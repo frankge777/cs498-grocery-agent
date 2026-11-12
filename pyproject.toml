@@ -9,6 +9,9 @@ description = "A reproducible intent-grounded grocery shopping agent benchmark a
 requires-python = ">=3.9"
 dependencies = []
 
+[project.optional-dependencies]
+langgraph = ["langgraph>=1.0,<2"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
