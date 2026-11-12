@@ -18,6 +18,12 @@ def run_experiment(output_dir: Path, trials: int = 3) -> dict:
     catalog = load_catalog()
     tasks = load_tasks()
     agents = [DirectFunctionAgent(), IntentGroundedAgent()]
+    try:
+        from .graph_agent import LangGraphIntentAgent
+    except ImportError:
+        pass  # langgraph is optional; install with `pip install -e .[langgraph]`
+    else:
+        agents.append(LangGraphIntentAgent())
     output_dir.mkdir(parents=True, exist_ok=True)
     rows: List[dict] = []
     trajectories = []
