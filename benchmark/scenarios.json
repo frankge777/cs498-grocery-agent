@@ -1,0 +1,419 @@
+{
+  "version": "1.0.0-draft",
+  "notes": "Draft release implementing the roster in Table 1 of the CS498 draft benchmark paper. Numeric parameters (budgets, quantities, prices) are design choices tuned to the fixed catalog and may differ from the paper's illustrative numbers. Fields 'needs', 'hard', 'interactions', 'preferences' and 'reference_carts' are hidden from agents; 'variants', 'context', 'initial_cart' and the tool interface are public. All three variants of a scenario share the same acceptance predicates.",
+  "scenarios": [
+    {
+      "id": "01", "category": "explicit", "difficulty": "E",
+      "title": "One specified milk SKU, exactly two packages",
+      "variants": {
+        "high": "Add exactly two 1 L cartons of Greenfarm Organic Whole Milk to my cart, nothing else.",
+        "medium": "Get two cartons of the Greenfarm organic whole milk, 1 liter size.",
+        "low": "Get two of my usual milk."
+      },
+      "context": {"usual_items": {"milk": "Greenfarm Organic Whole Milk 1 L"}},
+      "needs": [
+        {"id": "milk", "desc": "exactly 2 x Greenfarm Organic Whole Milk 1 L", "select": {"product_ids": ["milk_green_whole_1l"]}, "measure": "units", "min": 2, "max": 2}
+      ],
+      "reference_carts": [{"milk_green_whole_1l": 2}]
+    },
+    {
+      "id": "02", "category": "explicit", "difficulty": "E",
+      "title": "Bread, eggs, and apples in stated quantities",
+      "variants": {
+        "high": "Buy exactly 1 loaf of bread, 12 eggs in total, and 6 apples in total.",
+        "medium": "I need a loaf of bread, a dozen eggs, and half a dozen apples.",
+        "low": "Pick up this week's basics from my list."
+      },
+      "context": {"weekly_list": ["1 loaf of bread (any kind)", "12 eggs", "6 apples"]},
+      "needs": [
+        {"id": "bread", "desc": "1 loaf of bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "eggs", "desc": "12 eggs", "select": {"categories": ["eggs"]}, "measure": "count", "min": 12, "max": 12},
+        {"id": "apples", "desc": "6 apples", "select": {"categories": ["apples"]}, "measure": "count", "min": 6, "max": 6}
+      ],
+      "reference_carts": [
+        {"bread_value_white": 1, "eggs_value_12": 1, "apples_value_each": 6},
+        {"bread_value_wheat": 1, "eggs_value_6": 2, "apples_green_bag6": 1}
+      ]
+    },
+    {
+      "id": "03", "category": "explicit", "difficulty": "E",
+      "title": "Exactly 1 L milk using available package sizes",
+      "variants": {
+        "high": "Buy exactly 1 L of Value whole milk in total. If the 1 L carton is out of stock, combine smaller Value whole milk cartons to make exactly 1 L.",
+        "medium": "I need exactly one liter of Value whole milk; any combination of carton sizes is fine.",
+        "low": "Get the milk for my recipe."
+      },
+      "context": {"recipe_note": "The recipe needs exactly 1 liter of Value brand whole milk. Any carton sizes are fine, but no leftover milk."},
+      "stock_overrides": {"milk_value_whole_1l": 0},
+      "needs": [
+        {"id": "milk", "desc": "exactly 1000 ml of Value whole milk", "select": {"product_ids": ["milk_value_whole_1l", "milk_value_whole_500", "milk_value_whole_2l"]}, "measure": "volume_ml", "min": 1000, "max": 1000}
+      ],
+      "reference_carts": [{"milk_value_whole_500": 2}]
+    },
+    {
+      "id": "04", "category": "explicit", "difficulty": "E",
+      "title": "Five named pantry staples, no extra products",
+      "variants": {
+        "high": "Add exactly one package each of rice, pasta, rolled oats, flour, and sugar. Do not add anything else.",
+        "medium": "Stock the pantry with one each of rice, pasta, oats, flour, and sugar, nothing extra.",
+        "low": "Restock the pantry staples on my list and don't add anything else."
+      },
+      "context": {"pantry_list": ["rice (1 package)", "pasta (1 package)", "rolled oats (1 package)", "flour (1 package)", "sugar (1 package)"]},
+      "needs": [
+        {"id": "rice", "desc": "1 package rice", "select": {"categories": ["rice"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "pasta", "desc": "1 package pasta", "select": {"categories": ["pasta"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "oats", "desc": "1 package oats", "select": {"categories": ["oats"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "flour", "desc": "1 package flour", "select": {"categories": ["flour"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "sugar", "desc": "1 package sugar", "select": {"categories": ["sugar"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [
+        {"rice_value_1kg": 1, "pasta_value_spaghetti": 1, "oats_value_1kg": 1, "flour_value_2kg": 1, "sugar_value_2kg": 1},
+        {"rice_green_brown_1kg": 1, "pasta_value_penne": 1, "oats_sunrise_1kg": 1, "flour_green_1kg": 1, "sugar_value_2kg": 1}
+      ]
+    },
+    {
+      "id": "05", "category": "explicit", "difficulty": "M",
+      "title": "Correct a prefilled cart to an explicit target list",
+      "variants": {
+        "high": "My cart should contain exactly 6 bananas, 1 Greenfarm Organic Oat Milk 1 L, and 1 loaf of bread. Fix the current cart to match and remove anything else.",
+        "medium": "Fix my cart: I wanted 6 bananas, Greenfarm oat milk instead of whole milk, only one loaf of bread, and no chips.",
+        "low": "My cart doesn't match my shopping list. Please fix it."
+      },
+      "context": {"shopping_list": ["6 bananas", "1 Greenfarm Organic Oat Milk 1 L", "1 loaf of bread (any kind)"]},
+      "initial_cart": {"banana_value": 3, "milk_value_whole_1l": 1, "chips_value_potato": 1, "bread_value_white": 2},
+      "needs": [
+        {"id": "bananas", "desc": "6 bananas", "select": {"categories": ["banana"]}, "measure": "units", "min": 6, "max": 6},
+        {"id": "oat_milk", "desc": "1 Greenfarm oat milk", "select": {"product_ids": ["milk_green_oat_1l"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "1 loaf of bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [
+        {"banana_value": 6, "milk_green_oat_1l": 1, "bread_value_white": 1},
+        {"banana_value": 3, "banana_green": 3, "milk_green_oat_1l": 1, "bread_value_wheat": 1}
+      ]
+    },
+    {
+      "id": "06", "category": "constrained", "difficulty": "M",
+      "title": "Oats, milk, bananas, eggs, and bread within $20",
+      "variants": {
+        "high": "Buy 1 package of oats, 1 package of milk, 4 individual bananas, 1 carton of eggs, and 1 loaf of bread. Total must be at most $20.00.",
+        "medium": "Get oats, milk, bananas, eggs, and bread for breakfast; keep it to $20 or less.",
+        "low": "Restock my breakfast basics within my usual budget."
+      },
+      "context": {"breakfast_basics": {"oats": "1 package", "milk": "1 package", "bananas": "4 individual bananas", "eggs": "1 carton", "bread": "1 loaf"}, "usual_budget": "$20.00"},
+      "budget_cents": 2000,
+      "needs": [
+        {"id": "oats", "desc": "1 package oats", "select": {"categories": ["oats"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "milk", "desc": "1 package milk", "select": {"categories": ["milk"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bananas", "desc": "4 bananas", "select": {"categories": ["banana"]}, "measure": "units", "min": 4, "max": 4},
+        {"id": "eggs", "desc": "1 carton eggs", "select": {"categories": ["eggs"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "1 loaf bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [
+        {"oats_value_1kg": 1, "milk_value_whole_1l": 1, "banana_value": 4, "eggs_value_12": 1, "bread_value_white": 1},
+        {"oats_sunrise_1kg": 1, "milk_green_whole_1l": 1, "banana_green": 4, "eggs_value_12": 1, "bread_value_wheat": 1}
+      ]
+    },
+    {
+      "id": "07", "category": "constrained", "difficulty": "M",
+      "title": "Same five needs with dairy-free milk",
+      "variants": {
+        "high": "Buy 1 package of oats, 1 package of milk labeled dairy-free, 4 individual bananas, 1 carton of eggs, and 1 loaf of bread. Total must be at most $20.00.",
+        "medium": "Get oats, dairy-free milk, bananas, eggs, and bread for breakfast; keep it to $20 or less.",
+        "low": "Restock my breakfast basics within my usual budget, keeping in mind my dietary note."
+      },
+      "context": {"breakfast_basics": {"oats": "1 package", "milk": "1 package", "bananas": "4 individual bananas", "eggs": "1 carton", "bread": "1 loaf"}, "usual_budget": "$20.00", "dietary_note": "Milk must be labeled dairy-free. Lactose-free is not the same as dairy-free."},
+      "budget_cents": 2000,
+      "needs": [
+        {"id": "oats", "desc": "1 package oats", "select": {"categories": ["oats"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "milk", "desc": "1 package dairy-free milk", "select": {"categories": ["milk"], "tags_all": ["dairy_free"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bananas", "desc": "4 bananas", "select": {"categories": ["banana"]}, "measure": "units", "min": 4, "max": 4},
+        {"id": "eggs", "desc": "1 carton eggs", "select": {"categories": ["eggs"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "1 loaf bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [
+        {"oats_value_1kg": 1, "milk_pure_soy_1l": 1, "banana_value": 4, "eggs_value_12": 1, "bread_value_white": 1},
+        {"oats_value_1kg": 1, "milk_green_oat_1l": 1, "banana_value": 4, "eggs_value_6": 1, "bread_value_wheat": 1}
+      ]
+    },
+    {
+      "id": "08", "category": "constrained", "difficulty": "M",
+      "title": "Five needs within $20; prefer one stated brand",
+      "variants": {
+        "high": "Buy 1 package of oats, 1 package of milk, 4 individual bananas, 1 carton of eggs, and 1 loaf of bread for at most $20.00. I prefer Sunrise brand oats, but the budget comes first.",
+        "medium": "Get oats, milk, bananas, eggs, and bread for $20 or less; Sunrise oats if possible.",
+        "low": "Restock my breakfast basics within my usual budget, with my favorite brands where possible."
+      },
+      "context": {"breakfast_basics": {"oats": "1 package", "milk": "1 package", "bananas": "4 individual bananas", "eggs": "1 carton", "bread": "1 loaf"}, "usual_budget": "$20.00", "favorite_brands": {"oats": "Sunrise"}},
+      "budget_cents": 2000,
+      "needs": [
+        {"id": "oats", "desc": "1 package oats", "select": {"categories": ["oats"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "milk", "desc": "1 package milk", "select": {"categories": ["milk"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bananas", "desc": "4 bananas", "select": {"categories": ["banana"]}, "measure": "units", "min": 4, "max": 4},
+        {"id": "eggs", "desc": "1 carton eggs", "select": {"categories": ["eggs"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "1 loaf bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "preferences": [
+        {"id": "sunrise_oats", "weight": 1, "scope": {"categories": ["oats"]}, "prefer": {"brands": ["Sunrise"]}}
+      ],
+      "reference_carts": [
+        {"oats_sunrise_1kg": 1, "milk_value_whole_1l": 1, "banana_value": 4, "eggs_value_12": 1, "bread_value_white": 1},
+        {"oats_value_1kg": 1, "milk_value_whole_500": 1, "banana_value": 4, "eggs_value_6": 1, "bread_value_white": 1}
+      ]
+    },
+    {
+      "id": "09", "category": "constrained", "difficulty": "M",
+      "title": "Four snack portions with verified nut-free tags",
+      "variants": {
+        "high": "Buy at least 4 and at most 6 snack portions in total for my son's class. Every product must be explicitly labeled nut-free (unlabeled products do not count). Spend at most $8.00.",
+        "medium": "I need four nut-free snack portions for a school event, verified nut-free only, under $8.",
+        "low": "Get the snacks for Friday's class event."
+      },
+      "context": {"class_event": "Friday class party needs 4 snack portions (at most 6). The class has a nut allergy: only products explicitly labeled nut-free are allowed. Snack budget is $8.00."},
+      "budget_cents": 800,
+      "needs": [
+        {"id": "snacks", "desc": "4-6 nut-free snack portions", "select": {"tags_all": ["nut_free"]}, "measure": "portions:snack", "min": 4, "max": 6}
+      ],
+      "reference_carts": [
+        {"crackers_value": 1},
+        {"bar_pure_nutfree": 4},
+        {"popcorn_value": 1, "yogurt_value_cup": 1}
+      ]
+    },
+    {
+      "id": "10", "category": "constrained", "difficulty": "H",
+      "title": "Four meals with category quotas and a budget cap",
+      "variants": {
+        "high": "Buy food for 4 dinners: at least 4 protein portions (max 8), 4 grain portions (max 12), and 4 vegetable portions (max 8), using the portion counts in product details. Spend at most $8.00.",
+        "medium": "Shop for four simple dinners, each with a protein, a grain, and a vegetable, for $8 or less.",
+        "low": "Cover my dinners for the next few days on my usual meal plan."
+      },
+      "context": {"meal_plan": "4 dinners. Each dinner = 1 protein portion + 1 grain portion + 1 vegetable portion. Portion counts are listed in product details. Don't overbuy: at most 8 protein, 12 grain, 8 vegetable portions. Dinner budget: $8.00.", "grain_sources": ["rice", "pasta", "bread"], "protein_sources": ["eggs", "beans", "lentils", "tofu", "chicken"], "vegetable_sources": ["carrots", "broccoli", "spinach", "frozen vegetables"]},
+      "budget_cents": 800,
+      "needs": [
+        {"id": "protein", "desc": "4-8 protein portions", "select": {"categories": ["eggs", "beans", "lentils", "tofu", "chicken"]}, "measure": "portions:protein", "min": 4, "max": 8},
+        {"id": "grain", "desc": "4-12 grain portions", "select": {"categories": ["rice", "pasta", "bread"]}, "measure": "portions:grain", "min": 4, "max": 12},
+        {"id": "vegetable", "desc": "4-8 vegetable portions", "select": {"categories": ["carrots", "broccoli", "spinach", "frozen_vegetables"]}, "measure": "portions:vegetable", "min": 4, "max": 8}
+      ],
+      "reference_carts": [
+        {"lentils_value": 1, "pasta_value_spaghetti": 1, "carrots_value_1lb": 1},
+        {"eggs_value_12": 1, "pasta_value_spaghetti": 1, "frozen_veg_value": 1}
+      ]
+    },
+    {
+      "id": "11", "category": "goal", "difficulty": "M",
+      "title": "Three breakfasts from visible meal-role definitions",
+      "variants": {
+        "high": "Buy enough for 3 breakfasts: at least 3 grain portions from oats, cereal, or bread (max 10), 3 dairy portions from milk (max 8), and 3 fruit portions (max 6). Spend at most $10.00.",
+        "medium": "Set me up for three breakfasts, each with a grain, milk, and fruit, for $10 or less.",
+        "low": "Set me up for breakfast for the next three days."
+      },
+      "context": {"breakfast_definition": "Breakfast = 1 grain portion (oats, cereal, or bread) + 1 dairy portion (milk) + 1 fruit portion. Portion counts are in product details. Don't overbuy: at most 10 grain, 8 dairy, 6 fruit portions.", "breakfast_budget": "$10.00"},
+      "budget_cents": 1000,
+      "needs": [
+        {"id": "grain", "desc": "3-10 breakfast grain portions", "select": {"categories": ["oats", "cereal", "bread"]}, "measure": "portions:grain", "min": 3, "max": 10},
+        {"id": "dairy", "desc": "3-8 dairy portions", "select": {"categories": ["milk"]}, "measure": "portions:dairy", "min": 3, "max": 8},
+        {"id": "fruit", "desc": "3-6 fruit portions", "select": {"categories": ["banana", "apples", "oranges", "berries"]}, "measure": "portions:fruit", "min": 3, "max": 6}
+      ],
+      "reference_carts": [
+        {"bread_value_white": 1, "milk_value_whole_1l": 1, "banana_value": 3},
+        {"oats_value_1kg": 1, "milk_pure_soy_1l": 1, "apples_value_each": 3}
+      ]
+    },
+    {
+      "id": "12", "category": "goal", "difficulty": "H",
+      "title": "Three vegetarian dinners using pantry stock",
+      "variants": {
+        "high": "Buy what's missing for 3 vegetarian dinners. Each dinner needs 1 protein, 1 grain, and 1 vegetable portion. My pantry already has 10 grain portions and 2 protein portions, so buy only 1-4 more vegetarian protein portions and 3-8 vegetable portions, and no grains. Every item must be labeled vegetarian. Spend at most $8.00.",
+        "medium": "Get what I'm missing for three vegetarian dinners, using what's already in my pantry; $8 max.",
+        "low": "Plan this week's dinners around what's in my pantry."
+      },
+      "context": {"household": "Vegetarian household: every purchased product must be labeled vegetarian.", "dinner_plan": "3 dinners. Each dinner = 1 protein portion + 1 grain portion + 1 vegetable portion. Don't overbuy: at most 4 additional protein and 8 vegetable portions; buy nothing that the pantry already covers.", "pantry": {"Value Long Grain White Rice 1 kg": "1 bag = 10 grain portions", "Value Black Beans 425 g can": "1 can = 2 protein portions"}, "dinner_budget": "$8.00"},
+      "budget_cents": 800,
+      "needs": [
+        {"id": "protein", "desc": "1-4 extra vegetarian protein portions", "select": {"tags_all": ["vegetarian"]}, "measure": "portions:protein", "min": 1, "max": 4},
+        {"id": "vegetable", "desc": "3-8 vegetable portions", "select": {"tags_all": ["vegetarian"]}, "measure": "portions:vegetable", "min": 3, "max": 8}
+      ],
+      "hard": [
+        {"type": "all_items", "select": {"tags_all": ["vegetarian"]}}
+      ],
+      "reference_carts": [
+        {"beans_value_black": 1, "carrots_value_1lb": 1},
+        {"tofu_value_firm": 1, "broccoli_fresh_head": 1}
+      ]
+    },
+    {
+      "id": "13", "category": "goal", "difficulty": "H",
+      "title": "Weekly fitness basket with inventory and supplement priorities",
+      "variants": {
+        "high": "Restock my weekly fitness groceries. My targets are 7 fruit, 7 vegetable, and 7 protein portions, 7 snacks with at least 10 g protein each, plus 1 protein powder and 1 creatine. My pantry already has 2 fruit and 3 protein portions, so buy 5-9 fruit, 7-11 vegetable, 4-8 protein portions, and 7-10 high-protein snacks. Stay within $80.00. I prefer FitCore supplements (most important) and FreshPick food (less important), but needs and budget come first.",
+        "medium": "Restock my weekly fitness groceries and supplements, accounting for what's in my pantry. Stay within $80; FitCore supplements and FreshPick food preferred.",
+        "low": "Restock my weekly fitness groceries and supplements using my pantry; stay within $80."
+      },
+      "context": {"weekly_targets": {"fruit": "7 portions", "vegetable": "7 portions", "protein": "7 portions (eggs, beans, lentils, tofu, chicken)", "snacks": "7 snacks, each with at least 10 g protein", "protein_powder": "1 package", "creatine": "1 package"}, "pantry": {"fruit": "2 portions", "protein": "3 portions"}, "overbuying_limits": "At most 4 extra portions beyond each remaining target, at most 10 snacks, and exactly 1 of each supplement.", "brand_priorities": {"supplements": "FitCore (strong preference)", "food": "FreshPick (mild preference)"}, "budget": "$80.00"},
+      "budget_cents": 8000,
+      "needs": [
+        {"id": "fruit", "desc": "5-9 fruit portions", "select": {"categories": ["banana", "apples", "oranges", "berries"]}, "measure": "portions:fruit", "min": 5, "max": 9},
+        {"id": "vegetable", "desc": "7-11 vegetable portions", "select": {"categories": ["carrots", "broccoli", "spinach", "frozen_vegetables"]}, "measure": "portions:vegetable", "min": 7, "max": 11},
+        {"id": "protein", "desc": "4-8 protein portions", "select": {"categories": ["eggs", "beans", "lentils", "tofu", "chicken"]}, "measure": "portions:protein", "min": 4, "max": 8},
+        {"id": "snacks", "desc": "7-10 snacks with >=10 g protein", "select": {"min_protein_g": 10}, "measure": "portions:snack", "min": 7, "max": 10},
+        {"id": "protein_powder", "desc": "1 protein powder", "select": {"categories": ["protein_powder"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "creatine", "desc": "1 creatine", "select": {"categories": ["creatine"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "preferences": [
+        {"id": "fitcore_supplements", "weight": 3, "scope": {"categories": ["protein_powder", "creatine"]}, "prefer": {"brands": ["FitCore"]}},
+        {"id": "freshpick_food", "weight": 1, "scope": {"categories": ["banana", "apples", "oranges", "berries", "carrots", "broccoli", "spinach", "frozen_vegetables", "eggs", "beans", "lentils", "tofu", "chicken", "protein_bar", "yogurt"]}, "prefer": {"brands": ["FreshPick"]}}
+      ],
+      "reference_carts": [
+        {"protein_powder_fitcore": 1, "creatine_fitcore": 1, "banana_value": 5, "frozen_veg_value": 1, "carrots_value_1lb": 1, "lentils_value": 1, "bar_value_peanut": 7},
+        {"protein_powder_value": 1, "creatine_value": 1, "oranges_fresh_each": 5, "broccoli_fresh_head": 3, "tofu_fresh_firm": 2, "bar_fresh_choc": 7}
+      ]
+    },
+    {
+      "id": "14", "category": "goal", "difficulty": "M",
+      "title": "Restock five staples to visible inventory targets",
+      "variants": {
+        "high": "Restock to my targets: buy exactly 1 package of rice, 2 of pasta, 1 of oats, 3 cans of beans, and 1 of flour.",
+        "medium": "Top up my pantry so each staple reaches its target amount; current stock and targets are in my pantry sheet.",
+        "low": "Restock the pantry."
+      },
+      "context": {"pantry_sheet": [
+        {"item": "rice", "have": 1, "target": 2, "unit": "package"},
+        {"item": "pasta", "have": 0, "target": 2, "unit": "package"},
+        {"item": "oats", "have": 1, "target": 2, "unit": "package"},
+        {"item": "black beans", "have": 1, "target": 4, "unit": "can"},
+        {"item": "flour", "have": 0, "target": 1, "unit": "package"},
+        {"item": "sugar", "have": 2, "target": 1, "unit": "package"}
+      ], "rule": "Buy exactly enough to reach each target; don't buy items that are already at or above target."},
+      "needs": [
+        {"id": "rice", "desc": "1 rice", "select": {"categories": ["rice"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "pasta", "desc": "2 pasta", "select": {"categories": ["pasta"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "oats", "desc": "1 oats", "select": {"categories": ["oats"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "beans", "desc": "3 cans beans", "select": {"categories": ["beans"]}, "measure": "units", "min": 3, "max": 3},
+        {"id": "flour", "desc": "1 flour", "select": {"categories": ["flour"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [
+        {"rice_value_1kg": 1, "pasta_value_spaghetti": 2, "oats_value_1kg": 1, "beans_value_black": 3, "flour_value_2kg": 1},
+        {"rice_green_brown_1kg": 1, "pasta_value_spaghetti": 1, "pasta_value_penne": 1, "oats_sunrise_1kg": 1, "beans_green_black": 3, "flour_green_1kg": 1}
+      ]
+    },
+    {
+      "id": "15", "category": "goal", "difficulty": "H",
+      "title": "Clarify an unspecified milk requirement before selection",
+      "variants": {
+        "high": "Add one 1 L carton of milk. Someone in my household has a dietary restriction, so ask me about it before choosing a milk.",
+        "medium": "I need a liter of milk that works with our dietary restriction.",
+        "low": "Grab milk for the week."
+      },
+      "context": {"household_note": "Someone in the household has a milk-related dietary restriction that is not written down here. Ask before choosing milk.", "weekly_milk": "1 carton (1 L)"},
+      "clarification": [
+        {"id": "milk_restriction", "status": "required", "keywords": ["milk", "dairy", "lactose", "allerg", "restriction", "diet", "intoleran"], "answer": "We need milk that is labeled both dairy-free and nut-free. Soy or oat milk is fine. Just one 1 L carton."}
+      ],
+      "needs": [
+        {"id": "milk", "desc": "1000 ml of dairy-free, nut-free milk", "select": {"categories": ["milk"], "tags_all": ["dairy_free", "nut_free"]}, "measure": "volume_ml", "min": 1000, "max": 1000}
+      ],
+      "interactions": [
+        {"type": "clarify_before_add", "topic": "milk_restriction", "select": {"categories": ["milk"]}}
+      ],
+      "reference_carts": [{"milk_pure_soy_1l": 1}, {"milk_green_oat_1l": 1}]
+    },
+    {
+      "id": "16", "category": "recovery", "difficulty": "M",
+      "title": "Replace unavailable requested milk with an allowed option",
+      "variants": {
+        "high": "Buy two 1 L cartons of Greenfarm Organic Oat Milk. If it is unavailable, substitute any other milk that is labeled both dairy-free and nut-free, 2 L in total.",
+        "medium": "Get two liters of Greenfarm oat milk; if they're out, any dairy-free, nut-free milk works.",
+        "low": "Get my usual milk, two of them, and substitute if needed."
+      },
+      "context": {"usual_items": {"milk": "Greenfarm Organic Oat Milk 1 L"}, "substitution_rule": "Any milk labeled both dairy-free and nut-free is an acceptable substitute, same total volume."},
+      "events": [{"product_id": "milk_green_oat_1l", "trigger": "first_attempt"}],
+      "needs": [
+        {"id": "milk", "desc": "2000 ml dairy-free nut-free milk", "select": {"categories": ["milk"], "tags_all": ["dairy_free", "nut_free"]}, "measure": "volume_ml", "min": 2000, "max": 2000}
+      ],
+      "reference_carts": [{"milk_pure_soy_1l": 2}]
+    },
+    {
+      "id": "17", "category": "recovery", "difficulty": "H",
+      "title": "Replace unavailable pasta while preserving dietary tags",
+      "variants": {
+        "high": "Buy two 500 g packages of Pureliving Gluten-Free Spaghetti and one jar of pasta sauce for at most $12.00. If the spaghetti is unavailable, substitute an equivalent gluten-free pasta for exactly 1,000 g in total. The sauce must be gluten-free too.",
+        "medium": "Get 1 kg of gluten-free pasta (Pureliving spaghetti if possible) and a gluten-free sauce, $12 max.",
+        "low": "Get what I need for gluten-free pasta night."
+      },
+      "context": {"pasta_night": "Exactly 1,000 g of gluten-free pasta (Pureliving spaghetti preferred; any gluten-free pasta is an acceptable substitute) and 1 jar of gluten-free pasta sauce. Budget $12.00."},
+      "events": [{"product_id": "pasta_pure_gf_500", "trigger": "first_attempt"}],
+      "budget_cents": 1200,
+      "needs": [
+        {"id": "pasta", "desc": "1000 g gluten-free pasta", "select": {"categories": ["pasta"], "tags_all": ["gluten_free"]}, "measure": "weight_g", "min": 1000, "max": 1000},
+        {"id": "sauce", "desc": "1 gluten-free sauce", "select": {"categories": ["pasta_sauce"], "tags_all": ["gluten_free"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [
+        {"pasta_green_gf_500": 2, "sauce_value_marinara": 1},
+        {"pasta_green_gf_500": 2, "sauce_pure_lowsodium": 1}
+      ]
+    },
+    {
+      "id": "18", "category": "recovery", "difficulty": "H",
+      "title": "Revise two basket choices after a stock failure",
+      "variants": {
+        "high": "Buy 1 package of tortillas, 2 cans of black beans, 1 jar of salsa, and 1 bag of shredded cheese for at most $13.00. If an item is out of stock, substitute and adjust other choices to stay within budget.",
+        "medium": "Get tortillas, two cans of beans, salsa, and shredded cheese for taco night, $13 max.",
+        "low": "Get what I need for taco night."
+      },
+      "context": {"taco_night": {"tortillas": "1 package", "black beans": "2 cans", "salsa": "1 jar", "shredded cheese": "1 bag (vegan cheese is fine)"}, "budget": "$13.00"},
+      "events": [{"product_id": "cheese_value_shredded", "trigger": "first_attempt"}],
+      "budget_cents": 1300,
+      "needs": [
+        {"id": "tortillas", "desc": "1 tortillas", "select": {"categories": ["tortillas"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "beans", "desc": "2 cans beans", "select": {"categories": ["beans"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "salsa", "desc": "1 salsa", "select": {"categories": ["salsa"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "cheese", "desc": "1 cheese", "select": {"categories": ["cheese"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [{"tortillas_value": 1, "beans_value_black": 2, "salsa_value": 1, "cheese_pure_vegan": 1}]
+    },
+    {
+      "id": "19", "category": "recovery", "difficulty": "H",
+      "title": "Replace unavailable preferred brand within budget",
+      "variants": {
+        "high": "Buy one 340 g bag of Sunrise ground coffee and one Greenfarm Organic Oat Milk 1 L for at most $12.00. If Sunrise is unavailable, pick another ground coffee that keeps the total within budget.",
+        "medium": "Get Sunrise ground coffee and Greenfarm oat milk, $12 max; another coffee brand is fine if needed.",
+        "low": "Get my coffee supplies within my usual budget."
+      },
+      "context": {"coffee_supplies": {"coffee": "1 bag ground coffee (Sunrise preferred, other brands acceptable)", "milk": "Greenfarm Organic Oat Milk 1 L"}, "usual_budget": "$12.00"},
+      "events": [{"product_id": "coffee_sunrise_340g", "trigger": "first_attempt"}],
+      "budget_cents": 1200,
+      "needs": [
+        {"id": "coffee", "desc": "1 bag ground coffee", "select": {"categories": ["coffee"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "oat_milk", "desc": "1 Greenfarm oat milk", "select": {"product_ids": ["milk_green_oat_1l"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [{"coffee_value_340g": 1, "milk_green_oat_1l": 1}]
+    },
+    {
+      "id": "20", "category": "recovery", "difficulty": "H",
+      "title": "Preserve existing items through two scripted stock failures",
+      "variants": {
+        "high": "Keep the eggs and bread already in my cart. Add 1 package of pasta, 1 jar of pasta sauce, and 1 bag of carrots, keeping the whole cart at most $15.00. Substitute if anything is out of stock.",
+        "medium": "Don't touch what's in my cart; add pasta, sauce, and carrots, $15 total max.",
+        "low": "Finish my dinner order without changing what's already in the cart."
+      },
+      "context": {"dinner_order": {"keep": "everything currently in the cart", "add": ["1 package pasta (any)", "1 jar pasta sauce (any)", "1 bag carrots"]}, "cart_budget": "$15.00 for the whole cart"},
+      "initial_cart": {"eggs_value_12": 1, "bread_value_wheat": 1},
+      "events": [
+        {"product_id": "pasta_value_spaghetti", "trigger": "first_attempt"},
+        {"product_id": "sauce_value_marinara", "trigger": "first_attempt"}
+      ],
+      "budget_cents": 1500,
+      "needs": [
+        {"id": "eggs", "desc": "1 eggs", "select": {"categories": ["eggs"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "1 bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "pasta", "desc": "1 pasta", "select": {"categories": ["pasta"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "sauce", "desc": "1 sauce", "select": {"categories": ["pasta_sauce"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "carrots", "desc": "1 carrots", "select": {"categories": ["carrots"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "hard": [{"type": "preserve_initial"}],
+      "reference_carts": [
+        {"eggs_value_12": 1, "bread_value_wheat": 1, "pasta_value_penne": 1, "sauce_pure_lowsodium": 1, "carrots_value_1lb": 1},
+        {"eggs_value_12": 1, "bread_value_wheat": 1, "pasta_value_gf_340": 1, "sauce_pure_lowsodium": 1, "carrots_value_1lb": 1}
+      ]
+    }
+  ]
+}
