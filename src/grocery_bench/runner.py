@@ -42,49 +42,79 @@ def run_trials(
     variants: Sequence[str] = VARIANTS,
     runs: int = DEFAULT_RUNS,
     limits: Optional[dict] = None,
+    workers: int = 1,
+    progress: Optional[Callable[[int, int], None]] = None,
 ) -> List[dict]:
+    """Run every (scenario, variant, run) in a fresh environment.
+
+    ``workers > 1`` runs episodes in threads (for network-bound LLM agents);
+    results are returned in a deterministic order regardless of completion order.
+    """
     catalog = load_catalog()
     scenarios = list(scenarios) if scenarios is not None else load_scenarios()
-    trials = []
-    for instance in iter_instances(scenarios, tuple(variants)):
-        for run in range(1, runs + 1):
-            agent = agent_factory()
-            env = GroceryEnv(catalog, instance.scenario, instance.variant, limits=limits)
-            started = time.monotonic()
-            infra_error = None
-            try:
-                agent.run(env)
-            except EpisodeTerminated:
-                pass
-            except Exception:  # noqa: BLE001 - recorded as an infrastructure failure
-                infra_error = traceback.format_exc(limit=5)
-            if env.termination_reason is None:
-                env.termination_reason = "agent_returned" if infra_error is None else "infrastructure_error"
-            result = evaluate_env(env)
-            trials.append(
-                {
-                    "agent": getattr(agent, "name", type(agent).__name__),
-                    "scenario_id": instance.scenario.id,
-                    "category": instance.scenario.category,
-                    "difficulty": instance.scenario.difficulty,
-                    "variant": instance.variant,
-                    "run": run,
-                    "infra_failure": infra_error is not None,
-                    "infra_error": infra_error,
-                    "termination_reason": env.termination_reason,
-                    "runtime_seconds": round(time.monotonic() - started, 4),
-                    "tool_calls": env.tool_calls,
-                    "model_calls": env.model_calls,
-                    "input_tokens": env.input_tokens,
-                    "output_tokens": env.output_tokens,
-                    "cart_modifications": env.cart_modifications,
-                    "final_cart": dict(env.cart),
-                    "fired_events": list(env.fired_events),
-                    **{k: v for k, v in result.to_dict().items() if k not in ("scenario_id", "variant")},
-                    "trajectory": env.trajectory,
-                }
-            )
-    return trials
+    jobs = [(instance, run) for instance in iter_instances(scenarios, tuple(variants)) for run in range(1, runs + 1)]
+
+    def one(job):
+        instance, run = job
+        return _run_episode(agent_factory, catalog, instance, run, limits)
+
+    if workers <= 1:
+        trials = []
+        for index, job in enumerate(jobs, 1):
+            trials.append(one(job))
+            if progress:
+                progress(index, len(jobs))
+        return trials
+
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    results: Dict[int, dict] = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(one, job): index for index, job in enumerate(jobs)}
+        for done, future in enumerate(as_completed(futures), 1):
+            results[futures[future]] = future.result()
+            if progress:
+                progress(done, len(jobs))
+    return [results[index] for index in range(len(jobs))]
+
+
+def _run_episode(agent_factory, catalog, instance, run, limits) -> dict:
+    agent = agent_factory()
+    env = GroceryEnv(catalog, instance.scenario, instance.variant, limits=limits)
+    started = time.monotonic()
+    infra_error = None
+    try:
+        agent.run(env)
+    except EpisodeTerminated:
+        pass
+    except Exception:  # noqa: BLE001 - recorded as an infrastructure failure
+        infra_error = traceback.format_exc(limit=5)
+    if env.termination_reason is None:
+        env.termination_reason = "agent_returned" if infra_error is None else "infrastructure_error"
+    result = evaluate_env(env)
+    return {
+        "agent": getattr(agent, "name", type(agent).__name__),
+        "scenario_id": instance.scenario.id,
+        "category": instance.scenario.category,
+        "difficulty": instance.scenario.difficulty,
+        "variant": instance.variant,
+        "run": run,
+        "infra_failure": infra_error is not None,
+        "infra_error": infra_error,
+        "termination_reason": env.termination_reason,
+        "runtime_seconds": round(time.monotonic() - started, 4),
+        "tool_calls": env.tool_calls,
+        "model_calls": env.model_calls,
+        "input_tokens": env.input_tokens,
+        "cached_input_tokens": env.cached_input_tokens,
+        "output_tokens": env.output_tokens,
+        "cart_modifications": env.cart_modifications,
+        "final_cart": dict(env.cart),
+        "fired_events": list(env.fired_events),
+        **{k: v for k, v in result.to_dict().items() if k not in ("scenario_id", "variant")},
+        "agent_notes": getattr(agent, "notes", None),
+        "trajectory": env.trajectory,
+    }
 
 
 # ------------------------------------------------------------------ summary
@@ -119,7 +149,10 @@ def _rate(values: List[float]) -> Optional[float]:
 
 
 def _efficiency(trials: List[dict]) -> dict:
-    keys = ["tool_calls", "model_calls", "input_tokens", "output_tokens", "runtime_seconds", "cart_modifications"]
+    keys = [
+        "tool_calls", "model_calls", "input_tokens", "cached_input_tokens", "output_tokens",
+        "runtime_seconds", "cart_modifications",
+    ]
     return {key: _rate([t[key] for t in trials]) for key in keys} | {"n": len(trials)}
 
 
@@ -185,11 +218,13 @@ def write_outputs(trials: List[dict], output_dir: Path, agent_meta: Optional[dic
     summary = summarize(trials)
     with (output_dir / "trials.jsonl").open("w", encoding="utf-8") as handle:
         for trial in trials:
-            handle.write(json.dumps({k: v for k, v in trial.items() if k != "trajectory"}) + "\n")
+            handle.write(json.dumps({k: v for k, v in trial.items() if k not in ("trajectory", "agent_notes")}) + "\n")
     with (output_dir / "trajectories.jsonl").open("w", encoding="utf-8") as handle:
         for trial in trials:
             key = {k: trial[k] for k in ("agent", "scenario_id", "variant", "run")}
-            handle.write(json.dumps({**key, "trajectory": trial["trajectory"]}) + "\n")
+            handle.write(
+                json.dumps({**key, "trajectory": trial["trajectory"], "agent_notes": trial.get("agent_notes")}) + "\n"
+            )
     manifest = {
         **release_hashes(),
         "tool_schema_version": TOOL_SCHEMA_VERSION,

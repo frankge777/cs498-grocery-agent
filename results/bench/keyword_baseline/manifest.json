@@ -1,0 +1,8 @@
+{
+  "catalog_sha256": "8a63cc2202a1be536df801a4f9475232b014507453879a7021a33c015cbc498c",
+  "scenarios_sha256": "3fc39248d694a3de1ce50dcd158d9eee6d46218f7ea677ca4d5a7da2a21be006",
+  "tool_schema_version": "1.0.0",
+  "agent": {
+    "name": "keyword_baseline"
+  }
+}

@@ -70,6 +70,7 @@ class GroceryEnv:
         self.model_calls = 0
         self.input_tokens = 0
         self.output_tokens = 0
+        self.cached_input_tokens = 0
         self.cart_modifications = 0
         self.termination_reason: Optional[str] = None
 
@@ -92,12 +93,13 @@ class GroceryEnv:
     def unavailable_products(self) -> set:
         return {pid for pid, qty in self.stock.items() if qty <= 0}
 
-    def record_model_call(self, input_tokens: int = 0, output_tokens: int = 0) -> None:
+    def record_model_call(self, input_tokens: int = 0, output_tokens: int = 0, cached_input_tokens: int = 0) -> None:
         """Agents that call an LLM report each call here so caps and cost are enforced."""
         self._check_open()
         self.model_calls += 1
         self.input_tokens += int(input_tokens)
         self.output_tokens += int(output_tokens)
+        self.cached_input_tokens += int(cached_input_tokens)
         if self.model_calls > self.limits["max_model_calls"]:
             self._terminate("model_call_cap")
 

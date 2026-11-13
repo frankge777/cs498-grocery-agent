@@ -14,3 +14,6 @@ paper/*.out
 paper/*.run.xml
 paper/*.synctex.gz
 
+
+# secrets
+.env

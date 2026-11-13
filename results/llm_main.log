@@ -1,0 +1,119 @@
+Running ours on 20 scenarios x 3 variants x 1 runs
+  [ours] 20/60 episodes (8s)
+  [ours] 40/60 episodes (20s)
+  [ours] 60/60 episodes (40s)
+{
+ "agent": "ours",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/ours",
+ "macro_success": 1,
+ "ci95": [
+  1,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 1,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 60
+ },
+ "est_cost_usd_peak": 0.174,
+ "minutes": 0.7
+}
+Running react on 20 scenarios x 3 variants x 1 runs
+  [react] 20/60 episodes (7s)
+  [react] 40/60 episodes (14s)
+  [react] 60/60 episodes (26s)
+{
+ "agent": "react",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/react",
+ "macro_success": 1,
+ "ci95": [
+  1,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 1,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 60
+ },
+ "est_cost_usd_peak": 0.11,
+ "minutes": 0.4
+}
+Running direct_fc on 20 scenarios x 3 variants x 1 runs
+  [direct_fc] 20/60 episodes (3s)
+  [direct_fc] 40/60 episodes (6s)
+  [direct_fc] 60/60 episodes (10s)
+{
+ "agent": "direct_fc",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/direct_fc",
+ "macro_success": 0.5333,
+ "ci95": [
+  0.3167,
+  0.7333
+ ],
+ "by_variant": {
+  "high": 0.5,
+  "low": 0.55,
+  "medium": 0.55
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 60
+ },
+ "est_cost_usd_peak": 0.068,
+ "minutes": 0.2
+}
+Running ours_noverify on 20 scenarios x 3 variants x 1 runs
+  [ours_noverify] 20/60 episodes (8s)
+  [ours_noverify] 40/60 episodes (17s)
+  [ours_noverify] 60/60 episodes (26s)
+{
+ "agent": "ours_noverify",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/ours_noverify",
+ "macro_success": 1,
+ "ci95": [
+  1,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 1,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 60
+ },
+ "est_cost_usd_peak": 0.14,
+ "minutes": 0.4
+}
+Running ours_noclarify on 1 scenarios x 3 variants x 3 runs
+  [ours_noclarify] 9/9 episodes (9s)
+{
+ "agent": "ours_noclarify",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/ours_noclarify",
+ "macro_success": 1,
+ "ci95": [
+  1,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 1,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 9
+ },
+ "est_cost_usd_peak": 0.014,
+ "minutes": 0.1
+}
+DONE

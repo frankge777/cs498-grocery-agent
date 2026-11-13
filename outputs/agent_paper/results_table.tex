@@ -1,0 +1,12 @@
+\begin{tabular}{lccccc}
+\toprule
+System & Success (\%) & Coverage & Hard viol. & Tool calls & Model calls \\
+\midrule
+Ours (intent-grounded) & 100.0 {\scriptsize[100, 100]} & 100.0 & 0.0 & 15.3 & 6.0 \\
+ReAct & 100.0 {\scriptsize[100, 100]} & 100.0 & 0.0 & 12.6 & 4.5 \\
+Direct function calling & 53.3 {\scriptsize[32, 73]} & 64.5 & 1.7 & 9.9 & 2.0 \\
+Rule-based intent agent (prototype) & 6.7 {\scriptsize[0, 18]} & 24.1 & 20.0 & 4.9 & 0.0 \\
+Rule-based direct agent (prototype) & 0.0 {\scriptsize[0, 0]} & 18.8 & 20.0 & 4.8 & 0.0 \\
+Keyword baseline (non-LLM floor) & 8.3 {\scriptsize[2, 17]} & 24.8 & 33.3 & 4.4 & 0.0 \\
+\bottomrule
+\end{tabular}
