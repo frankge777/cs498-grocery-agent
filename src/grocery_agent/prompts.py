@@ -66,10 +66,10 @@ Guidance:
   "units" = number of packages (e.g. "1 loaf of bread", "2 cartons"); "count" = number of individual items when packs vary (e.g. "12 eggs", "6 apples");
   "volume_ml" / "weight_g" for stated volumes or weights (e.g. "exactly 1 L" -> min 1000, max 1000);
   "portions:<role>" when the context defines meals by portions (roles: fruit, vegetable, protein, grain, dairy, snack).
-- min/max: exact amounts get min = max. Use ranges only when the request or context gives a range or an upper limit.
+- min/max: min is the amount actually needed. max is the most the shopper allows: if the request or context states an upper limit ("at most", "max", "don't overbuy: at most N"), use that limit as max, even when it is larger than min. Use min = max only when an exact amount is required ("exactly", "no leftovers", a fixed number of packages with no limit given). Packages come in fixed sizes, so a range is usually needed for portions.
 - Subtract pantry stock / current inventory given in the context. Do not create requirements for things already covered.
-- required_tags use these names: vegan, vegetarian, dairy_free, gluten_free, nut_free, low_sodium, organic.
-- brand is only for a brand that is REQUIRED (e.g. "my usual Greenfarm oat milk"); a brand that is merely preferred goes in preferences. Use product_ids only if the request names an exact product id.
+- required_tags use these names: vegan, vegetarian, dairy_free, gluten_free, nut_free, low_sodium, organic. Only include tags the shopper actually requires; a product name like "organic" in a preferred item is not a requirement.
+- brand: set it only when no other brand is acceptable. If the shopper allows substitutes ("if unavailable, any ... is fine", "another brand is fine"), leave brand null, put the brand in preferences, and express the substitution rule with required_tags. Use product_ids only if the request names an exact product id.
 - budget_cents: a hard cap in cents if one is stated in the request or context, else null.
 - keep_existing_items: true if the shopper wants current cart items kept (and then also list them as requirements).
 - open_questions: ONLY for mandatory information that cannot be determined from the request or context (e.g. context says a dietary restriction exists but does not say what it is). Leave empty otherwise."""

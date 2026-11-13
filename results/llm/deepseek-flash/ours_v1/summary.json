@@ -1,0 +1,89 @@
+{
+  "agent": "ours",
+  "n_trials": 60,
+  "n_scored": 60,
+  "n_infra_failures": 0,
+  "macro_success": 1,
+  "macro_success_ci95": [
+    1,
+    1
+  ],
+  "success_by_variant": {
+    "high": 1,
+    "low": 1,
+    "medium": 1
+  },
+  "success_by_category": {
+    "constrained": 1,
+    "explicit": 1,
+    "goal": 1,
+    "recovery": 1
+  },
+  "success_by_difficulty": {
+    "E": 1,
+    "H": 1,
+    "M": 1
+  },
+  "success_by_scenario": {
+    "01": 1,
+    "02": 1,
+    "03": 1,
+    "04": 1,
+    "05": 1,
+    "06": 1,
+    "07": 1,
+    "08": 1,
+    "09": 1,
+    "10": 1,
+    "11": 1,
+    "12": 1,
+    "13": 1,
+    "14": 1,
+    "15": 1,
+    "16": 1,
+    "17": 1,
+    "18": 1,
+    "19": 1,
+    "20": 1
+  },
+  "secondary": {
+    "coverage": 1.0,
+    "hard_violation_rate": 0.0,
+    "budget_compliance": {
+      "rate": 1.0,
+      "n": 36
+    },
+    "preference_score": {
+      "mean": 0.75,
+      "n": 6
+    },
+    "missed_required_clarification": {
+      "rate": 0.0,
+      "n": 3
+    },
+    "unnecessary_clarification_rate": 0.0333
+  },
+  "efficiency_all": {
+    "tool_calls": 15.2667,
+    "model_calls": 5.9833,
+    "input_tokens": 20452.35,
+    "cached_input_tokens": 16200.4667,
+    "output_tokens": 1279.4667,
+    "runtime_seconds": 9.6427,
+    "cart_modifications": 3.2167,
+    "n": 60
+  },
+  "efficiency_successful": {
+    "tool_calls": 15.2667,
+    "model_calls": 5.9833,
+    "input_tokens": 20452.35,
+    "cached_input_tokens": 16200.4667,
+    "output_tokens": 1279.4667,
+    "runtime_seconds": 9.6427,
+    "cart_modifications": 3.2167,
+    "n": 60
+  },
+  "termination_reasons": {
+    "finished": 60
+  }
+}

@@ -1,0 +1,187 @@
+Running ours on 5 scenarios x 3 variants x 3 runs
+  [ours] 20/45 episodes (20s)
+  [ours] 40/45 episodes (38s)
+  [ours] 45/45 episodes (73s)
+{
+ "agent": "ours",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/stress/ours",
+ "macro_success": 0.9778,
+ "ci95": [
+  0.9333,
+  1
+ ],
+ "by_variant": {
+  "high": 0.9333,
+  "low": 1,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 45
+ },
+ "est_cost_usd_peak": 0.281,
+ "minutes": 1.2
+}
+Running react on 5 scenarios x 3 variants x 3 runs
+  [react] 20/45 episodes (16s)
+  [react] 40/45 episodes (28s)
+  [react] 45/45 episodes (36s)
+{
+ "agent": "react",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/stress/react",
+ "macro_success": 0.9778,
+ "ci95": [
+  0.9333,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 0.9333,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 45
+ },
+ "est_cost_usd_peak": 0.197,
+ "minutes": 0.6
+}
+Running direct_fc on 5 scenarios x 3 variants x 3 runs
+  [direct_fc] 20/45 episodes (5s)
+  [direct_fc] 40/45 episodes (8s)
+  [direct_fc] 45/45 episodes (10s)
+{
+ "agent": "direct_fc",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/stress/direct_fc",
+ "macro_success": 0,
+ "ci95": [
+  0,
+  0
+ ],
+ "by_variant": {
+  "high": 0,
+  "low": 0,
+  "medium": 0
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 45
+ },
+ "est_cost_usd_peak": 0.086,
+ "minutes": 0.2
+}
+Running ours_noverify on 5 scenarios x 3 variants x 3 runs
+  [ours_noverify] 20/45 episodes (20s)
+  [ours_noverify] 40/45 episodes (32s)
+  [ours_noverify] 45/45 episodes (40s)
+{
+ "agent": "ours_noverify",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/stress/ours_noverify",
+ "macro_success": 0.9333,
+ "ci95": [
+  0.8,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 0.8667,
+  "medium": 0.9333
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 45
+ },
+ "est_cost_usd_peak": 0.238,
+ "minutes": 0.7
+}
+Running ours on 20 scenarios x 3 variants x 3 runs
+  [ours] 20/180 episodes (7s)
+  [ours] 40/180 episodes (13s)
+  [ours] 60/180 episodes (21s)
+  [ours] 80/180 episodes (28s)
+  [ours] 100/180 episodes (36s)
+  [ours] 120/180 episodes (47s)
+  [ours] 140/180 episodes (55s)
+  [ours] 160/180 episodes (61s)
+  [ours] 180/180 episodes (68s)
+{
+ "agent": "ours",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/ours",
+ "macro_success": 1,
+ "ci95": [
+  1,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 1,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 180
+ },
+ "est_cost_usd_peak": 0.428,
+ "minutes": 1.1
+}
+Running react on 20 scenarios x 3 variants x 3 runs
+  [react] 20/180 episodes (6s)
+  [react] 40/180 episodes (10s)
+  [react] 60/180 episodes (16s)
+  [react] 80/180 episodes (22s)
+  [react] 100/180 episodes (29s)
+  [react] 120/180 episodes (37s)
+  [react] 140/180 episodes (45s)
+  [react] 160/180 episodes (50s)
+  [react] 180/180 episodes (56s)
+{
+ "agent": "react",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/react",
+ "macro_success": 0.9944,
+ "ci95": [
+  0.9833,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 0.9833,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 180
+ },
+ "est_cost_usd_peak": 0.327,
+ "minutes": 0.9
+}
+Running direct_fc on 20 scenarios x 3 variants x 3 runs
+  [direct_fc] 20/180 episodes (3s)
+  [direct_fc] 40/180 episodes (5s)
+  [direct_fc] 60/180 episodes (9s)
+  [direct_fc] 80/180 episodes (10s)
+  [direct_fc] 100/180 episodes (13s)
+  [direct_fc] 120/180 episodes (16s)
+  [direct_fc] 140/180 episodes (19s)
+  [direct_fc] 160/180 episodes (21s)
+  [direct_fc] 180/180 episodes (23s)
+{
+ "agent": "direct_fc",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/direct_fc",
+ "macro_success": 0.4889,
+ "ci95": [
+  0.2944,
+  0.6833
+ ],
+ "by_variant": {
+  "high": 0.5167,
+  "low": 0.4833,
+  "medium": 0.4667
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 180
+ },
+ "est_cost_usd_peak": 0.171,
+ "minutes": 0.4
+}
+DONE

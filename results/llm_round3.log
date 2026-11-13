@@ -1,0 +1,53 @@
+Running ours_noverify on 20 scenarios x 3 variants x 3 runs
+  [ours_noverify] 20/180 episodes (7s)
+  [ours_noverify] 40/180 episodes (13s)
+  [ours_noverify] 60/180 episodes (21s)
+  [ours_noverify] 80/180 episodes (27s)
+  [ours_noverify] 100/180 episodes (35s)
+  [ours_noverify] 120/180 episodes (43s)
+  [ours_noverify] 140/180 episodes (52s)
+  [ours_noverify] 160/180 episodes (57s)
+  [ours_noverify] 180/180 episodes (65s)
+{
+ "agent": "ours_noverify",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/ours_noverify",
+ "macro_success": 1,
+ "ci95": [
+  1,
+  1
+ ],
+ "by_variant": {
+  "high": 1,
+  "low": 1,
+  "medium": 1
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 180
+ },
+ "est_cost_usd_peak": 0.406,
+ "minutes": 1.1
+}
+Running ours_noask on 1 scenarios x 3 variants x 3 runs
+  [ours_noask] 9/9 episodes (136s)
+{
+ "agent": "ours_noask",
+ "out": "/Users/tao/Desktop/cs498-grocery-agent/results/llm/deepseek-flash/ours_noask",
+ "macro_success": 0.5556,
+ "ci95": [
+  0.5556,
+  0.5556
+ ],
+ "by_variant": {
+  "high": 0.3333,
+  "low": 0.6667,
+  "medium": 0.6667
+ },
+ "infra_failures": 0,
+ "terminations": {
+  "finished": 9
+ },
+ "est_cost_usd_peak": 0.035,
+ "minutes": 2.3
+}
+DONE

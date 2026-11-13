@@ -1,0 +1,158 @@
+{
+  "version": "0.1.0-stress",
+  "notes": "Stress split added after the first LLM run saturated the main 20-scenario release (ReAct and the intent-grounded agent both reached 100%). These five scenarios were written and validated (oracle feasible, evaluator mutations) before any agent was run on them. They combine several difficulties per task: long lists with mixed units, stacked dietary constraints with a tight budget, pantry subtraction plus a stock event, repairing a prefilled cart after a new household rule, and cascading stock failures. They are reported separately and never mixed into the main release score.",
+  "scenarios": [
+    {
+      "id": "S1", "category": "stress", "difficulty": "H",
+      "title": "Twelve-item weekly list with mixed units, tight budget, two stock events",
+      "variants": {
+        "high": "Buy my weekly list for at most $55.00 total: exactly 2 L of whole milk (any brand), exactly 18 eggs, 6 bananas, 1 package of rolled oats, 2 loaves of bread, 1 package of rice, 3 packages of pasta, 2 jars of pasta sauce, 2 bags of carrots, 4 cans of black beans, exactly 4 apples, and 6 yogurt cups. Substitute if something is out of stock.",
+        "medium": "Do my weekly shop from my list, staying within my usual budget; quantities are in the list.",
+        "low": "Do the weekly shop."
+      },
+      "context": {
+        "weekly_list": ["whole milk: exactly 2 L in total (any brand, any carton sizes)", "eggs: exactly 18", "bananas: 6", "rolled oats: 1 package", "bread: 2 loaves", "rice: 1 package", "pasta: 3 packages (any shape)", "pasta sauce: 2 jars", "carrots: 2 bags", "black beans: 4 cans", "apples: exactly 4", "yogurt cups: 6"],
+        "usual_budget": "$55.00 for the whole list",
+        "rule": "Buy exactly the list; substitute equivalent items if something is out of stock."
+      },
+      "events": [
+        {"product_id": "pasta_value_spaghetti", "trigger": "first_attempt"},
+        {"product_id": "milk_value_whole_2l", "trigger": "first_attempt"}
+      ],
+      "budget_cents": 5500,
+      "needs": [
+        {"id": "milk", "desc": "2000 ml whole milk", "select": {"product_ids": ["milk_value_whole_1l", "milk_value_whole_500", "milk_value_whole_2l", "milk_green_whole_1l"]}, "measure": "volume_ml", "min": 2000, "max": 2000},
+        {"id": "eggs", "desc": "18 eggs", "select": {"categories": ["eggs"]}, "measure": "count", "min": 18, "max": 18},
+        {"id": "bananas", "desc": "6 bananas", "select": {"categories": ["banana"]}, "measure": "units", "min": 6, "max": 6},
+        {"id": "oats", "desc": "1 oats", "select": {"categories": ["oats"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "2 bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "rice", "desc": "1 rice", "select": {"categories": ["rice"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "pasta", "desc": "3 pasta", "select": {"categories": ["pasta"]}, "measure": "units", "min": 3, "max": 3},
+        {"id": "sauce", "desc": "2 sauce", "select": {"categories": ["pasta_sauce"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "carrots", "desc": "2 carrots", "select": {"categories": ["carrots"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "beans", "desc": "4 beans", "select": {"categories": ["beans"]}, "measure": "units", "min": 4, "max": 4},
+        {"id": "apples", "desc": "4 apples", "select": {"categories": ["apples"]}, "measure": "count", "min": 4, "max": 4},
+        {"id": "yogurt", "desc": "6 yogurt", "select": {"categories": ["yogurt"]}, "measure": "units", "min": 6, "max": 6}
+      ],
+      "reference_carts": [
+        {"milk_value_whole_1l": 2, "eggs_value_12": 1, "eggs_value_6": 1, "banana_value": 6, "oats_value_1kg": 1, "bread_value_white": 2, "rice_value_1kg": 1, "pasta_value_penne": 3, "sauce_value_marinara": 2, "carrots_value_1lb": 2, "beans_value_black": 4, "apples_value_each": 4, "yogurt_value_cup": 6},
+        {"milk_value_whole_1l": 2, "eggs_value_6": 3, "banana_value": 6, "oats_value_1kg": 1, "bread_value_white": 2, "rice_value_1kg": 1, "pasta_value_penne": 3, "sauce_value_marinara": 2, "carrots_value_1lb": 2, "beans_value_black": 4, "apples_value_each": 4, "yogurt_value_cup": 6}
+      ]
+    },
+    {
+      "id": "S2", "category": "stress", "difficulty": "H",
+      "title": "Stacked vegan + gluten-free + nut-free constraints under a tight budget",
+      "variants": {
+        "high": "Buy 1 package of pasta, 1 jar of pasta sauce, 1 loaf of bread, exactly 1 L of milk, 4 protein bars, and 1 box of cereal. Every item must be labeled vegan, gluten-free, AND nut-free. Total at most $26.00.",
+        "medium": "Get pasta, sauce, bread, a liter of milk, 4 protein bars, and cereal that are safe for our household; $26 max.",
+        "low": "Get this week's groceries for the household."
+      },
+      "context": {
+        "household_rules": "Every product we buy must be labeled vegan, gluten-free, and nut-free (an allergy and a celiac diagnosis). Unlabeled products are not safe.",
+        "this_week": ["1 package of pasta", "1 jar of pasta sauce", "1 loaf of bread", "exactly 1 L of milk", "4 protein bars", "1 box of cereal"],
+        "budget": "$26.00"
+      },
+      "budget_cents": 2600,
+      "needs": [
+        {"id": "pasta", "desc": "1 pasta", "select": {"categories": ["pasta"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "sauce", "desc": "1 sauce", "select": {"categories": ["pasta_sauce"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "1 bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "milk", "desc": "1000 ml milk", "select": {"categories": ["milk"]}, "measure": "volume_ml", "min": 1000, "max": 1000},
+        {"id": "bars", "desc": "4 protein bars", "select": {"categories": ["protein_bar"]}, "measure": "units", "min": 4, "max": 4},
+        {"id": "cereal", "desc": "1 cereal", "select": {"categories": ["cereal"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "hard": [{"type": "all_items", "select": {"tags_all": ["vegan", "gluten_free", "nut_free"]}}],
+      "reference_carts": [
+        {"pasta_value_gf_340": 1, "sauce_value_marinara": 1, "bread_green_gf": 1, "milk_pure_soy_1l": 1, "bar_pure_nutfree": 4, "cereal_value_corn": 1}
+      ]
+    },
+    {
+      "id": "S3", "category": "stress", "difficulty": "H",
+      "title": "Five dinners for two with pantry subtraction, stock event, and a costly preference",
+      "variants": {
+        "high": "Buy food for 5 dinners for 2 people: 10 protein, 10 grain, and 10 vegetable portions in total. My pantry already has 4 grain and 3 vegetable portions, so buy 10-14 protein, 6-10 grain, and 7-11 vegetable portions. Spend at most $13.50. I mildly prefer FreshPick vegetables, but budget comes first. Substitute if something is out of stock.",
+        "medium": "Cover five dinners for two, using what's in my pantry, for $13.50 or less; FreshPick veggies if they fit.",
+        "low": "Cover this week's dinners."
+      },
+      "context": {
+        "dinner_plan": "5 dinners for 2 people. Each person's dinner = 1 protein + 1 grain + 1 vegetable portion (so 10 of each in total). Portion counts are in product details. Don't overbuy: at most 4 portions above what is needed for each role.",
+        "pantry": {"grain": "4 portions", "vegetable": "3 portions"},
+        "preferences": "FreshPick vegetables (mild preference)",
+        "budget": "$13.50"
+      },
+      "events": [{"product_id": "lentils_value", "trigger": "first_attempt"}],
+      "budget_cents": 1350,
+      "needs": [
+        {"id": "protein", "desc": "10-14 protein portions", "select": {"categories": ["eggs", "beans", "lentils", "tofu", "chicken"]}, "measure": "portions:protein", "min": 10, "max": 14},
+        {"id": "grain", "desc": "6-10 grain portions", "select": {"categories": ["rice", "pasta", "bread"]}, "measure": "portions:grain", "min": 6, "max": 10},
+        {"id": "vegetable", "desc": "7-11 vegetable portions", "select": {"categories": ["carrots", "broccoli", "spinach", "frozen_vegetables"]}, "measure": "portions:vegetable", "min": 7, "max": 11}
+      ],
+      "preferences": [
+        {"id": "freshpick_veg", "weight": 1, "scope": {"categories": ["carrots", "broccoli", "spinach", "frozen_vegetables"]}, "prefer": {"brands": ["FreshPick"]}}
+      ],
+      "reference_carts": [
+        {"beans_value_black": 5, "bread_value_white": 1, "carrots_value_1lb": 2},
+        {"eggs_value_12": 1, "beans_value_black": 2, "rice_value_1kg": 1, "carrots_value_1lb": 1, "frozen_veg_value": 1}
+      ]
+    },
+    {
+      "id": "S4", "category": "stress", "difficulty": "H",
+      "title": "Repair a prefilled cart after a new household rule, with a stock event",
+      "variants": {
+        "high": "Our household is now vegetarian and nut-free. Fix the cart: replace the chicken with 6-8 vegetarian, nut-free protein portions; replace the peanut bars with 4 nut-free protein bars; keep only 1 loaf of bread; keep the milk, 6 bananas, and 2 packages of pasta. Everything must be vegetarian and nut-free, total at most $25.00.",
+        "medium": "We just went vegetarian and nut-free. Fix my cart so it follows the new rules and my list, $25 max.",
+        "low": "Please fix my cart."
+      },
+      "context": {
+        "household_rules": "As of this week the household is vegetarian and nut-free: every product must be labeled vegetarian and nut-free.",
+        "list_for_this_cart": ["1 L milk carton (1 package)", "1 loaf of bread", "6 bananas", "2 packages of pasta", "protein for dinners: 6-8 protein portions", "4 protein bars"],
+        "note": "The current cart was filled before the new rules.",
+        "budget": "$25.00"
+      },
+      "initial_cart": {"chicken_value_breast": 2, "bar_value_peanut": 4, "milk_value_whole_1l": 1, "bread_value_white": 3, "banana_value": 6, "pasta_value_spaghetti": 2},
+      "events": [{"product_id": "bar_pure_nutfree", "trigger": "first_attempt"}],
+      "budget_cents": 2500,
+      "needs": [
+        {"id": "protein", "desc": "6-8 vegetarian nut-free protein portions", "select": {"tags_all": ["vegetarian", "nut_free"]}, "measure": "portions:protein", "min": 6, "max": 8},
+        {"id": "bars", "desc": "4 nut-free protein bars", "select": {"categories": ["protein_bar"], "tags_all": ["nut_free"]}, "measure": "units", "min": 4, "max": 4},
+        {"id": "milk", "desc": "1 milk", "select": {"categories": ["milk"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bread", "desc": "1 bread", "select": {"categories": ["bread"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "bananas", "desc": "6 bananas", "select": {"categories": ["banana"]}, "measure": "units", "min": 6, "max": 6},
+        {"id": "pasta", "desc": "2 pasta", "select": {"categories": ["pasta"]}, "measure": "units", "min": 2, "max": 2}
+      ],
+      "hard": [{"type": "all_items", "select": {"tags_all": ["vegetarian", "nut_free"]}}],
+      "reference_carts": [
+        {"beans_value_black": 3, "bar_fitcore_whey": 4, "milk_value_whole_1l": 1, "bread_value_white": 1, "banana_value": 6, "pasta_value_spaghetti": 2},
+        {"eggs_value_12": 1, "bar_fitcore_whey": 4, "milk_value_whole_1l": 1, "bread_value_white": 1, "banana_value": 6, "pasta_value_spaghetti": 2}
+      ]
+    },
+    {
+      "id": "S5", "category": "stress", "difficulty": "H",
+      "title": "Cascading stock failures with a tight budget",
+      "variants": {
+        "high": "Buy taco night for six: 2 packages of tortillas, 4 cans of black beans, 2 jars of salsa, and 2 bags of shredded cheese (any kind), at most $31.00 total. Several items may be out of stock; keep substituting until everything is covered within budget.",
+        "medium": "Get taco supplies for six people (two packs of tortillas, four cans of beans, two salsas, two cheeses), $31 max.",
+        "low": "Get what I need for a taco night for six."
+      },
+      "context": {
+        "taco_night_for_six": {"tortillas": "2 packages", "black beans": "4 cans", "salsa": "2 jars", "shredded cheese": "2 bags (any kind, vegan is fine)"},
+        "budget": "$31.00"
+      },
+      "events": [
+        {"product_id": "cheese_value_shredded", "trigger": "first_attempt"},
+        {"product_id": "cheese_pure_vegan", "trigger": "first_attempt"},
+        {"product_id": "salsa_value", "trigger": "first_attempt"}
+      ],
+      "budget_cents": 3100,
+      "needs": [
+        {"id": "tortillas", "desc": "2 tortillas", "select": {"categories": ["tortillas"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "beans", "desc": "4 beans", "select": {"categories": ["beans"]}, "measure": "units", "min": 4, "max": 4},
+        {"id": "salsa", "desc": "2 salsa", "select": {"categories": ["salsa"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "cheese", "desc": "2 cheese", "select": {"categories": ["cheese"]}, "measure": "units", "min": 2, "max": 2}
+      ],
+      "reference_carts": [
+        {"tortillas_value": 2, "beans_value_black": 4, "salsa_green": 2, "cheese_green_shredded": 2}
+      ]
+    }
+  ]
+}

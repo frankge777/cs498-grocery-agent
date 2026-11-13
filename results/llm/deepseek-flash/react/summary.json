@@ -1,27 +1,27 @@
 {
   "agent": "react",
-  "n_trials": 60,
-  "n_scored": 60,
+  "n_trials": 180,
+  "n_scored": 180,
   "n_infra_failures": 0,
-  "macro_success": 1,
+  "macro_success": 0.9944,
   "macro_success_ci95": [
-    1,
+    0.9833,
     1
   ],
   "success_by_variant": {
     "high": 1,
-    "low": 1,
+    "low": 0.9833,
     "medium": 1
   },
   "success_by_category": {
     "constrained": 1,
     "explicit": 1,
-    "goal": 1,
+    "goal": 0.9778,
     "recovery": 1
   },
   "success_by_difficulty": {
     "E": 1,
-    "H": 1,
+    "H": 0.9861,
     "M": 1
   },
   "success_by_scenario": {
@@ -37,7 +37,7 @@
     "10": 1,
     "11": 1,
     "12": 1,
-    "13": 1,
+    "13": 0.8889,
     "14": 1,
     "15": 1,
     "16": 1,
@@ -47,43 +47,43 @@
     "20": 1
   },
   "secondary": {
-    "coverage": 1.0,
+    "coverage": 0.9991,
     "hard_violation_rate": 0.0,
     "budget_compliance": {
       "rate": 1.0,
-      "n": 36
+      "n": 108
     },
     "preference_score": {
-      "mean": 0.875,
-      "n": 6
+      "mean": 0.8056,
+      "n": 18
     },
     "missed_required_clarification": {
       "rate": 0.0,
-      "n": 3
+      "n": 9
     },
-    "unnecessary_clarification_rate": 0.0
+    "unnecessary_clarification_rate": 0.0056
   },
   "efficiency_all": {
-    "tool_calls": 12.6333,
-    "model_calls": 4.4833,
-    "input_tokens": 12445.4667,
-    "cached_input_tokens": 9849.6,
-    "output_tokens": 824.0667,
-    "runtime_seconds": 6.797,
-    "cart_modifications": 3.2333,
-    "n": 60
+    "tool_calls": 12.7056,
+    "model_calls": 4.6111,
+    "input_tokens": 13189.8667,
+    "cached_input_tokens": 10620.3278,
+    "output_tokens": 816.9,
+    "runtime_seconds": 6.9709,
+    "cart_modifications": 3.1944,
+    "n": 180
   },
   "efficiency_successful": {
-    "tool_calls": 12.6333,
-    "model_calls": 4.4833,
-    "input_tokens": 12445.4667,
-    "cached_input_tokens": 9849.6,
-    "output_tokens": 824.0667,
-    "runtime_seconds": 6.797,
-    "cart_modifications": 3.2333,
-    "n": 60
+    "tool_calls": 12.6089,
+    "model_calls": 4.6034,
+    "input_tokens": 13079.2123,
+    "cached_input_tokens": 10534.4972,
+    "output_tokens": 811.1061,
+    "runtime_seconds": 6.9389,
+    "cart_modifications": 3.1788,
+    "n": 179
   },
   "termination_reasons": {
-    "finished": 60
+    "finished": 180
   }
 }

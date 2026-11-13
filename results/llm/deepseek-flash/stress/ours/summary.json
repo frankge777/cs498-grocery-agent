@@ -1,0 +1,69 @@
+{
+  "agent": "ours",
+  "n_trials": 45,
+  "n_scored": 45,
+  "n_infra_failures": 0,
+  "macro_success": 0.9778,
+  "macro_success_ci95": [
+    0.9333,
+    1
+  ],
+  "success_by_variant": {
+    "high": 0.9333,
+    "low": 1,
+    "medium": 1
+  },
+  "success_by_category": {
+    "stress": 0.9778
+  },
+  "success_by_difficulty": {
+    "H": 0.9778
+  },
+  "success_by_scenario": {
+    "S1": 1,
+    "S2": 1,
+    "S3": 0.8889,
+    "S4": 1,
+    "S5": 1
+  },
+  "secondary": {
+    "coverage": 0.9926,
+    "hard_violation_rate": 0.0,
+    "budget_compliance": {
+      "rate": 1.0,
+      "n": 45
+    },
+    "preference_score": {
+      "mean": 0.0,
+      "n": 9
+    },
+    "missed_required_clarification": {
+      "rate": null,
+      "n": 0
+    },
+    "unnecessary_clarification_rate": 0.0
+  },
+  "efficiency_all": {
+    "tool_calls": 32.3778,
+    "model_calls": 7.9556,
+    "input_tokens": 48011.7333,
+    "cached_input_tokens": 39702.7556,
+    "output_tokens": 2931.4222,
+    "runtime_seconds": 17.7793,
+    "cart_modifications": 7.2444,
+    "n": 45
+  },
+  "efficiency_successful": {
+    "tool_calls": 31.9091,
+    "model_calls": 7.75,
+    "input_tokens": 45224.4773,
+    "cached_input_tokens": 36977.4545,
+    "output_tokens": 2736.8636,
+    "runtime_seconds": 16.523,
+    "cart_modifications": 7.2955,
+    "n": 44
+  },
+  "termination_reasons": {
+    "finished": 45
+  }
+}

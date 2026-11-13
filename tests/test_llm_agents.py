@@ -121,6 +121,22 @@ class LLMAgentTests(unittest.TestCase):
             IntentGroundedLLMAgent(llm).run(env)
         self.assertEqual(env.termination_reason, "model_call_cap")
 
+    def test_noask_hides_ask_user_and_skips_clarify(self):
+        seen = []
+
+        def responder(messages, tools, json_mode):
+            if json_mode:
+                return {"content": json.dumps({**MILK_INTENT, "open_questions": [{"question": "which milk?"}]})}
+            seen.append({t["function"]["name"] if "function" in t else t["name"] for t in tools})
+            return {"tool_calls": [call("submit_cart", assignments=[])]}
+
+        env = self.env("15", "low")
+        agent = IntentGroundedLLMAgent(ScriptedLLM(responder), allow_ask=False, use_verifier=False)
+        agent.run(env)
+        self.assertEqual(agent.name, "ours_noverify_noask")
+        self.assertNotIn("ask_user", seen[0])
+        self.assertFalse(any(s.get("tool") == "ask_user" for s in env.trajectory))
+
     def test_react_and_direct(self):
         react = ScriptedLLM(sequence([
             {"content": "Thought: add milk", "tool_calls": [call("add_to_cart", product_id="milk_green_whole_1l", quantity=2)]},

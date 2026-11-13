@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from grocery_agent.llm import DEFAULT_MODEL, DeepSeekClient, estimate_cost_usd  # noqa: E402
 from grocery_agent.llm_agents import DirectFunctionCallingAgent, IntentGroundedLLMAgent, ReActAgent  # noqa: E402
 from grocery_bench import load_scenarios, run_trials, write_outputs  # noqa: E402
+from grocery_bench.data import BENCHMARK_DIR  # noqa: E402
 
 
 def factories(llm):
@@ -31,6 +32,7 @@ def factories(llm):
         "ours": lambda: IntentGroundedLLMAgent(llm),
         "ours_noverify": lambda: IntentGroundedLLMAgent(llm, use_verifier=False),
         "ours_noclarify": lambda: IntentGroundedLLMAgent(llm, use_clarify=False),
+        "ours_noask": lambda: IntentGroundedLLMAgent(llm, allow_ask=False),
         "react": lambda: ReActAgent(llm),
         "direct_fc": lambda: DirectFunctionCallingAgent(llm),
     }
@@ -47,12 +49,14 @@ def main() -> None:
     parser.add_argument("--scenarios", nargs="*", help="subset of scenario ids, e.g. 01 15")
     parser.add_argument("--variants", nargs="*", default=["high", "medium", "low"])
     parser.add_argument("--smoke", action="store_true", help="one instance (scenario 15, low) per agent, 1 run")
+    parser.add_argument("--split", choices=["main", "stress"], default="main",
+                        help="main = 20-scenario release; stress = benchmark/scenarios_stress.json")
     parser.add_argument("--output-root", type=Path, default=ROOT / "results" / "llm")
     args = parser.parse_args()
 
     llm = DeepSeekClient(model=args.model, temperature=args.temperature, thinking=args.thinking)
     tag = args.model + ("-thinking" if args.thinking else "")
-    scenarios = load_scenarios()
+    scenarios = load_scenarios(BENCHMARK_DIR / "scenarios_stress.json") if args.split == "stress" else load_scenarios()
     if args.smoke:
         args.scenarios, args.variants, args.runs = ["15"], ["low"], 1
     if args.scenarios:
@@ -72,8 +76,9 @@ def main() -> None:
         trials = run_trials(available[name], scenarios=scenarios, variants=args.variants, runs=args.runs,
                             workers=args.workers, progress=progress)
         suffix = "smoke" if args.smoke else ""
-        out = args.output_root / tag / (name + (f"_{suffix}" if suffix else ""))
-        meta = {"name": name, "llm": llm.describe(), "runs": args.runs, "variants": args.variants,
+        base = args.output_root / tag / ("stress" if args.split == "stress" else "")
+        out = base / (name + (f"_{suffix}" if suffix else ""))
+        meta = {"name": name, "split": args.split, "llm": llm.describe(), "runs": args.runs, "variants": args.variants,
                 "scenarios": [s.id for s in scenarios], "started_utc": datetime.now(timezone.utc).isoformat()}
         summary = write_outputs(trials, out, agent_meta=meta)
         cost = sum(estimate_cost_usd(args.model, t["input_tokens"], t["cached_input_tokens"], t["output_tokens"])

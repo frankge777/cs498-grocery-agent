@@ -142,6 +142,7 @@ class AgentContext:
     llm: Any
     use_clarify: bool
     use_verifier: bool
+    allow_ask: bool
     max_shop_turns: int
     max_verify_rounds: int
 
@@ -213,7 +214,8 @@ def shop(state: OursState, runtime: Runtime[AgentContext]) -> dict:
     cache = dict(state["product_cache"])
     submitted = None
     for _ in range(ctx.max_shop_turns):
-        reply = ctx.llm.chat(messages, tools=SHOP_TOOLS + [SUBMIT_CART_SPEC], env=ctx.env)
+        tools = SHOP_TOOLS if ctx.allow_ask else [t for t in SHOP_TOOLS if t["name"] != "ask_user"]
+        reply = ctx.llm.chat(messages, tools=tools + [SUBMIT_CART_SPEC], env=ctx.env)
         messages.append(reply.message)
         if not reply.tool_calls:
             messages.append({"role": "user", "content": prompts.SHOP_NUDGE})
@@ -260,7 +262,7 @@ def finish(state: OursState, runtime: Runtime[AgentContext]) -> dict:
 
 def route_after_intent(state: OursState, runtime: Runtime[AgentContext]) -> Literal["clarify", "start_shopping"]:
     wants = bool(state["intent"]["open_questions"])
-    if runtime.context.use_clarify and wants and state["clarify_rounds"] < 1:
+    if runtime.context.use_clarify and runtime.context.allow_ask and wants and state["clarify_rounds"] < 1:
         return "clarify"
     return "start_shopping"
 
@@ -296,7 +298,7 @@ _GRAPH = None
 
 
 class IntentGroundedLLMAgent:
-    def __init__(self, llm, use_clarify: bool = True, use_verifier: bool = True,
+    def __init__(self, llm, use_clarify: bool = True, use_verifier: bool = True, allow_ask: bool = True,
                  max_shop_turns: int = 30, max_verify_rounds: int = 2, name: Optional[str] = None):
         global _GRAPH
         if _GRAPH is None:
@@ -305,15 +307,17 @@ class IntentGroundedLLMAgent:
         self.llm = llm
         self.use_clarify = use_clarify
         self.use_verifier = use_verifier
+        self.allow_ask = allow_ask
         self.max_shop_turns = max_shop_turns
         self.max_verify_rounds = max_verify_rounds
-        suffix = "" if (use_clarify and use_verifier) else "".join(
-            ["_noclarify" if not use_clarify else "", "_noverify" if not use_verifier else ""])
+        suffix = "".join(["_noclarify" if not use_clarify else "", "_noverify" if not use_verifier else "",
+                          "_noask" if not allow_ask else ""])
         self.name = name or f"ours{suffix}"
         self.notes: Dict[str, Any] = {"llm": llm.describe()}
 
     def run(self, env: GroceryEnv) -> None:
-        ctx = AgentContext(env, self.llm, self.use_clarify, self.use_verifier, self.max_shop_turns, self.max_verify_rounds)
+        ctx = AgentContext(env, self.llm, self.use_clarify, self.use_verifier, self.allow_ask,
+                           self.max_shop_turns, self.max_verify_rounds)
         state: Dict[str, Any] = {}
         try:
             for update in self.graph.stream({}, context=ctx, config={"recursion_limit": 60}, stream_mode="values"):

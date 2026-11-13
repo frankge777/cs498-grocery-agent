@@ -4,6 +4,7 @@
   "tool_schema_version": "1.0.0",
   "agent": {
     "name": "ours_noverify",
+    "split": "main",
     "llm": {
       "provider": "deepseek",
       "model": "deepseek-flash",
@@ -11,7 +12,7 @@
       "temperature": 0.7,
       "max_tokens": 4096
     },
-    "runs": 1,
+    "runs": 3,
     "variants": [
       "high",
       "medium",
@@ -39,6 +40,6 @@
       "19",
       "20"
     ],
-    "started_utc": "2026-11-13T00:16:56.501744+00:00"
+    "started_utc": "2026-11-13T00:29:09.999197+00:00"
   }
 }

@@ -1,7 +1,7 @@
 {
   "agent": "ours_noverify",
-  "n_trials": 60,
-  "n_scored": 60,
+  "n_trials": 180,
+  "n_scored": 180,
   "n_infra_failures": 0,
   "macro_success": 1,
   "macro_success_ci95": [
@@ -51,39 +51,39 @@
     "hard_violation_rate": 0.0,
     "budget_compliance": {
       "rate": 1.0,
-      "n": 36
+      "n": 108
     },
     "preference_score": {
       "mean": 0.875,
-      "n": 6
+      "n": 18
     },
     "missed_required_clarification": {
       "rate": 0.0,
-      "n": 3
+      "n": 9
     },
-    "unnecessary_clarification_rate": 0.0167
+    "unnecessary_clarification_rate": 0.0
   },
   "efficiency_all": {
-    "tool_calls": 12.6,
-    "model_calls": 5.2833,
-    "input_tokens": 15307.6,
-    "cached_input_tokens": 12215.2833,
-    "output_tokens": 1116.45,
-    "runtime_seconds": 8.2584,
-    "cart_modifications": 3.1833,
-    "n": 60
+    "tool_calls": 12.4333,
+    "model_calls": 5.1722,
+    "input_tokens": 14904.8278,
+    "cached_input_tokens": 11975.6722,
+    "output_tokens": 1086.0167,
+    "runtime_seconds": 8.1212,
+    "cart_modifications": 3.2222,
+    "n": 180
   },
   "efficiency_successful": {
-    "tool_calls": 12.6,
-    "model_calls": 5.2833,
-    "input_tokens": 15307.6,
-    "cached_input_tokens": 12215.2833,
-    "output_tokens": 1116.45,
-    "runtime_seconds": 8.2584,
-    "cart_modifications": 3.1833,
-    "n": 60
+    "tool_calls": 12.4333,
+    "model_calls": 5.1722,
+    "input_tokens": 14904.8278,
+    "cached_input_tokens": 11975.6722,
+    "output_tokens": 1086.0167,
+    "runtime_seconds": 8.1212,
+    "cart_modifications": 3.2222,
+    "n": 180
   },
   "termination_reasons": {
-    "finished": 60
+    "finished": 180
   }
 }

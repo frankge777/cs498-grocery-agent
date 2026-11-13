@@ -27,15 +27,17 @@ sys.path.insert(0, str(ROOT / "src"))
 from grocery_agent.llm import estimate_cost_usd  # noqa: E402
 from grocery_bench.runner import bootstrap_ci, compare_systems, per_scenario_success  # noqa: E402
 
-MAIN = ["ours", "react", "direct_fc"]
-ABLATIONS = ["ours", "ours_noverify", "ours_noclarify"]
+MAIN = ["ours", "ours_v1", "react", "direct_fc"]
+ABLATIONS = ["ours", "ours_noverify", "ours_noclarify", "ours_noask"]
 PILOT = ["intent_grounded", "direct_function", "keyword_baseline"]
 LABELS = {
     "ours": "Ours (intent-grounded)",
+    "ours_v1": "Ours v1 prompts (1 run)",
     "react": "ReAct",
     "direct_fc": "Direct function calling",
     "ours_noverify": "Ours w/o verifier",
-    "ours_noclarify": "Ours w/o clarification",
+    "ours_noclarify": "Ours w/o dedicated clarify node",
+    "ours_noask": "Ours w/o any clarification (no ask_user)",
     "intent_grounded": "Rule-based intent agent (prototype)",
     "direct_function": "Rule-based direct agent (prototype)",
     "keyword_baseline": "Keyword baseline (non-LLM floor)",
@@ -71,6 +73,18 @@ def macro(trials, **filters):
     rows = [t for t in scored(trials) if all(t[k] == v for k, v in filters.items())]
     per = per_scenario_success(rows)
     return (mean(per.values()), bootstrap_ci(list(per.values()))) if per else (None, None)
+
+
+def pass_k(trials):
+    """tau-bench style pass^k: an instance counts only if ALL its runs succeed; macro over scenarios."""
+    inst = defaultdict(list)
+    for t in scored(trials):
+        inst[(t["scenario_id"], t["variant"])].append(t["success"])
+    k = min(len(v) for v in inst.values()) if inst else 0
+    per = defaultdict(list)
+    for (sid, _), vals in inst.items():
+        per[sid].append(float(all(vals)))
+    return (mean(mean(v) for v in per.values()) if per else None), k
 
 
 def pct(value):
@@ -195,6 +209,8 @@ def main():
 
     llm_root = ROOT / "results" / "llm" / args.tag
     data = {name: load(llm_root / name) for name in set(MAIN + ABLATIONS)}
+    stress = {name: load(llm_root / "stress" / name) for name in ["ours", "react", "direct_fc", "ours_noverify"]}
+    stress = {k: v for k, v in stress.items() if v}
     data.update({name: load(ROOT / "results" / "bench" / name) for name in PILOT})
     data = {k: v for k, v in data.items() if v}
     present = [s for s in MAIN + PILOT if s in data]
@@ -202,9 +218,9 @@ def main():
 
     # ---------------------------------------------------------- main table
     md += ["## Main results", "",
-           "| System | Runs/inst. | Macro success % [95% CI] | Coverage % | Hard-violation % | Missed clarif. % | Unneeded clarif. % "
+           "| System | Runs/inst. | Macro success % [95% CI] | pass^k % | Coverage % | Hard-violation % | Missed clarif. % | Unneeded clarif. % "
            "| Tool calls | Model calls | Tokens in/out (k) | Cost/episode (USD) |",
-           "|---|---|---|---|---|---|---|---|---|---|---|"]
+           "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     tex_rows = []
     for name in present:
         trials = scored(data[name])
@@ -213,7 +229,8 @@ def main():
         req = [t for t in trials if t["required_clarification_missed"] is not None]
         is_llm = name in MAIN + ABLATIONS
         c = cost(trials, args.model) / len(trials) if is_llm else 0
-        row = [LABELS[name], str(runs), f"{pct(s)} {ci_str(ci)}", pct(mean(t["coverage"] for t in trials)),
+        pk, k = pass_k(trials)
+        row = [LABELS[name], str(runs), f"{pct(s)} {ci_str(ci)}", f"{pct(pk)} (k={k})", pct(mean(t["coverage"] for t in trials)),
                pct(mean(float(t["hard_satisfaction"] < 1) for t in trials)),
                pct(mean(float(t["required_clarification_missed"]) for t in req)) if req else "–",
                pct(mean(float(t["unnecessary_clarifications"] > 0) for t in trials)),
@@ -223,14 +240,14 @@ def main():
                f"{c:.4f}" if is_llm else "–"]
         md.append("| " + " | ".join(row) + " |")
         tex_rows.append(" & ".join([row[0], row[2].replace("[", "{\\scriptsize[").replace("]", "]}"), row[3], row[4],
-                                    row[7], row[8]]) + r" \\")
+                                    row[5], row[8], row[9]]) + r" \\")
         infra = len(data[name]) - len(trials)
         if infra:
-            md.append(f"| ↳ {infra} infrastructure failures excluded | | | | | | | | | | |")
+            md.append(f"| ↳ {infra} infrastructure failures excluded | | | | | | | | | | | |")
     md += ["", "Macro success averages each scenario's mean over variants and runs, then over the 20 scenarios; "
            "CIs bootstrap whole scenarios (2,000 resamples). Rule-based rows are deterministic pilot references.", ""]
     (args.out / "results_table.tex").write_text(
-        "\\begin{tabular}{lccccc}\n\\toprule\nSystem & Success (\\%) & Coverage & Hard viol. & Tool calls & Model calls \\\\\n"
+        "\\begin{tabular}{lcccccc}\n\\toprule\nSystem & Success (\\%) & pass\\textasciicircum{}k & Coverage & Hard viol. & Tool calls & Model calls \\\\\n"
         "\\midrule\n" + "\n".join(r.replace("%", "\\%") for r in tex_rows) + "\n\\bottomrule\n\\end{tabular}\n",
         encoding="utf-8")
 
@@ -260,7 +277,7 @@ def main():
     if "ours" in data:
         md += ["## Paired comparisons (Ours − other, macro success, scenario bootstrap)", "",
                "| Comparison | Δ (pp) | 95% CI (pp) |", "|---|---|---|"]
-        for other in ["react", "direct_fc", "ours_noverify", "ours_noclarify", "intent_grounded"]:
+        for other in ["react", "direct_fc", "ours_noverify", "ours_noclarify", "ours_noask", "intent_grounded"]:
             if other in data:
                 comp = compare_systems(scored(data["ours"]), scored(data[other]))
                 ci = comp["ci95"]
@@ -282,6 +299,43 @@ def main():
                       f"{pct(mean(float(t['required_clarification_missed']) for t in req)) if req else '–'} | – | "
                       f"{mean(t['model_calls'] for t in trials):.1f} |")
         md += ["", "Note: ablations may use fewer runs than the main condition; compare against Ours with the same runs.", ""]
+
+    # ------------------------------------------------------ stress split
+    if stress:
+        md += ["## Stress split (5 harder scenarios, reported separately)", "",
+               "| System | Runs/inst. | Macro success % [95% CI] | pass^k % | Coverage % | Hard-violation % | high | medium | low | Model calls | Tool calls |",
+               "|---|---|---|---|---|---|---|---|---|---|---|"]
+        for name in ["ours", "ours_noverify", "react", "direct_fc"]:
+            if name not in stress:
+                continue
+            trials = scored(stress[name])
+            sm, sci = macro(trials)
+            pk, k = pass_k(trials)
+            byv = [pct(macro(trials, variant=v)[0]) for v in VARIANT_ORDER]
+            md.append(f"| {LABELS[name]} | {max(t['run'] for t in trials)} | {pct(sm)} {ci_str(sci)} | {pct(pk)} (k={k}) | "
+                      f"{pct(mean(t['coverage'] for t in trials))} | {pct(mean(float(t['hard_satisfaction'] < 1) for t in trials))} | "
+                      + " | ".join(byv) + f" | {mean(t['model_calls'] for t in trials):.1f} | {mean(t['tool_calls'] for t in trials):.1f} |")
+        md += ["", "Per-scenario success (%):", "", "| Scenario | " + " | ".join(LABELS[n] for n in stress) + " |",
+               "|---|" + "---|" * len(stress)]
+        sper = {n: per_scenario_success(stress[n]) for n in stress}
+        for sid in sorted(next(iter(sper.values()))):
+            md.append(f"| {sid} | " + " | ".join(pct(sper[n].get(sid)) for n in stress) + " |")
+        if "ours" in stress:
+            md += ["", "| Paired (stress) | Δ (pp) | 95% CI (pp) |", "|---|---|---|"]
+            for other in ["react", "direct_fc", "ours_noverify"]:
+                if other in stress:
+                    comp = compare_systems(scored(stress["ours"]), scored(stress[other]))
+                    ci = comp["ci95"]
+                    md.append(f"| Ours − {LABELS[other]} | {100 * comp['mean_difference']:+.1f} | [{100 * ci[0]:+.1f}, {100 * ci[1]:+.1f}] |")
+            md += ["", "With only 5 scenarios, scenario-bootstrap intervals are wide; treat as indicative."]
+        md.append("")
+        for name, trials in stress.items():
+            failed = [t for t in scored(trials) if not t["success"]]
+            if failed:
+                c = Counter(m for t in failed for m in failure_modes(t))
+                md.append(f"- Stress failure modes, {LABELS[name]} (n={len(failed)}): " +
+                          ", ".join(f"{m} {v}" for m, v in c.most_common()))
+        md.append("")
 
     # ------------------------------------------------------ failure taxonomy
     md += ["## Failure taxonomy (share of failed trials showing each mode; multi-label)", ""]
