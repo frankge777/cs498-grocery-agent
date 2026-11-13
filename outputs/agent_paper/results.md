@@ -126,8 +126,8 @@ With only 5 scenarios, scenario-bootstrap intervals are wide; treat as indicativ
 
 - Stress failure modes, Ours (intent-grounded) (n=1): quantity below bound 1
 - Stress failure modes, ReAct (n=1): over budget 1
-- Stress failure modes, Direct function calling (n=45): need missing entirely 45, quantity below bound 8, quantity above bound 7, over budget 5, extra / disallowed product 5, dietary rule violated on some item 5
-- Stress failure modes, Ours w/o verifier (n=3): over budget 3, extra / disallowed product 1, need missing entirely 1
+- Stress failure modes, Direct function calling (n=45): need missing entirely 45, quantity below bound 8, quantity above bound 7, dietary rule violated on some item 5, over budget 5, extra / disallowed product 5
+- Stress failure modes, Ours w/o verifier (n=3): over budget 3, need missing entirely 1, extra / disallowed product 1
 
 ## Failure taxonomy (share of failed trials showing each mode; multi-label)
 

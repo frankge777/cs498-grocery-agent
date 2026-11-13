@@ -389,6 +389,21 @@ def main():
                     rtraj = load_trajectories(llm_root / "react").get(key)
                     if rtraj:
                         ex += ["ReAct on the same instance:", "", render_trace(rtraj, other[key], max_steps=25), ""]
+    # Stress-split cases: every failure of ours / ReAct / ours w/o verifier, plus ours on the same instance.
+    if stress:
+        ex += ["## Stress split cases", ""]
+        for name in ["ours", "react", "ours_noverify"]:
+            if name not in stress:
+                continue
+            traj = load_trajectories(llm_root / "stress" / name)
+            for t in [t for t in scored(stress[name]) if not t["success"]][:2]:
+                key = (t["scenario_id"], t["variant"], t["run"])
+                ex += [f"### {LABELS[name]} fails", "", render_trace(traj[key], t, max_steps=30), ""]
+                if name != "ours" and "ours" in stress:
+                    ours_t = {(o["scenario_id"], o["variant"], o["run"]): o for o in stress["ours"]}.get(key)
+                    ours_traj = load_trajectories(llm_root / "stress" / "ours").get(key)
+                    if ours_t and ours_traj:
+                        ex += ["Ours on the same instance:", "", render_trace(ours_traj, ours_t, max_steps=30), ""]
     (args.out / "examples.md").write_text("\n".join(ex), encoding="utf-8")
 
     # ------------------------------------------------------ architecture
