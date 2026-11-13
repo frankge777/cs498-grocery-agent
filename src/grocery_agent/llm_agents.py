@@ -66,7 +66,10 @@ def task_message(env: GroceryEnv, cart: dict) -> str:
     )
 
 
-def run_tool(env: GroceryEnv, name: str, args: Optional[dict]) -> dict:
+def run_tool(env: GroceryEnv, name: str, args: Optional[dict], offered: Optional[List[dict]] = None) -> dict:
+    """Execute a tool call, refusing tools that were not offered to the model in this turn."""
+    if offered is not None and name not in {spec["name"] for spec in offered}:
+        return {"ok": False, "message": f"Tool '{name}' is not available here", "data": None}
     if args is None:
         return {"ok": False, "message": "Arguments were not valid JSON", "data": None}
     return env.call(name, args)
@@ -93,11 +96,11 @@ class DirectFunctionCallingAgent:
         first = self.llm.chat(messages, tools=INFO_TOOLS, env=env)
         messages.append(first.message)
         for call in first.tool_calls:
-            messages.append(tool_message(call.id, run_tool(env, call.name, call.arguments)))
+            messages.append(tool_message(call.id, run_tool(env, call.name, call.arguments, INFO_TOOLS)))
         messages.append({"role": "user", "content": prompts.DIRECT_TURN2})
         second = self.llm.chat(messages, tools=CART_TOOLS, env=env)
         for call in second.tool_calls:  # executed blind: results are not shown to the model
-            run_tool(env, call.name, call.arguments)
+            run_tool(env, call.name, call.arguments, CART_TOOLS)
         self.notes["planned_actions"] = [{"tool": c.name, "args": c.arguments} for c in second.tool_calls]
         env.finish("direct function calling done")
 
@@ -128,7 +131,7 @@ class ReActAgent:
                 messages.append({"role": "user", "content": prompts.REACT_NUDGE})
                 continue
             for call in reply.tool_calls:
-                messages.append(tool_message(call.id, run_tool(env, call.name, call.arguments)))
+                messages.append(tool_message(call.id, run_tool(env, call.name, call.arguments, TOOL_SPECS)))
                 if env.done:
                     return
         if not env.done:
@@ -225,7 +228,7 @@ def shop(state: OursState, runtime: Runtime[AgentContext]) -> dict:
                 submitted = call.arguments or {"assignments": []}
                 messages.append(tool_message(call.id, {"ok": True, "message": "Submitted for checking"}))
                 continue
-            result = run_tool(ctx.env, call.name, call.arguments)
+            result = run_tool(ctx.env, call.name, call.arguments, tools)
             if call.name == "get_product" and result.get("ok"):
                 cache[result["data"]["id"]] = result["data"]
             messages.append(tool_message(call.id, result))

@@ -128,6 +128,8 @@ class LLMAgentTests(unittest.TestCase):
             if json_mode:
                 return {"content": json.dumps({**MILK_INTENT, "open_questions": [{"question": "which milk?"}]})}
             seen.append({t["function"]["name"] if "function" in t else t["name"] for t in tools})
+            if len(seen) == 1:  # the model calls a tool it was not offered
+                return {"tool_calls": [call("ask_user", question="which milk?")]}
             return {"tool_calls": [call("submit_cart", assignments=[])]}
 
         env = self.env("15", "low")

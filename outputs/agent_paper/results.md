@@ -83,7 +83,7 @@ Macro success averages each scenario's mean over variants and runs, then over th
 | Ours − Direct function calling | +51.1 | [+31.7, +70.6] |
 | Ours − Ours w/o verifier | +0.0 | [+0.0, +0.0] |
 | Ours − Ours w/o dedicated clarify node (scenarios: 1) | +0.0 | [+0.0, +0.0] |
-| Ours − Ours w/o any clarification (no ask_user) (scenarios: 1) | +44.4 | [+44.4, +44.4] |
+| Ours − Ours w/o any clarification (no ask_user) (scenarios: 1) | +100.0 | [+100.0, +100.0] |
 | Ours − Rule-based intent agent (prototype) | +93.3 | [+81.7, +100.0] |
 
 ## Ablations
@@ -93,7 +93,7 @@ Macro success averages each scenario's mean over variants and runs, then over th
 | Ours (intent-grounded) | 3 | 100.0 [100, 100] | 0.0 | – | 5.2 |
 | Ours w/o verifier | 3 | 100.0 [100, 100] | 0.0 | – | 5.2 |
 | Ours w/o dedicated clarify node | 3 | 100.0 [100, 100] | 0.0 | – | 6.0 |
-| Ours w/o any clarification (no ask_user) | 3 | 55.6 [56, 56] | 44.4 | – | 16.6 |
+| Ours w/o any clarification (no ask_user) | 3 | 0.0 [0, 0] | 100.0 | – | 25.7 |
 
 Note: ablations may use fewer runs than the main condition; compare against Ours with the same runs.
 
@@ -126,7 +126,7 @@ With only 5 scenarios, scenario-bootstrap intervals are wide; treat as indicativ
 
 - Stress failure modes, Ours (intent-grounded) (n=1): quantity below bound 1
 - Stress failure modes, ReAct (n=1): over budget 1
-- Stress failure modes, Direct function calling (n=45): need missing entirely 45, quantity below bound 8, quantity above bound 7, dietary rule violated on some item 5, over budget 5, extra / disallowed product 5
+- Stress failure modes, Direct function calling (n=45): need missing entirely 45, quantity below bound 8, quantity above bound 7, over budget 5, dietary rule violated on some item 5, extra / disallowed product 5
 - Stress failure modes, Ours w/o verifier (n=3): over budget 3, need missing entirely 1, extra / disallowed product 1
 
 ## Failure taxonomy (share of failed trials showing each mode; multi-label)
@@ -148,4 +148,4 @@ With only 5 scenarios, scenario-bootstrap intervals are wide; treat as indicativ
 - Direct function calling: {'finished': 180}; total est. cost $0.17 (peak pricing upper bound), mean runtime 2.9s/episode
 - Ours w/o verifier: {'finished': 180}; total est. cost $0.41 (peak pricing upper bound), mean runtime 8.1s/episode
 - Ours w/o dedicated clarify node: {'finished': 9}; total est. cost $0.01 (peak pricing upper bound), mean runtime 7.8s/episode
-- Ours w/o any clarification (no ask_user): {'finished': 9}; total est. cost $0.04 (peak pricing upper bound), mean runtime 25.2s/episode
+- Ours w/o any clarification (no ask_user): {'finished': 9}; total est. cost $0.06 (peak pricing upper bound), mean runtime 39.2s/episode
