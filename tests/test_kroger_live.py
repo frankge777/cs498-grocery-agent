@@ -23,6 +23,7 @@ MILK = {
     "items": [{
         "size": "1 gal",
         "price": {"regular": 3.99, "promo": 3.49},
+        "inventory": {"stockLevel": "HIGH"},
         "fulfillment": {"inStore": True, "curbside": True, "delivery": False, "shipToHome": False},
     }],
 }
@@ -57,7 +58,7 @@ class FakeTransport:
 
 class KrogerAdapterTests(unittest.TestCase):
     def test_configuration_requires_credentials(self):
-        with patch.dict(os.environ, {}, clear=True):
+        with patch("grocery_bench.kroger._load_repo_dotenv"), patch.dict(os.environ, {}, clear=True):
             with self.assertRaises(KrogerConfigurationError):
                 KrogerClient()
 
@@ -67,6 +68,7 @@ class KrogerAdapterTests(unittest.TestCase):
         self.assertEqual(product.price_cents, 349)
         self.assertEqual((product.size, product.unit), (3785, "ml"))
         self.assertEqual(product.source, "kroger_live")
+        self.assertEqual(product.stock_level, "HIGH")
         self.assertTrue(product.availability["inStore"])
         self.assertEqual(product.tags, frozenset())
 

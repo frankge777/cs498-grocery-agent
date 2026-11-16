@@ -33,6 +33,7 @@ class Product:
     upc: Optional[str] = None
     raw_size: Optional[str] = None
     source: Optional[str] = None
+    stock_level: Optional[str] = None
     availability: Mapping[str, bool] = field(default_factory=dict)
 
     def public_summary(self, in_stock: bool) -> dict:
@@ -52,6 +53,8 @@ class Product:
             payload["raw_size"] = self.raw_size
         if self.source:
             payload["source"] = self.source
+        if self.stock_level:
+            payload["stock_level"] = self.stock_level
         if self.availability:
             payload["availability"] = dict(self.availability)
         return payload
@@ -124,6 +127,7 @@ def load_catalog(path: Path = CATALOG_PATH) -> Dict[str, Product]:
             upc=row.get("upc"),
             raw_size=row.get("raw_size"),
             source=row.get("source"),
+            stock_level=row.get("stock_level"),
             availability=dict(row.get("availability", {})),
         )
         if product.id in catalog:

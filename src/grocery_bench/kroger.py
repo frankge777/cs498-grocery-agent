@@ -191,7 +191,10 @@ def normalize_kroger_product(raw: Mapping[str, Any], search_term: Optional[str] 
     price_cents = promo if promo > 0 else regular
     fulfillment = item.get("fulfillment") if isinstance(item.get("fulfillment"), dict) else {}
     availability = {str(key): bool(value) for key, value in fulfillment.items()}
-    available = price_cents > 0 and (any(availability.values()) if availability else True)
+    inventory = item.get("inventory") if isinstance(item.get("inventory"), dict) else {}
+    stock_level = str(inventory.get("stockLevel") or "").upper() or None
+    inventory_available = stock_level != "TEMPORARILY_OUT_OF_STOCK"
+    available = price_cents > 0 and inventory_available and (any(availability.values()) if availability else True)
     raw_size = str(item.get("size") or raw.get("size") or "").strip()
     size, unit = parse_kroger_size(raw_size)
     categories = [str(value) for value in (raw.get("categories") or []) if value]
@@ -214,6 +217,7 @@ def normalize_kroger_product(raw: Mapping[str, Any], search_term: Optional[str] 
         upc=str(raw.get("upc") or "") or None,
         raw_size=raw_size or None,
         source="kroger_live",
+        stock_level=stock_level,
         availability=availability,
     )
 
@@ -408,6 +412,7 @@ def product_to_snapshot_row(product: Product) -> dict:
         "portions": dict(product.portions),
         "stock": product.stock,
         "source": product.source,
+        "stock_level": product.stock_level,
         "availability": dict(product.availability),
     }
 
