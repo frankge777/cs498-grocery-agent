@@ -1,0 +1,1486 @@
+{
+  "version": "1.0.0-kroger-snapshot",
+  "catalog": "kroger_snapshots/02100946-20261116.json",
+  "notes": "Twenty fixed tasks backed by the Kroger - Mt Zion snapshot retrieved on 2026-11-16. Product selectors use real Kroger UPCs. Dietary and protein constraints require explicit API metadata; unknown values never satisfy a constraint. Hidden acceptance predicates are not exposed to agents.",
+  "scenarios": [
+    {
+      "id": "K01",
+      "category": "explicit",
+      "difficulty": "E",
+      "title": "Two named half-gallon milk cartons",
+      "variants": {
+        "high": "Add exactly two Kroger Vitamin D Whole Milk Half Gallon cartons, nothing else.",
+        "medium": "Get two half-gallons of the Kroger whole milk.",
+        "low": "Get two of my usual half-gallon milk."
+      },
+      "context": {
+        "usual_milk": "Kroger Vitamin D Whole Milk Half Gallon"
+      },
+      "needs": [
+        {
+          "id": "milk",
+          "desc": "two named half-gallon cartons",
+          "select": {
+            "product_ids": [
+              "0001111040601"
+            ]
+          },
+          "measure": "units",
+          "min": 2,
+          "max": 2
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111040601": 2
+        }
+      ]
+    },
+    {
+      "id": "K02",
+      "category": "explicit",
+      "difficulty": "E",
+      "title": "Bread, eggs, and four oranges",
+      "variants": {
+        "high": "Buy exactly one Kroger White Bread, twelve Kroger large white eggs, and four medium navel oranges.",
+        "medium": "Get one Kroger white loaf, a dozen large white eggs, and four medium navel oranges.",
+        "low": "Pick up the three items and quantities on my weekly list."
+      },
+      "context": {
+        "weekly_list": [
+          "1 Kroger White Bread",
+          "12 Kroger large white eggs",
+          "4 medium navel oranges"
+        ]
+      },
+      "needs": [
+        {
+          "id": "bread",
+          "desc": "one Kroger white bread",
+          "select": {
+            "product_ids": [
+              "0001111008485"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "eggs",
+          "desc": "twelve eggs",
+          "select": {
+            "product_ids": [
+              "0001111060903",
+              "0001111060906"
+            ]
+          },
+          "measure": "count",
+          "min": 12,
+          "max": 12
+        },
+        {
+          "id": "oranges",
+          "desc": "four oranges",
+          "select": {
+            "product_ids": [
+              "0000000003107"
+            ]
+          },
+          "measure": "units",
+          "min": 4,
+          "max": 4
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111008485": 1,
+          "0001111060903": 1,
+          "0000000003107": 4
+        },
+        {
+          "0001111008485": 1,
+          "0001111060906": 2,
+          "0000000003107": 4
+        }
+      ]
+    },
+    {
+      "id": "K03",
+      "category": "explicit",
+      "difficulty": "E",
+      "title": "Exactly twenty-four eggs",
+      "variants": {
+        "high": "Buy exactly 24 large eggs. Either one 24-count Simple Truth carton or two 12-count Kroger cartons is acceptable.",
+        "medium": "Get two dozen large eggs using the available carton sizes.",
+        "low": "Get the eggs needed for my two-dozen recipe."
+      },
+      "context": {
+        "recipe": "Needs exactly 24 large eggs; no extra eggs."
+      },
+      "needs": [
+        {
+          "id": "eggs",
+          "desc": "exactly twenty-four eggs",
+          "select": {
+            "product_ids": [
+              "0001111015097",
+              "0001111060903"
+            ]
+          },
+          "measure": "count",
+          "min": 24,
+          "max": 24
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111015097": 1
+        },
+        {
+          "0001111060903": 2
+        }
+      ]
+    },
+    {
+      "id": "K04",
+      "category": "explicit",
+      "difficulty": "E",
+      "title": "Five named pantry staples",
+      "variants": {
+        "high": "Add one package each of Kroger Basmati Rice, Kroger Penne Rigate Pasta, Simple Truth Organic Rolled Oats, Kroger 2 lb All Purpose Flour, and Smart Way 4 lb Granulated Sugar.",
+        "medium": "Get one each of the named rice, penne, oats, flour, and sugar from my list.",
+        "low": "Restock every item on my pantry list once."
+      },
+      "context": {
+        "pantry_list": [
+          "Kroger Basmati Rice",
+          "Kroger Penne Rigate",
+          "Simple Truth Organic Rolled Oats",
+          "Kroger 2 lb All Purpose Flour",
+          "Smart Way 4 lb Granulated Sugar"
+        ]
+      },
+      "needs": [
+        {
+          "id": "rice",
+          "desc": "one named rice",
+          "select": {
+            "product_ids": [
+              "0001111015342"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "pasta",
+          "desc": "one named pasta",
+          "select": {
+            "product_ids": [
+              "0001111085033"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "oats",
+          "desc": "one named oats",
+          "select": {
+            "product_ids": [
+              "0001111002805"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "flour",
+          "desc": "one named flour",
+          "select": {
+            "product_ids": [
+              "0001111085401"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "sugar",
+          "desc": "one named sugar",
+          "select": {
+            "product_ids": [
+              "0001111011888"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111015342": 1,
+          "0001111085033": 1,
+          "0001111002805": 1,
+          "0001111085401": 1,
+          "0001111011888": 1
+        }
+      ]
+    },
+    {
+      "id": "K05",
+      "category": "explicit",
+      "difficulty": "M",
+      "title": "Correct a prefilled cart",
+      "variants": {
+        "high": "Fix my cart so it has one Planet Oat Original Oat Milk, one Kroger White Bread, and twelve Kroger large white eggs. Remove everything else.",
+        "medium": "Replace the whole milk with Planet Oat Original, reduce the white bread to one, add a dozen Kroger eggs, and remove the sugar.",
+        "low": "Make the current cart match my corrected list."
+      },
+      "context": {
+        "corrected_list": [
+          "1 Planet Oat Original Oat Milk",
+          "1 Kroger White Bread",
+          "12 Kroger large white eggs"
+        ]
+      },
+      "initial_cart": {
+        "0001111040601": 1,
+        "0001111008485": 2,
+        "0001111011888": 1
+      },
+      "needs": [
+        {
+          "id": "oat_milk",
+          "desc": "one Planet Oat Original",
+          "select": {
+            "product_ids": [
+              "0004410015618"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "bread",
+          "desc": "one Kroger white bread",
+          "select": {
+            "product_ids": [
+              "0001111008485"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "eggs",
+          "desc": "twelve Kroger eggs",
+          "select": {
+            "product_ids": [
+              "0001111060903"
+            ]
+          },
+          "measure": "count",
+          "min": 12,
+          "max": 12
+        }
+      ],
+      "reference_carts": [
+        {
+          "0004410015618": 1,
+          "0001111008485": 1,
+          "0001111060903": 1
+        }
+      ]
+    },
+    {
+      "id": "K06",
+      "category": "constrained",
+      "difficulty": "M",
+      "title": "Breakfast basics under ten dollars",
+      "variants": {
+        "high": "Buy one package of rolled oats, one half-gallon whole milk, twelve eggs, and one loaf of bread for at most $10.00.",
+        "medium": "Get oats, a half-gallon of whole milk, a dozen eggs, and bread; keep the total under ten dollars.",
+        "low": "Restock my breakfast basics within my $10 budget."
+      },
+      "context": {
+        "breakfast_list": [
+          "rolled oats",
+          "half-gallon whole milk",
+          "12 eggs",
+          "bread"
+        ],
+        "budget": "$10.00"
+      },
+      "budget_cents": 1000,
+      "needs": [
+        {
+          "id": "oats",
+          "desc": "one oats",
+          "select": {
+            "product_ids": [
+              "0001111002805",
+              "0001111001177"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "milk",
+          "desc": "one half-gallon whole milk",
+          "select": {
+            "product_ids": [
+              "0001111040601"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "eggs",
+          "desc": "twelve eggs",
+          "select": {
+            "product_ids": [
+              "0001111060903",
+              "0001111060906"
+            ]
+          },
+          "measure": "count",
+          "min": 12,
+          "max": 12
+        },
+        {
+          "id": "bread",
+          "desc": "one bread",
+          "select": {
+            "product_ids": [
+              "0001111008450",
+              "0001111008485"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111002805": 1,
+          "0001111040601": 1,
+          "0001111060903": 1,
+          "0001111008485": 1
+        }
+      ]
+    },
+    {
+      "id": "K07",
+      "category": "constrained",
+      "difficulty": "M",
+      "title": "Explicitly organic and vegan basket",
+      "variants": {
+        "high": "Buy one Simple Truth Organic Rolled Oats, one Simple Truth Organic Extra Firm Tofu, and one Simple Truth Organic Cane Sugar. Every item must be explicitly labeled organic and vegan. Spend at most $8.50.",
+        "medium": "Get the named oats, tofu, and cane sugar; organic and vegan labels are required, with an $8.50 cap.",
+        "low": "Get the three items on my organic vegan list within its budget."
+      },
+      "context": {
+        "dietary_rule": "Every purchased product must explicitly say Organic and Vegan.",
+        "budget": "$8.50"
+      },
+      "budget_cents": 850,
+      "hard": [
+        {
+          "type": "all_items",
+          "select": {
+            "tags_all": [
+              "organic",
+              "vegan"
+            ]
+          }
+        }
+      ],
+      "needs": [
+        {
+          "id": "oats",
+          "desc": "one organic vegan oats",
+          "select": {
+            "product_ids": [
+              "0001111002805"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "tofu",
+          "desc": "one organic vegan tofu",
+          "select": {
+            "product_ids": [
+              "0001111091342"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "sugar",
+          "desc": "one organic vegan sugar",
+          "select": {
+            "product_ids": [
+              "0001111084930"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111002805": 1,
+          "0001111091342": 1,
+          "0001111084930": 1
+        }
+      ]
+    },
+    {
+      "id": "K08",
+      "category": "constrained",
+      "difficulty": "M",
+      "title": "Breakfast basket with an organic-oats preference",
+      "variants": {
+        "high": "Buy rolled oats, a half-gallon whole milk, twelve eggs, and bread for at most $12.00. Prefer organic oats if the budget allows.",
+        "medium": "Get my four breakfast basics under $12, choosing organic oats when possible.",
+        "low": "Restock breakfast within budget and honor my oats preference if possible."
+      },
+      "context": {
+        "breakfast_list": [
+          "rolled oats",
+          "half-gallon whole milk",
+          "12 eggs",
+          "bread"
+        ],
+        "preference": "Organic oats preferred",
+        "budget": "$12.00"
+      },
+      "budget_cents": 1200,
+      "preferences": [
+        {
+          "id": "organic_oats",
+          "weight": 1,
+          "scope": {
+            "product_ids": [
+              "0001111002805",
+              "0001111001177"
+            ]
+          },
+          "prefer": {
+            "tags_all": [
+              "organic"
+            ]
+          }
+        }
+      ],
+      "needs": [
+        {
+          "id": "oats",
+          "desc": "one oats",
+          "select": {
+            "product_ids": [
+              "0001111002805",
+              "0001111001177"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "milk",
+          "desc": "one milk",
+          "select": {
+            "product_ids": [
+              "0001111040601"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "eggs",
+          "desc": "twelve eggs",
+          "select": {
+            "product_ids": [
+              "0001111060903",
+              "0001111060906"
+            ]
+          },
+          "measure": "count",
+          "min": 12,
+          "max": 12
+        },
+        {
+          "id": "bread",
+          "desc": "one bread",
+          "select": {
+            "product_ids": [
+              "0001111008450",
+              "0001111008485"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111002805": 1,
+          "0001111040601": 1,
+          "0001111060903": 1,
+          "0001111008485": 1
+        },
+        {
+          "0001111001177": 1,
+          "0001111040601": 1,
+          "0001111060903": 1,
+          "0001111008450": 1
+        }
+      ]
+    },
+    {
+      "id": "K09",
+      "category": "constrained",
+      "difficulty": "M",
+      "title": "Four to six verified high-protein bars",
+      "variants": {
+        "high": "Buy 4 to 6 protein bars total. Every selected bar must be explicitly gluten-free and list at least 10 g protein per labeled serving. Spend at most $8.00.",
+        "medium": "Get 4-6 gluten-free bars with at least 10 g protein per serving, under $8.",
+        "low": "Get the verified protein bars for my trip within the snack budget."
+      },
+      "context": {
+        "trip_snacks": "4-6 bars; each product must explicitly be gluten-free and show at least 10 g protein per labeled serving.",
+        "budget": "$8.00"
+      },
+      "budget_cents": 800,
+      "needs": [
+        {
+          "id": "bars",
+          "desc": "four to six qualifying bars",
+          "select": {
+            "product_ids": [
+              "0001111011125",
+              "0074982600016"
+            ],
+            "tags_all": [
+              "gluten_free"
+            ],
+            "min_protein_g": 10
+          },
+          "measure": "count",
+          "min": 4,
+          "max": 6
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111011125": 1
+        },
+        {
+          "0074982600016": 1
+        }
+      ]
+    },
+    {
+      "id": "K10",
+      "category": "constrained",
+      "difficulty": "H",
+      "title": "Taco-night basket at a tight budget",
+      "variants": {
+        "high": "Buy one package of Kroger soft taco tortillas, exactly two cans of black beans, one Kroger mild salsa, and one 8 oz bag of Kroger shredded cheese. Spend at most $8.00.",
+        "medium": "Get tortillas, two black-bean cans, mild salsa, and an 8 oz shredded cheese for taco night, under $8.",
+        "low": "Get my taco-night list without going over the saved budget."
+      },
+      "context": {
+        "taco_list": [
+          "1 Kroger soft taco tortillas",
+          "2 black bean cans",
+          "1 Kroger mild salsa",
+          "1 Kroger 8 oz shredded cheese"
+        ],
+        "budget": "$8.00"
+      },
+      "budget_cents": 800,
+      "needs": [
+        {
+          "id": "tortillas",
+          "desc": "one tortillas",
+          "select": {
+            "product_ids": [
+              "0001111005265"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "beans",
+          "desc": "two bean cans",
+          "select": {
+            "product_ids": [
+              "0001111072567",
+              "0001111012209"
+            ]
+          },
+          "measure": "units",
+          "min": 2,
+          "max": 2
+        },
+        {
+          "id": "salsa",
+          "desc": "one salsa",
+          "select": {
+            "product_ids": [
+              "0001111002269"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "cheese",
+          "desc": "one cheese",
+          "select": {
+            "product_ids": [
+              "0001111050170",
+              "0001111050159"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111005265": 1,
+          "0001111072567": 2,
+          "0001111002269": 1,
+          "0001111050170": 1
+        }
+      ]
+    },
+    {
+      "id": "K11",
+      "category": "goal",
+      "difficulty": "M",
+      "title": "Three-day breakfast restock",
+      "variants": {
+        "high": "For three breakfast days, buy one Simple Truth Organic Rolled Oats, one Kroger Whole Milk Half Gallon, and three medium navel oranges. Spend no more than $9.00.",
+        "medium": "Set up three breakfasts with the saved oats, milk, and one orange per day, under $9.",
+        "low": "Restock the items in my three-day breakfast plan within its budget."
+      },
+      "context": {
+        "three_day_plan": [
+          "1 package Simple Truth Organic Rolled Oats",
+          "1 Kroger Whole Milk Half Gallon",
+          "3 medium navel oranges"
+        ],
+        "budget": "$9.00"
+      },
+      "budget_cents": 900,
+      "needs": [
+        {
+          "id": "oats",
+          "desc": "one oats",
+          "select": {
+            "product_ids": [
+              "0001111002805"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "milk",
+          "desc": "one milk",
+          "select": {
+            "product_ids": [
+              "0001111040601"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "oranges",
+          "desc": "three oranges",
+          "select": {
+            "product_ids": [
+              "0000000003107"
+            ]
+          },
+          "measure": "units",
+          "min": 3,
+          "max": 3
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111002805": 1,
+          "0001111040601": 1,
+          "0000000003107": 3
+        }
+      ]
+    },
+    {
+      "id": "K12",
+      "category": "goal",
+      "difficulty": "H",
+      "title": "Vegan dinner-prep components",
+      "variants": {
+        "high": "Buy one package each of Simple Truth Extra Firm Tofu, Kroger 90 Second Jasmine Rice, and Kroger Leaf Spinach. Every item must be explicitly labeled vegan. Spend at most $5.00.",
+        "medium": "Get tofu, a rice pouch, and spinach for dinner prep; verified vegan only, $5 max.",
+        "low": "Complete my vegan dinner-prep list within the saved budget."
+      },
+      "context": {
+        "prep_list": [
+          "Simple Truth Extra Firm Tofu",
+          "Kroger 90 Second Jasmine Rice",
+          "Kroger Leaf Spinach"
+        ],
+        "rule": "Every purchased item must explicitly say Vegan.",
+        "budget": "$5.00"
+      },
+      "budget_cents": 500,
+      "hard": [
+        {
+          "type": "all_items",
+          "select": {
+            "tags_all": [
+              "vegan"
+            ]
+          }
+        }
+      ],
+      "needs": [
+        {
+          "id": "tofu",
+          "desc": "one tofu",
+          "select": {
+            "product_ids": [
+              "0001111091342"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "rice",
+          "desc": "one rice",
+          "select": {
+            "product_ids": [
+              "0001111001950"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "spinach",
+          "desc": "one spinach",
+          "select": {
+            "product_ids": [
+              "0001111008631"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111091342": 1,
+          "0001111001950": 1,
+          "0001111008631": 1
+        }
+      ]
+    },
+    {
+      "id": "K13",
+      "category": "goal",
+      "difficulty": "H",
+      "title": "Fitness restock using labeled protein",
+      "variants": {
+        "high": "Restock one Orgain Organic Vegan Protein Powder, one Optimum Nutrition Creatine Stick Pack box, exactly four gluten-free protein bars with at least 20 g protein per labeled serving, and one four-count Oikos high-protein yogurt. Spend at most $50.00.",
+        "medium": "Get my powder, creatine, four qualifying 20 g gluten-free bars, and the four-pack Oikos yogurt within $50.",
+        "low": "Complete my saved fitness restock without exceeding its budget."
+      },
+      "context": {
+        "fitness_list": [
+          "Orgain Organic Vegan 21g Protein Powder",
+          "Optimum Nutrition Creatine Stick Packs",
+          "4 gluten-free bars with >=20g protein per labeled serving",
+          "Oikos Triple Zero high-protein yogurt 4-pack"
+        ],
+        "budget": "$50.00"
+      },
+      "budget_cents": 5000,
+      "needs": [
+        {
+          "id": "powder",
+          "desc": "one named protein powder",
+          "select": {
+            "product_ids": [
+              "0085177000392"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "creatine",
+          "desc": "one named creatine",
+          "select": {
+            "product_ids": [
+              "0074892707339"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "bars",
+          "desc": "exactly four qualifying bars",
+          "select": {
+            "product_ids": [
+              "0074982600016"
+            ],
+            "tags_all": [
+              "gluten_free"
+            ],
+            "min_protein_g": 20
+          },
+          "measure": "count",
+          "min": 4,
+          "max": 4
+        },
+        {
+          "id": "yogurt",
+          "desc": "one named yogurt four-pack",
+          "select": {
+            "product_ids": [
+              "0003663201953"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0085177000392": 1,
+          "0074892707339": 1,
+          "0074982600016": 1,
+          "0003663201953": 1
+        }
+      ]
+    },
+    {
+      "id": "K14",
+      "category": "goal",
+      "difficulty": "M",
+      "title": "Restock pantry to target levels",
+      "variants": {
+        "high": "Restock exactly one rice, two pasta packages, one oats, three black-bean cans, and one flour package from my approved products. Spend at most $15.00.",
+        "medium": "Top up the pantry to the target levels in my sheet, $15 maximum.",
+        "low": "Restock the pantry according to current and target stock."
+      },
+      "context": {
+        "pantry_sheet": [
+          {
+            "item": "Kroger Basmati Rice",
+            "have": 1,
+            "target": 2
+          },
+          {
+            "item": "approved Kroger pasta",
+            "have": 0,
+            "target": 2
+          },
+          {
+            "item": "Simple Truth Organic Rolled Oats",
+            "have": 1,
+            "target": 2
+          },
+          {
+            "item": "approved black-bean cans",
+            "have": 1,
+            "target": 4
+          },
+          {
+            "item": "Kroger 2 lb All Purpose Flour",
+            "have": 0,
+            "target": 1
+          }
+        ],
+        "rule": "Buy only the difference between have and target.",
+        "budget": "$15.00"
+      },
+      "budget_cents": 1500,
+      "needs": [
+        {
+          "id": "rice",
+          "desc": "one rice",
+          "select": {
+            "product_ids": [
+              "0001111015342"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "pasta",
+          "desc": "two pasta",
+          "select": {
+            "product_ids": [
+              "0001111011693",
+              "0001111085033"
+            ]
+          },
+          "measure": "units",
+          "min": 2,
+          "max": 2
+        },
+        {
+          "id": "oats",
+          "desc": "one oats",
+          "select": {
+            "product_ids": [
+              "0001111002805"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "beans",
+          "desc": "three beans",
+          "select": {
+            "product_ids": [
+              "0001111072567",
+              "0001111012209"
+            ]
+          },
+          "measure": "units",
+          "min": 3,
+          "max": 3
+        },
+        {
+          "id": "flour",
+          "desc": "one flour",
+          "select": {
+            "product_ids": [
+              "0001111085401"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111015342": 1,
+          "0001111085033": 2,
+          "0001111002805": 1,
+          "0001111072567": 3,
+          "0001111085401": 1
+        }
+      ]
+    },
+    {
+      "id": "K15",
+      "category": "goal",
+      "difficulty": "H",
+      "title": "Clarify an unstated milk restriction",
+      "variants": {
+        "high": "Add one carton of milk. A household restriction is not written down, so ask about it before choosing.",
+        "medium": "Get one milk that works with our unstated dietary restriction; ask first.",
+        "low": "Grab milk for the household."
+      },
+      "context": {
+        "household_note": "A milk-related dietary restriction is missing from this note. Ask before selecting.",
+        "quantity": "one carton"
+      },
+      "clarification": [
+        {
+          "id": "milk_restriction",
+          "status": "required",
+          "keywords": [
+            "milk",
+            "dairy",
+            "nut",
+            "allerg",
+            "restriction",
+            "diet"
+          ],
+          "answer": "Choose exactly one product explicitly labeled both dairy-free and nut-free. Oat or soy is fine."
+        }
+      ],
+      "interactions": [
+        {
+          "type": "clarify_before_add",
+          "topic": "milk_restriction",
+          "select": {
+            "product_ids": [
+              "0004410015618",
+              "0004410015619",
+              "0001111009433",
+              "0001111040601",
+              "0001111009431"
+            ]
+          }
+        }
+      ],
+      "needs": [
+        {
+          "id": "milk",
+          "desc": "one dairy-free nut-free milk",
+          "select": {
+            "product_ids": [
+              "0004410015618",
+              "0004410015619",
+              "0001111009433"
+            ],
+            "tags_all": [
+              "dairy_free",
+              "nut_free"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0004410015618": 1
+        },
+        {
+          "0004410015619": 1
+        },
+        {
+          "0001111009433": 1
+        }
+      ]
+    },
+    {
+      "id": "K16",
+      "category": "recovery",
+      "difficulty": "M",
+      "title": "Substitute an unavailable oat milk",
+      "variants": {
+        "high": "Buy one Planet Oat Dairy Free Original Oat Milk. If it becomes unavailable, substitute one other milk explicitly labeled dairy-free and nut-free.",
+        "medium": "Get Planet Oat Original, or another dairy-free nut-free carton if it is out.",
+        "low": "Get my usual milk and use the saved substitution rule if needed."
+      },
+      "context": {
+        "usual_milk": "Planet Oat Dairy Free Original Oat Milk",
+        "substitution_rule": "One other product explicitly labeled dairy-free and nut-free."
+      },
+      "events": [
+        {
+          "product_id": "0004410015618",
+          "trigger": "first_attempt"
+        }
+      ],
+      "needs": [
+        {
+          "id": "milk",
+          "desc": "one qualifying milk",
+          "select": {
+            "product_ids": [
+              "0004410015618",
+              "0004410015619",
+              "0001111009433"
+            ],
+            "tags_all": [
+              "dairy_free",
+              "nut_free"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0004410015619": 1
+        },
+        {
+          "0001111009433": 1
+        }
+      ]
+    },
+    {
+      "id": "K17",
+      "category": "recovery",
+      "difficulty": "H",
+      "title": "Replace unavailable gluten-free spaghetti",
+      "variants": {
+        "high": "Buy exactly 680 g of gluten-free pasta using two 340 g packages, plus one Kroger No Salt Added Tomato Sauce. Try Kroger Gluten Free Spaghetti first; if unavailable, use another approved gluten-free Kroger pasta. Spend at most $7.00.",
+        "medium": "Get two 340 g gluten-free Kroger pastas and the no-salt tomato sauce, $7 max; substitute the pasta shape if needed.",
+        "low": "Get my saved gluten-free pasta-night list and recover from stock problems."
+      },
+      "context": {
+        "pasta_night": "680 g total from two 340 g packages of explicitly gluten-free Kroger pasta, plus one Kroger No Salt Added Tomato Sauce.",
+        "preferred": "Kroger Gluten Free Spaghetti",
+        "budget": "$7.00"
+      },
+      "events": [
+        {
+          "product_id": "0001111013338",
+          "trigger": "first_attempt"
+        }
+      ],
+      "budget_cents": 700,
+      "needs": [
+        {
+          "id": "pasta",
+          "desc": "exactly 680 g gluten-free pasta",
+          "select": {
+            "product_ids": [
+              "0001111013338",
+              "0001111013339",
+              "0001111013340"
+            ],
+            "tags_all": [
+              "gluten_free"
+            ]
+          },
+          "measure": "weight_g",
+          "min": 680,
+          "max": 680
+        },
+        {
+          "id": "sauce",
+          "desc": "one named gluten-free tomato sauce",
+          "select": {
+            "product_ids": [
+              "0001111011969"
+            ],
+            "tags_all": [
+              "gluten_free"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111013339": 2,
+          "0001111011969": 1
+        },
+        {
+          "0001111013340": 2,
+          "0001111011969": 1
+        }
+      ]
+    },
+    {
+      "id": "K18",
+      "category": "recovery",
+      "difficulty": "H",
+      "title": "Recover taco night after cheese stock failure",
+      "variants": {
+        "high": "Buy Kroger soft taco tortillas, exactly two black-bean cans, Kroger mild salsa, and one 8 oz Kroger shredded cheese for at most $8.00. If the mild cheddar is unavailable, substitute another approved 8 oz Kroger shredded cheese.",
+        "medium": "Get the taco-night list under $8 and replace the cheese if it goes out of stock.",
+        "low": "Finish my taco-night basket using the saved substitutions and budget."
+      },
+      "context": {
+        "taco_list": [
+          "Kroger soft taco tortillas",
+          "2 black bean cans",
+          "Kroger mild salsa",
+          "Kroger 8 oz shredded cheese"
+        ],
+        "preferred_cheese": "Kroger Mild Cheddar 8 oz",
+        "substitution": "Kroger Mozzarella 8 oz is approved",
+        "budget": "$8.00"
+      },
+      "events": [
+        {
+          "product_id": "0001111050170",
+          "trigger": "first_attempt"
+        }
+      ],
+      "budget_cents": 800,
+      "needs": [
+        {
+          "id": "tortillas",
+          "desc": "one tortillas",
+          "select": {
+            "product_ids": [
+              "0001111005265"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "beans",
+          "desc": "two beans",
+          "select": {
+            "product_ids": [
+              "0001111072567",
+              "0001111012209"
+            ]
+          },
+          "measure": "units",
+          "min": 2,
+          "max": 2
+        },
+        {
+          "id": "salsa",
+          "desc": "one salsa",
+          "select": {
+            "product_ids": [
+              "0001111002269"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "cheese",
+          "desc": "one cheese",
+          "select": {
+            "product_ids": [
+              "0001111050170",
+              "0001111050159"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111005265": 1,
+          "0001111072567": 2,
+          "0001111002269": 1,
+          "0001111050159": 1
+        }
+      ]
+    },
+    {
+      "id": "K19",
+      "category": "recovery",
+      "difficulty": "H",
+      "title": "Replace unavailable preferred coffee",
+      "variants": {
+        "high": "Buy one 11 oz Kroger Breakfast Blend Ground Coffee and one Planet Oat Original Oat Milk for at most $10.00. If the coffee is unavailable, use the approved 11 oz Kroger Colombian Ground Coffee.",
+        "medium": "Get the breakfast-blend coffee and Planet Oat milk under $10; use the approved Colombian coffee if needed.",
+        "low": "Get my coffee supplies within the saved budget and substitution rule."
+      },
+      "context": {
+        "coffee_supplies": [
+          "Kroger Breakfast Blend Ground Coffee 11 oz",
+          "Planet Oat Original Oat Milk"
+        ],
+        "coffee_substitute": "Kroger Colombian Ground Coffee 11 oz",
+        "budget": "$10.00"
+      },
+      "events": [
+        {
+          "product_id": "0001111010738",
+          "trigger": "first_attempt"
+        }
+      ],
+      "budget_cents": 1000,
+      "needs": [
+        {
+          "id": "coffee",
+          "desc": "one approved coffee",
+          "select": {
+            "product_ids": [
+              "0001111010738",
+              "0001111010741"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "milk",
+          "desc": "one Planet Oat Original",
+          "select": {
+            "product_ids": [
+              "0004410015618"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111010741": 1,
+          "0004410015618": 1
+        }
+      ]
+    },
+    {
+      "id": "K20",
+      "category": "recovery",
+      "difficulty": "H",
+      "title": "Preserve cart through two stock failures",
+      "variants": {
+        "high": "Keep the eggs and bread already in my cart. Add one Kroger pasta, one Kroger pasta sauce, and one bag of Kroger carrots. Spend at most $8.00 total and substitute approved alternatives if items become unavailable.",
+        "medium": "Do not change the existing eggs or bread; add pasta, sauce, and carrots under $8, recovering from stock failures.",
+        "low": "Finish my dinner order without changing the current cart."
+      },
+      "context": {
+        "keep": "Everything currently in the cart",
+        "add": [
+          "1 approved Kroger pasta",
+          "1 approved Kroger pasta sauce",
+          "1 Kroger carrot bag"
+        ],
+        "substitutions": {
+          "pasta": "Kroger Ditalini",
+          "sauce": "Kroger Tomato Basil"
+        },
+        "budget": "$8.00 total"
+      },
+      "initial_cart": {
+        "0001111060903": 1,
+        "0001111008450": 1
+      },
+      "events": [
+        {
+          "product_id": "0001111085033",
+          "trigger": "first_attempt"
+        },
+        {
+          "product_id": "0001111013416",
+          "trigger": "first_attempt"
+        }
+      ],
+      "budget_cents": 800,
+      "hard": [
+        {
+          "type": "preserve_initial"
+        }
+      ],
+      "needs": [
+        {
+          "id": "eggs",
+          "desc": "existing eggs",
+          "select": {
+            "product_ids": [
+              "0001111060903"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "bread",
+          "desc": "existing bread",
+          "select": {
+            "product_ids": [
+              "0001111008450"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "pasta",
+          "desc": "one approved pasta",
+          "select": {
+            "product_ids": [
+              "0001111085033",
+              "0001111011693"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "sauce",
+          "desc": "one approved sauce",
+          "select": {
+            "product_ids": [
+              "0001111013416",
+              "0001111013414"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        },
+        {
+          "id": "carrots",
+          "desc": "one carrots",
+          "select": {
+            "product_ids": [
+              "0001111091620"
+            ]
+          },
+          "measure": "units",
+          "min": 1,
+          "max": 1
+        }
+      ],
+      "reference_carts": [
+        {
+          "0001111060903": 1,
+          "0001111008450": 1,
+          "0001111011693": 1,
+          "0001111013414": 1,
+          "0001111091620": 1
+        }
+      ]
+    }
+  ]
+}

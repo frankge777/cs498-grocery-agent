@@ -23,8 +23,14 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from grocery_agent.llm import DEFAULT_MODEL, DeepSeekClient, estimate_cost_usd  # noqa: E402
 from grocery_agent.llm_agents import DirectFunctionCallingAgent, IntentGroundedLLMAgent, ReActAgent  # noqa: E402
-from grocery_bench import load_scenarios, run_trials, write_outputs  # noqa: E402
-from grocery_bench.data import BENCHMARK_DIR  # noqa: E402
+from grocery_bench import load_catalog, load_scenarios, run_trials, write_outputs  # noqa: E402
+from grocery_bench.data import (  # noqa: E402
+    BENCHMARK_DIR,
+    CATALOG_PATH,
+    KROGER_CATALOG_PATH,
+    KROGER_SCENARIOS_PATH,
+    SCENARIOS_PATH,
+)
 
 
 def factories(llm):
@@ -51,14 +57,28 @@ def main() -> None:
     parser.add_argument("--smoke", action="store_true", help="one instance (scenario 15, low) per agent, 1 run")
     parser.add_argument("--split", choices=["main", "stress"], default="main",
                         help="main = 20-scenario release; stress = benchmark/scenarios_stress.json")
+    parser.add_argument("--dataset", choices=["synthetic", "kroger"], default="synthetic",
+                        help="synthetic release or the fixed real Kroger snapshot/tasks")
+    parser.add_argument("--catalog-path", type=Path, help="override the selected catalog JSON")
+    parser.add_argument("--scenario-path", type=Path, help="override the selected scenario JSON")
     parser.add_argument("--output-root", type=Path, default=ROOT / "results" / "llm")
     args = parser.parse_args()
 
+    if args.dataset == "kroger" and args.split == "stress":
+        parser.error("--split stress is only defined for the synthetic dataset")
+    default_catalog = KROGER_CATALOG_PATH if args.dataset == "kroger" else CATALOG_PATH
+    default_scenarios = KROGER_SCENARIOS_PATH if args.dataset == "kroger" else SCENARIOS_PATH
+    catalog_path = args.catalog_path or default_catalog
+    scenario_path = args.scenario_path or default_scenarios
+    if args.split == "stress":
+        scenario_path = BENCHMARK_DIR / "scenarios_stress.json"
+
     llm = DeepSeekClient(model=args.model, temperature=args.temperature, thinking=args.thinking)
     tag = args.model + ("-thinking" if args.thinking else "")
-    scenarios = load_scenarios(BENCHMARK_DIR / "scenarios_stress.json") if args.split == "stress" else load_scenarios()
+    catalog = load_catalog(catalog_path)
+    scenarios = load_scenarios(scenario_path)
     if args.smoke:
-        args.scenarios, args.variants, args.runs = ["15"], ["low"], 1
+        args.scenarios, args.variants, args.runs = ["K15" if args.dataset == "kroger" else "15"], ["low"], 1
     if args.scenarios:
         scenarios = [s for s in scenarios if s.id in set(args.scenarios)]
 
@@ -74,13 +94,17 @@ def main() -> None:
 
         print(f"Running {name} on {len(scenarios)} scenarios x {len(args.variants)} variants x {args.runs} runs", flush=True)
         trials = run_trials(available[name], scenarios=scenarios, variants=args.variants, runs=args.runs,
+                            catalog=catalog,
                             workers=args.workers, progress=progress)
         suffix = "smoke" if args.smoke else ""
-        base = args.output_root / tag / ("stress" if args.split == "stress" else "")
+        split_dir = "stress" if args.split == "stress" else args.dataset
+        base = args.output_root / tag / split_dir
         out = base / (name + (f"_{suffix}" if suffix else ""))
-        meta = {"name": name, "split": args.split, "llm": llm.describe(), "runs": args.runs, "variants": args.variants,
+        meta = {"name": name, "split": args.split, "dataset": args.dataset,
+                "catalog_path": str(catalog_path), "scenario_path": str(scenario_path),
+                "llm": llm.describe(), "runs": args.runs, "variants": args.variants,
                 "scenarios": [s.id for s in scenarios], "started_utc": datetime.now(timezone.utc).isoformat()}
-        summary = write_outputs(trials, out, agent_meta=meta)
+        summary = write_outputs(trials, out, agent_meta=meta, catalog_path=catalog_path, scenarios_path=scenario_path)
         cost = sum(estimate_cost_usd(args.model, t["input_tokens"], t["cached_input_tokens"], t["output_tokens"])
                    for t in trials)
         print(json.dumps({

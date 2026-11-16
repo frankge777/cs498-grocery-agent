@@ -6,11 +6,13 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, FrozenSet, List, Mapping, Optional, Tuple
+from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 BENCHMARK_DIR = Path(__file__).resolve().parents[2] / "benchmark"
 CATALOG_PATH = BENCHMARK_DIR / "catalog.json"
 SCENARIOS_PATH = BENCHMARK_DIR / "scenarios.json"
+KROGER_CATALOG_PATH = BENCHMARK_DIR / "kroger_snapshots" / "02100946-20261116.json"
+KROGER_SCENARIOS_PATH = BENCHMARK_DIR / "scenarios_kroger.json"
 
 VARIANTS: Tuple[str, ...] = ("high", "medium", "low")
 CATEGORIES: Tuple[str, ...] = ("explicit", "constrained", "goal", "recovery")
@@ -28,13 +30,23 @@ class Product:
     price_cents: int
     tags: FrozenSet[str]
     portions: Mapping[str, int]
-    protein_g: Optional[int] = None
+    protein_g: Optional[float] = None
     stock: int = DEFAULT_STOCK
     upc: Optional[str] = None
     raw_size: Optional[str] = None
     source: Optional[str] = None
     stock_level: Optional[str] = None
     availability: Mapping[str, bool] = field(default_factory=dict)
+    allergens_contains: FrozenSet[str] = frozenset()
+    allergens_may_contain: FrozenSet[str] = frozenset()
+    allergens_free_from: FrozenSet[str] = frozenset()
+    declarations: FrozenSet[str] = frozenset()
+    ingredient_statement: Optional[str] = None
+    nutrition: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    serving_size: Mapping[str, Any] = field(default_factory=dict)
+    servings_per_package: Optional[float] = None
+    organic: Optional[bool] = None
+    sold_by: Optional[str] = None
 
     def public_summary(self, in_stock: bool) -> dict:
         payload = {
@@ -65,6 +77,19 @@ class Product:
             "dietary_tags": sorted(self.tags),
             "portions": dict(self.portions),
             "protein_g": self.protein_g,
+            "protein_basis": "per labeled serving" if self.protein_g is not None else None,
+            "allergens": {
+                "contains": sorted(self.allergens_contains),
+                "may_contain": sorted(self.allergens_may_contain),
+                "free_from": sorted(self.allergens_free_from),
+            },
+            "manufacturer_declarations": sorted(self.declarations),
+            "ingredient_statement": self.ingredient_statement,
+            "nutrition_per_serving": dict(self.nutrition),
+            "serving_size": dict(self.serving_size),
+            "servings_per_package": self.servings_per_package,
+            "organic": self.organic,
+            "sold_by": self.sold_by,
         }
 
 
@@ -129,6 +154,16 @@ def load_catalog(path: Path = CATALOG_PATH) -> Dict[str, Product]:
             source=row.get("source"),
             stock_level=row.get("stock_level"),
             availability=dict(row.get("availability", {})),
+            allergens_contains=frozenset(row.get("allergens_contains", [])),
+            allergens_may_contain=frozenset(row.get("allergens_may_contain", [])),
+            allergens_free_from=frozenset(row.get("allergens_free_from", [])),
+            declarations=frozenset(row.get("declarations", [])),
+            ingredient_statement=row.get("ingredient_statement"),
+            nutrition=dict(row.get("nutrition", {})),
+            serving_size=dict(row.get("serving_size", {})),
+            servings_per_package=row.get("servings_per_package"),
+            organic=row.get("organic"),
+            sold_by=row.get("sold_by"),
         )
         if product.id in catalog:
             raise ValueError(f"Duplicate product id {product.id}")

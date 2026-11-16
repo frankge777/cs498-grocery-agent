@@ -72,11 +72,21 @@ python3 scripts/run_experiments.py --trials 3 --output-dir results
 
 ## Use real Kroger store data
 
-The benchmark above remains frozen and synthetic so historical experiments are
-comparable. For a real-store run, `KrogerLiveEnv` reads product search results,
-prices, package sizes and fulfillment availability from Kroger for one store.
-Cart operations stay inside the local environment: these commands cannot add
-to or submit a real Kroger order.
+There are now two Kroger modes:
+
+- **Fixed experiment dataset:** `benchmark/kroger_snapshots/02100946-20261116.json`
+  contains a frozen read of 722 real products from Kroger - Mt Zion
+  (`locationId=02100946`, ZIP search `61820`).
+  `benchmark/scenarios_kroger.json` contains 20 tasks built entirely from UPCs,
+  prices, package sizes, availability, manufacturer declarations, allergens,
+  and nutrition fields in that snapshot. This is the reproducible mode used to
+  compare agents.
+- **Live demonstration:** `KrogerLiveEnv` performs product reads from Kroger at
+  run time. Prices and availability may change, so this mode demonstrates the
+  application but should not be used to compare experimental systems.
+
+Both modes keep cart operations inside the local environment. They cannot add
+to a Kroger account cart, check out, or place an order.
 
 Create an application in the Kroger Developer portal, then set its client
 credentials locally (never commit them):
@@ -84,16 +94,38 @@ credentials locally (never commit them):
 ```bash
 cp .env.example .env
 # Edit .env and set KROGER_CLIENT_ID / KROGER_CLIENT_SECRET.
-python3 scripts/snapshot_kroger.py --zip 61820
+python3 scripts/snapshot_kroger.py --zip 61820 --location-id 02100946
+python3 scripts/build_kroger_scenarios.py
 python3 scripts/run_kroger_live.py --zip 61820 \
   --instruction "Buy one gallon of whole milk and a dozen eggs under $10"
 ```
 
 The snapshot command records the store, retrieval time, real UPCs, current
-prices and availability under `benchmark/kroger_snapshots/`. Kroger exposes
-fulfillment availability rather than an exact stock count, and its product API
-does not provide the benchmark's curated dietary tags or meal-portion labels;
-the adapter reports those fields as unknown rather than guessing them.
+prices, availability, allergens, manufacturer declarations, ingredients, and
+nutrition under `benchmark/kroger_snapshots/`. Dietary tags are created only
+from explicit Kroger declarations. Protein is recorded per labeled serving.
+Missing metadata remains unknown and never satisfies a constraint. Kroger
+exposes fulfillment availability/stock level rather than an exact inventory
+count, and meal portions are deliberately not inferred.
+
+Validate and run the fixed real-data benchmark without making network calls:
+
+```bash
+PYTHONPATH=src python3 -m unittest tests.test_kroger_benchmark -v
+python3 scripts/run_benchmark.py --dataset kroger --agent oracle_validation --runs 1
+```
+
+Run the three LLM systems on the real snapshot (this uses the configured model
+API and therefore may incur model cost):
+
+```bash
+python3 scripts/run_llm_experiments.py --dataset kroger \
+  --agents ours react direct_fc --runs 3 --workers 16
+```
+
+Every output manifest records the selected catalog/scenario paths and their
+SHA-256 hashes, so a result cannot silently mix synthetic tasks with the Kroger
+catalog.
 
 The command writes:
 

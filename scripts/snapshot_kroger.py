@@ -28,6 +28,7 @@ DEFAULT_QUERIES = [
     "black beans", "lentils", "tofu", "chicken breast", "carrots", "broccoli", "spinach",
     "frozen vegetables", "protein bars", "yogurt", "crackers", "popcorn", "trail mix",
     "protein powder", "creatine", "coffee", "tortillas", "salsa", "shredded cheese",
+    "gluten free pasta", "dairy free milk", "high protein yogurt",
 ]
 
 
@@ -80,7 +81,8 @@ def main() -> None:
             "result_limit_per_query": args.limit,
             "limitations": [
                 "availability is boolean; exact inventory count is not provided",
-                "dietary tags and meal portions are not inferred from product names",
+                "only explicit Kroger manufacturer declarations become dietary tags; missing declarations remain unknown",
+                "protein is recorded per labeled serving; meal portions are not inferred",
                 "prices and availability are a time-specific snapshot",
             ],
         },

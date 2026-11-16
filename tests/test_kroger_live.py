@@ -20,6 +20,15 @@ MILK = {
     "brand": "Kroger",
     "description": "Kroger Whole Milk",
     "categories": ["Dairy"],
+    "allergens": [{"levelOfContainmentName": "Contains", "name": "Milk and its derivates"}],
+    "manufacturerDeclarations": ["Gluten Free", "Kosher"],
+    "organicClaimName": "NO",
+    "nutritionInformation": [{
+        "ingredientStatement": "Milk, Vitamin D3.",
+        "servingSize": {"quantity": 8, "unitOfMeasure": {"name": "FLUID OUNCES"}},
+        "servingsPerPackage": {"value": 16},
+        "nutrients": [{"displayName": "Protein", "quantity": 8, "unitOfMeasure": {"name": "Gram"}}],
+    }],
     "items": [{
         "size": "1 gal",
         "price": {"regular": 3.99, "promo": 3.49},
@@ -70,7 +79,27 @@ class KrogerAdapterTests(unittest.TestCase):
         self.assertEqual(product.source, "kroger_live")
         self.assertEqual(product.stock_level, "HIGH")
         self.assertTrue(product.availability["inStore"])
-        self.assertEqual(product.tags, frozenset())
+        self.assertEqual(product.tags, frozenset({"gluten_free", "kosher"}))
+        self.assertEqual(product.protein_g, 8)
+        self.assertEqual(product.allergens_contains, frozenset({"milk_and_its_derivates"}))
+        self.assertEqual(product.servings_per_package, 16)
+        self.assertFalse(product.organic)
+
+    def test_only_explicit_combined_nut_claim_becomes_nut_free(self):
+        raw = {
+            **MILK,
+            "productId": "nut-free-test",
+            "upc": "nut-free-test",
+            "manufacturerDeclarations": ["Dairy Free", "Tree Nuts Free", "Free from Peanuts", "Vegan"],
+        }
+        product = normalize_kroger_product(raw, "oat milk")
+        self.assertTrue({"dairy_free", "tree_nut_free", "peanut_free", "nut_free", "vegan"}.issubset(product.tags))
+
+        partial = normalize_kroger_product(
+            {**raw, "productId": "partial-test", "manufacturerDeclarations": ["Tree Nuts Free"]},
+            "oat milk",
+        )
+        self.assertNotIn("nut_free", partial.tags)
 
     def test_client_uses_store_filters_and_reuses_token(self):
         transport = FakeTransport()
@@ -90,7 +119,13 @@ class KrogerAdapterTests(unittest.TestCase):
     def test_size_parser(self):
         self.assertEqual(parse_kroger_size("12 ct"), (12, "ct"))
         self.assertEqual(parse_kroger_size("32 fl oz"), (946, "ml"))
+        self.assertEqual(parse_kroger_size("1/2 gal"), (1893, "ml"))
+        self.assertEqual(parse_kroger_size("1 1/2 qt"), (1420, "ml"))
+        self.assertEqual(parse_kroger_size("32 oz", liquid_hint=True), (946, "ml"))
         self.assertEqual(parse_kroger_size("16 oz"), (454, "g"))
+        self.assertEqual(parse_kroger_size("5.3 oz., 4 pack"), (4, "ct"))
+        self.assertEqual(parse_kroger_size("14 onz"), (397, "g"))
+        self.assertEqual(parse_kroger_size("2 lbr"), (907, "g"))
         self.assertEqual(parse_kroger_size("unknown"), (1, "unit"))
 
     def test_live_environment_reads_kroger_and_keeps_cart_local(self):

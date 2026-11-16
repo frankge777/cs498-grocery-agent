@@ -19,10 +19,14 @@ import traceback
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean
-from typing import Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Callable, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from .data import (
     VARIANTS,
+    BENCHMARK_DIR,
+    CATALOG_PATH,
+    SCENARIOS_PATH,
+    Product,
     Scenario,
     iter_instances,
     load_catalog,
@@ -36,6 +40,15 @@ DEFAULT_RUNS = 5
 BOOTSTRAP_SAMPLES = 2000
 
 
+def _portable_path(path: Path) -> str:
+    """Prefer a repository-relative manifest path over a machine-specific one."""
+    resolved = path.resolve()
+    try:
+        return str(resolved.relative_to(BENCHMARK_DIR.parent))
+    except ValueError:
+        return str(resolved)
+
+
 def run_trials(
     agent_factory: Callable[[], object],
     scenarios: Optional[Sequence[Scenario]] = None,
@@ -44,13 +57,14 @@ def run_trials(
     limits: Optional[dict] = None,
     workers: int = 1,
     progress: Optional[Callable[[int, int], None]] = None,
+    catalog: Optional[Mapping[str, Product]] = None,
 ) -> List[dict]:
     """Run every (scenario, variant, run) in a fresh environment.
 
     ``workers > 1`` runs episodes in threads (for network-bound LLM agents);
     results are returned in a deterministic order regardless of completion order.
     """
-    catalog = load_catalog()
+    catalog = dict(catalog) if catalog is not None else load_catalog()
     scenarios = list(scenarios) if scenarios is not None else load_scenarios()
     jobs = [(instance, run) for instance in iter_instances(scenarios, tuple(variants)) for run in range(1, runs + 1)]
 
@@ -213,7 +227,13 @@ def compare_systems(trials_a: List[dict], trials_b: List[dict], samples: int = B
     }
 
 
-def write_outputs(trials: List[dict], output_dir: Path, agent_meta: Optional[dict] = None) -> dict:
+def write_outputs(
+    trials: List[dict],
+    output_dir: Path,
+    agent_meta: Optional[dict] = None,
+    catalog_path: Path = CATALOG_PATH,
+    scenarios_path: Path = SCENARIOS_PATH,
+) -> dict:
     output_dir.mkdir(parents=True, exist_ok=True)
     summary = summarize(trials)
     with (output_dir / "trials.jsonl").open("w", encoding="utf-8") as handle:
@@ -226,7 +246,9 @@ def write_outputs(trials: List[dict], output_dir: Path, agent_meta: Optional[dic
                 json.dumps({**key, "trajectory": trial["trajectory"], "agent_notes": trial.get("agent_notes")}) + "\n"
             )
     manifest = {
-        **release_hashes(),
+        **release_hashes(catalog_path, scenarios_path),
+        "catalog_path": _portable_path(catalog_path),
+        "scenarios_path": _portable_path(scenarios_path),
         "tool_schema_version": TOOL_SCHEMA_VERSION,
         "agent": agent_meta or {"name": summary["agent"]},
     }
