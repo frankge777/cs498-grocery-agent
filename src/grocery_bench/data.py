@@ -30,9 +30,13 @@ class Product:
     portions: Mapping[str, int]
     protein_g: Optional[int] = None
     stock: int = DEFAULT_STOCK
+    upc: Optional[str] = None
+    raw_size: Optional[str] = None
+    source: Optional[str] = None
+    availability: Mapping[str, bool] = field(default_factory=dict)
 
     def public_summary(self, in_stock: bool) -> dict:
-        return {
+        payload = {
             "id": self.id,
             "name": self.name,
             "brand": self.brand,
@@ -42,6 +46,15 @@ class Product:
             "price_cents": self.price_cents,
             "in_stock": in_stock,
         }
+        if self.upc:
+            payload["upc"] = self.upc
+        if self.raw_size:
+            payload["raw_size"] = self.raw_size
+        if self.source:
+            payload["source"] = self.source
+        if self.availability:
+            payload["availability"] = dict(self.availability)
+        return payload
 
     def public_details(self, in_stock: bool) -> dict:
         return {
@@ -108,6 +121,10 @@ def load_catalog(path: Path = CATALOG_PATH) -> Dict[str, Product]:
             portions=dict(row.get("portions", {})),
             protein_g=row.get("protein_g"),
             stock=int(row.get("stock", DEFAULT_STOCK)),
+            upc=row.get("upc"),
+            raw_size=row.get("raw_size"),
+            source=row.get("source"),
+            availability=dict(row.get("availability", {})),
         )
         if product.id in catalog:
             raise ValueError(f"Duplicate product id {product.id}")

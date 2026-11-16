@@ -4,6 +4,7 @@ from .agents import KeywordBaseline, OracleAgent
 from .data import VARIANTS, load_catalog, load_scenarios
 from .environment import EpisodeTerminated, GroceryEnv
 from .evaluator import evaluate, evaluate_env
+from .kroger import KrogerClient, KrogerLiveEnv
 from .runner import compare_systems, run_trials, summarize, write_outputs
 from .tools import TOOL_SPECS
 
@@ -12,6 +13,8 @@ __all__ = [
     "EpisodeTerminated",
     "GroceryEnv",
     "KeywordBaseline",
+    "KrogerClient",
+    "KrogerLiveEnv",
     "OracleAgent",
     "TOOL_SPECS",
     "compare_systems",

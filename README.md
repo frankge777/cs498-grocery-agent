@@ -70,6 +70,31 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 python3 scripts/run_experiments.py --trials 3 --output-dir results
 ```
 
+## Use real Kroger store data
+
+The benchmark above remains frozen and synthetic so historical experiments are
+comparable. For a real-store run, `KrogerLiveEnv` reads product search results,
+prices, package sizes and fulfillment availability from Kroger for one store.
+Cart operations stay inside the local environment: these commands cannot add
+to or submit a real Kroger order.
+
+Create an application in the Kroger Developer portal, then set its client
+credentials locally (never commit them):
+
+```bash
+cp .env.example .env
+# Edit .env and set KROGER_CLIENT_ID / KROGER_CLIENT_SECRET.
+python3 scripts/snapshot_kroger.py --zip 61820
+python3 scripts/run_kroger_live.py --zip 61820 \
+  --instruction "Buy one gallon of whole milk and a dozen eggs under $10"
+```
+
+The snapshot command records the store, retrieval time, real UPCs, current
+prices and availability under `benchmark/kroger_snapshots/`. Kroger exposes
+fulfillment availability rather than an exact stock count, and its product API
+does not provide the benchmark's curated dietary tags or meal-portion labels;
+the adapter reports those fields as unknown rather than guessing them.
+
 The command writes:
 
 - `results/raw_results.csv`: one row per agent/task/trial.
