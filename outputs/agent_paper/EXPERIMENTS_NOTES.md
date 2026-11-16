@@ -13,7 +13,7 @@ All LLM systems use the **same model, same tools, same caps, same task input**.
 
 | Name in tables | What it is | Role in the paper |
 |---|---|---|
-| **Ours (intent-grounded)** | LangGraph agent: intent extraction (LLM, JSON) → optional clarification → LLM tool loop → **deterministic verifier** → repair (≤2 rounds) → finish. See `architecture.md`. | Proposed agent |
+| **Ours (intent-grounded)** | Hand-written Python state machine: intent extraction (LLM, JSON) → optional clarification → LLM tool loop → **deterministic verifier** → repair (≤2 rounds) → finish. See `architecture.md`. | Proposed agent |
 | **ReAct** | Thought → one tool call → observation loop until `finish` (≤40 turns). | Main baseline (closed loop, no explicit intent, no verifier) |
 | **Direct function calling** | Turn 1: one batch of information calls (search/inspect/ask). Turn 2: one batch of all cart actions, executed **blind** (no results shown, no recovery). | Open-loop baseline (the paper's planned "direct function calling" reference system) |
 | Ours w/o verifier | Ours, but the cart is accepted at the first `submit_cart`. | Ablation of the verifier |
@@ -127,7 +127,7 @@ with tools against that specification. Before the agent may finish, deterministi
 code checks the actual cart against the specification and returns concrete
 violations for repair.
 
-The agent is a single-agent state machine implemented in LangGraph [CITE: LangGraph]
+The agent is a single-agent state machine implemented directly in Python without an agent framework
 with six nodes (Fig. [FIG: architecture, from `architecture.md`]):
 (1) **Observe** reads the current cart (some tasks start with a prefilled cart);
 (2) **Intent extraction** (LLM) produces the structured intent;
@@ -188,10 +188,12 @@ returned to the shopping loop as a bullet list with an instruction to repair the
 cart and resubmit; if the model believes a violation comes from a wrong requirement,
 it is told to follow the shopper's original request.
 
-**Memory and state.** LangGraph's typed state holds the intent, the clarification
-Q&A, the complete shopping message history (kept across repair rounds, so the model
-remembers what it tried), a cache of inspected product details, and all verifier
-reports. Nodes return partial state updates; there is no long-term memory across episodes.
+**Memory and state.** A project-defined typed dictionary holds the intent, the
+clarification Q&A, the complete shopping message history (kept across repair rounds,
+so the model remembers what it tried), a cache of inspected product details, and all
+verifier reports. Each stage returns a partial state update that the hand-written
+orchestrator applies before selecting the next stage. There is no long-term memory
+across episodes.
 
 **Error handling.** Failed tool calls (e.g., an item that becomes out of stock on the
 first add attempt) are returned to the model as observations, and the model chooses
@@ -200,7 +202,7 @@ error; blank JSON-mode replies are retried up to two times; API and network erro
 retried by the client (up to 5 retries). Calls to tools that were not offered in the
 current step are refused with an error message. The verifier bounds repair to two
 rounds; the environment enforces 100 tool calls, 100 model calls, and 300 s per
-episode, and LangGraph's recursion limit bounds graph steps.
+episode, while explicit loop counters bound clarification, shopping, and repair steps.
 
 ### 3.3 Implementation details
 
@@ -217,9 +219,9 @@ episode, and LangGraph's recursion limit bounds graph steps.
 - **Tools:** the benchmark's eight tools (`search_products`, `get_product`,
   `view_cart`, `add_to_cart`, `update_quantity`, `remove_from_cart`, `ask_user`,
   `finish`) plus the agent-internal `submit_cart`.
-- **Code:** Python, LangGraph 1.2; about 400 lines for the three agents. The
-  rule-based prototype is a LangGraph port of an earlier hand-written loop, verified
-  to produce identical trajectories.
+- **Code:** Python with project-owned orchestration; about 400 lines for the three
+  agents. Both the rule-based prototype and LLM agents use hand-written loops and
+  explicit state updates rather than an agent framework.
 
 ### 3.4 Design decisions and trade-offs
 
@@ -242,10 +244,11 @@ episode, and LangGraph's recursion limit bounds graph steps.
 5. **Clarification as a node vs. as a tool.** We made clarification an explicit step so
    that questions are asked before selection. The ablation shows that offering
    `ask_user` inside the loop is enough (Sec. 5).
-6. **LangGraph vs. a hand-written loop or multi-agent frameworks** (CrewAI, AutoGen
-   [CITE]). The task is a single-agent control loop with clear stages, which matches a
-   typed state machine with conditional edges and step limits. Role-based teams or
-   conversational multi-agent designs add coordination cost without a clear benefit here.
+6. **Hand-written loop vs. agent frameworks.** The course requires project-owned
+   orchestration, so the state transitions, conditional routing, tool loop, and step
+   limits are implemented directly in Python. The task is a single-agent control loop
+   with clear stages; role-based teams or conversational multi-agent designs would add
+   coordination cost without a clear benefit here.
 7. **Bounded repair (two rounds) and non-thinking mode.** Both cap cost and latency.
    Thinking mode was not evaluated (future work).
 

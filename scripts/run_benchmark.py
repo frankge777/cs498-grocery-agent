@@ -22,12 +22,6 @@ AGENTS = {
     "direct_function": lambda: BenchmarkAgent(DirectFunctionAgent()),
     "intent_grounded": lambda: BenchmarkAgent(IntentGroundedAgent()),
 }
-try:
-    from grocery_agent.graph_agent import LangGraphIntentAgent
-except ImportError:
-    pass
-else:
-    AGENTS["langgraph_intent"] = lambda: BenchmarkAgent(LangGraphIntentAgent())
 
 
 def main() -> None:

@@ -19,7 +19,7 @@ flowchart TD
     end
 
     %% ---------- agent ----------
-    subgraph AG["Intent-grounded agent (LangGraph state machine)"]
+    subgraph AG["Intent-grounded agent (hand-written state machine)"]
         OBS["① Observe<br/>view_cart"]
         INT["② Intent extraction<br/>LLM, JSON mode<br/>→ requirements with measure + min/max,<br/>required tags, budget, preferences,<br/>keep/remove rules, open questions"]
         Q{"Mandatory info<br/>missing?"}
@@ -106,7 +106,7 @@ flowchart TD
 | ⑤ | Verifier | no | cart, product details, intent, assignment | list of violations | Separates "tool calls succeeded" from "goal satisfied"; violations go back to ④ |
 | ⑥ | Finish | no | — | ends episode | Cart is scored by the benchmark evaluator (outside the agent) |
 
-**Memory/state:** typed LangGraph state holding the intent, clarification Q&A, the full shopping message history (kept across repair rounds), a product-detail cache, and verifier reports.
+**Memory/state:** a project-defined typed dictionary holding the intent, clarification Q&A, the full shopping message history (kept across repair rounds), a product-detail cache, and verifier reports. A hand-written Python loop applies each stage's partial state update and selects the next stage.
 **Error handling:** tool failures are returned to the LLM as observations (e.g. "Out of stock"); invalid JSON from ② is retried once; API errors are retried by the client; the environment enforces 100 tool calls / 100 model calls / 300 s.
 
 ## Comparison with the baselines (same model, same tools, same caps)

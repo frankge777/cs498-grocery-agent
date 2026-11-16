@@ -8,7 +8,7 @@ results/bench/<agent>/, and writes outputs/agent_paper/:
   results_table.tex     main table for the ICLR template
   fig_by_variant.pdf/png, fig_by_category.pdf/png
   examples.md           qualitative traces (successes and failures)
-  architecture.mmd      LangGraph architecture diagram (mermaid)
+  architecture.mmd      hand-written state-machine architecture diagram (mermaid)
 """
 from __future__ import annotations
 
@@ -407,12 +407,27 @@ def main():
     (args.out / "examples.md").write_text("\n".join(ex), encoding="utf-8")
 
     # ------------------------------------------------------ architecture
-    try:
-        from grocery_agent.llm_agents import build_ours_graph
-
-        (args.out / "architecture.mmd").write_text(build_ours_graph().get_graph().draw_mermaid(), encoding="utf-8")
-    except Exception as error:  # noqa: BLE001
-        print("architecture export failed:", error)
+    # Keep the diagram source framework-independent, just like the agent's
+    # project-owned Python control flow.
+    architecture = """---
+config:
+  flowchart:
+    curve: linear
+---
+flowchart TD
+    start([Start]) --> observe[observe]
+    observe --> extract[extract intent]
+    extract -. open question .-> clarify[clarify]
+    clarify --> extract
+    extract -. ready .-> shopping[start shopping]
+    shopping --> shop[shop / call tools]
+    shop -. submitted .-> verify[deterministic verify]
+    verify -. violations and repair budget remains .-> shop
+    verify -. valid or repair budget exhausted .-> finish[finish]
+    shop -. verifier disabled .-> finish
+    finish --> end_node([End])
+"""
+    (args.out / "architecture.mmd").write_text(architecture, encoding="utf-8")
     print(f"wrote {args.out}")
 
 

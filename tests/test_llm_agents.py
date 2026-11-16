@@ -4,18 +4,14 @@ import json
 import unittest
 
 from grocery_bench import EpisodeTerminated, GroceryEnv, evaluate_env, load_catalog, load_scenarios
-
-try:
-    from grocery_agent.llm import ScriptedLLM
-    from grocery_agent.llm_agents import (
-        DirectFunctionCallingAgent,
-        IntentGroundedLLMAgent,
-        ReActAgent,
-        check_cart,
-        normalize_intent,
-    )
-except ImportError:  # langgraph not installed
-    IntentGroundedLLMAgent = None
+from grocery_agent.llm import ScriptedLLM
+from grocery_agent.llm_agents import (
+    DirectFunctionCallingAgent,
+    IntentGroundedLLMAgent,
+    ReActAgent,
+    check_cart,
+    normalize_intent,
+)
 
 
 def sequence(replies):
@@ -42,7 +38,6 @@ MILK_INTENT = {
 }
 
 
-@unittest.skipIf(IntentGroundedLLMAgent is None, "langgraph not installed")
 class LLMAgentTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

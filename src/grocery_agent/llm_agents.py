@@ -1,6 +1,6 @@
 """LLM agents evaluated on the grocery benchmark.
 
-* ``IntentGroundedLLMAgent`` (ours): LangGraph state machine
+* ``IntentGroundedLLMAgent`` (ours): hand-written state machine
   observe -> extract_intent -> [clarify -> extract_intent] -> shop <-> tools
   -> verify --(violations)--> shop ... -> finish.
   The key idea is that "the tool calls succeeded" is not accepted as "the goal
@@ -19,11 +19,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Literal, Optional
-
-from langgraph.graph import END, START, StateGraph
-from langgraph.runtime import Runtime
-from typing_extensions import TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 from grocery_bench.environment import GroceryEnv
 from grocery_bench.tools import TOOL_SPECS
@@ -163,14 +159,13 @@ class OursState(TypedDict, total=False):
     status: str
 
 
-def observe(state: OursState, runtime: Runtime[AgentContext]) -> dict:
-    cart = runtime.context.env.view_cart().data
+def observe(state: OursState, ctx: AgentContext) -> dict:
+    cart = ctx.env.view_cart().data
     return {"cart_at_start": cart, "clarifications": [], "clarify_rounds": 0, "verify_rounds": 0,
             "verify_reports": [], "product_cache": {}}
 
 
-def extract_intent(state: OursState, runtime: Runtime[AgentContext]) -> dict:
-    ctx = runtime.context
+def extract_intent(state: OursState, ctx: AgentContext) -> dict:
     user = task_message(ctx.env, state["cart_at_start"])
     if state["clarifications"]:
         user += "\n\nAnswers from the shopper to your earlier questions:\n" + json.dumps(state["clarifications"], indent=1)
@@ -191,8 +186,8 @@ def extract_intent(state: OursState, runtime: Runtime[AgentContext]) -> dict:
     return {"intent": intent}
 
 
-def clarify(state: OursState, runtime: Runtime[AgentContext]) -> dict:
-    env = runtime.context.env
+def clarify(state: OursState, ctx: AgentContext) -> dict:
+    env = ctx.env
     answers = list(state["clarifications"])
     for item in state["intent"]["open_questions"][:3]:
         question = item.get("question") if isinstance(item, dict) else str(item)
@@ -201,8 +196,7 @@ def clarify(state: OursState, runtime: Runtime[AgentContext]) -> dict:
     return {"clarifications": answers, "clarify_rounds": state["clarify_rounds"] + 1}
 
 
-def start_shopping(state: OursState, runtime: Runtime[AgentContext]) -> dict:
-    ctx = runtime.context
+def start_shopping(state: OursState, ctx: AgentContext) -> dict:
     content = task_message(ctx.env, state["cart_at_start"])
     if state["clarifications"]:
         content += "\n\nClarifications from the shopper:\n" + json.dumps(state["clarifications"], indent=1)
@@ -210,9 +204,8 @@ def start_shopping(state: OursState, runtime: Runtime[AgentContext]) -> dict:
     return {"messages": [{"role": "system", "content": prompts.SHOP_SYSTEM}, {"role": "user", "content": content}]}
 
 
-def shop(state: OursState, runtime: Runtime[AgentContext]) -> dict:
+def shop(state: OursState, ctx: AgentContext) -> dict:
     """Tool loop until the model submits the cart (or the turn budget runs out)."""
-    ctx = runtime.context
     messages = list(state["messages"])
     cache = dict(state["product_cache"])
     submitted = None
@@ -237,8 +230,7 @@ def shop(state: OursState, runtime: Runtime[AgentContext]) -> dict:
     return {"messages": messages, "submitted": submitted, "product_cache": cache}
 
 
-def verify(state: OursState, runtime: Runtime[AgentContext]) -> dict:
-    ctx = runtime.context
+def verify(state: OursState, ctx: AgentContext) -> dict:
     env = ctx.env
     cache = dict(state["product_cache"])
     for pid in env.cart:
@@ -258,55 +250,21 @@ def verify(state: OursState, runtime: Runtime[AgentContext]) -> dict:
             "product_cache": cache, "messages": messages, "submitted": None}
 
 
-def finish(state: OursState, runtime: Runtime[AgentContext]) -> dict:
-    runtime.context.env.finish("intent-grounded agent done")
+def finish(state: OursState, ctx: AgentContext) -> dict:
+    ctx.env.finish("intent-grounded agent done")
     return {"status": "finished"}
 
 
-def route_after_intent(state: OursState, runtime: Runtime[AgentContext]) -> Literal["clarify", "start_shopping"]:
-    wants = bool(state["intent"]["open_questions"])
-    if runtime.context.use_clarify and runtime.context.allow_ask and wants and state["clarify_rounds"] < 1:
-        return "clarify"
-    return "start_shopping"
-
-
-def route_after_shop(state: OursState, runtime: Runtime[AgentContext]) -> Literal["verify", "finish"]:
-    return "verify" if runtime.context.use_verifier else "finish"
-
-
-def route_after_verify(state: OursState, runtime: Runtime[AgentContext]) -> Literal["shop", "finish"]:
-    last = state["verify_reports"][-1]
-    if last["violations"] and state["verify_rounds"] <= runtime.context.max_verify_rounds:
-        return "shop"
-    return "finish"
-
-
-def build_ours_graph():
-    g = StateGraph(OursState, context_schema=AgentContext)
-    for name, fn in [("observe", observe), ("extract_intent", extract_intent), ("clarify", clarify),
-                     ("start_shopping", start_shopping), ("shop", shop), ("verify", verify), ("finish", finish)]:
-        g.add_node(name, fn)
-    g.add_edge(START, "observe")
-    g.add_edge("observe", "extract_intent")
-    g.add_conditional_edges("extract_intent", route_after_intent)
-    g.add_edge("clarify", "extract_intent")
-    g.add_edge("start_shopping", "shop")
-    g.add_conditional_edges("shop", route_after_shop)
-    g.add_conditional_edges("verify", route_after_verify)
-    g.add_edge("finish", END)
-    return g.compile()
-
-
-_GRAPH = None
-
-
 class IntentGroundedLLMAgent:
+    """Single-agent pipeline implemented with explicit Python control flow.
+
+    The orchestration deliberately lives here rather than in an agent framework:
+    observe -> extract intent -> optional clarification -> shop -> optional
+    deterministic verification/repair -> finish.
+    """
+
     def __init__(self, llm, use_clarify: bool = True, use_verifier: bool = True, allow_ask: bool = True,
                  max_shop_turns: int = 30, max_verify_rounds: int = 2, name: Optional[str] = None):
-        global _GRAPH
-        if _GRAPH is None:
-            _GRAPH = build_ours_graph()
-        self.graph = _GRAPH
         self.llm = llm
         self.use_clarify = use_clarify
         self.use_verifier = use_verifier
@@ -323,8 +281,27 @@ class IntentGroundedLLMAgent:
                            self.max_shop_turns, self.max_verify_rounds)
         state: Dict[str, Any] = {}
         try:
-            for update in self.graph.stream({}, context=ctx, config={"recursion_limit": 60}, stream_mode="values"):
-                state = update
+            state.update(observe(state, ctx))
+            state.update(extract_intent(state, ctx))
+
+            wants_clarification = bool(state["intent"]["open_questions"])
+            if self.use_clarify and self.allow_ask and wants_clarification and state["clarify_rounds"] < 1:
+                state.update(clarify(state, ctx))
+                state.update(extract_intent(state, ctx))
+
+            state.update(start_shopping(state, ctx))
+            while True:
+                state.update(shop(state, ctx))
+                if not self.use_verifier:
+                    break
+
+                state.update(verify(state, ctx))
+                last_report = state["verify_reports"][-1]
+                repair_allowed = bool(last_report["violations"]) and state["verify_rounds"] <= self.max_verify_rounds
+                if not repair_allowed:
+                    break
+
+            state.update(finish(state, ctx))
         finally:
             self.notes.update({
                 "intent": state.get("intent"),
