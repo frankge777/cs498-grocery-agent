@@ -146,6 +146,14 @@ benchmark result: each task was sampled only once, and it predates the final
 `1.1.1` acceptance-set audit. See `outputs/kroger_smoke_test_20261118.md` for
 the result and limitations.
 
+A full-coverage 1.1.1 pilot is recorded under
+`results/kroger_pilot_20261118_v111/`: 20 tasks × 3 instruction variants × 1
+run for each of the three LLM systems (180 episodes, no infrastructure
+failures). Intent-grounded scored 95%, ReAct 100%, and Direct FC 60%. This is a
+single-run pilot, not a final repeated result. See
+`outputs/kroger_pilot_results_20261118.md` for costs, paired intervals, failure
+analysis, and the invalidated 1.1.0 diagnostic-run provenance.
+
 The command writes:
 
 - `results/raw_results.csv`: one row per agent/task/trial.
