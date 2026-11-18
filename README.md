@@ -120,9 +120,9 @@ python3 scripts/audit_kroger_benchmark.py
 python3 scripts/run_benchmark.py --dataset kroger --agent oracle_validation --runs 1
 ```
 
-The frozen task release is `1.1.0-kroger-snapshot-audited`. Its catalog and
+The frozen task release is `1.1.1-kroger-snapshot-audited`. Its catalog and
 scenario SHA-256 hashes are `2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce`
-and `e954e387b96346cee6ae4b93c00fcebf4140fa0ad11a6bfbb5b8b74803ebb0e8`.
+and `590c01667f938ab7e3509da03539b94e548906fa1da99e128af37272cfa3442e`.
 The audit checks all attribute-defined candidate sets against the complete
 snapshot and replays all 102 accepted reference carts. See
 `outputs/kroger_benchmark_audit_20261118.md` for the scenario-by-scenario
@@ -143,7 +143,7 @@ catalog.
 A four-task, high-explicitness smoke test is recorded under
 `results/llm_smoke_kroger_20261118_final/`. It is a pipeline check, not a final
 benchmark result: each task was sampled only once, and it predates the final
-`1.1.0` acceptance-set audit. See `outputs/kroger_smoke_test_20261118.md` for
+`1.1.1` acceptance-set audit. See `outputs/kroger_smoke_test_20261118.md` for
 the result and limitations.
 
 The command writes:

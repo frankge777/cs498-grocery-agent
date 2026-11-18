@@ -225,7 +225,7 @@ SCENARIOS = [
         [{OATS_ORGANIC: 1, TOFU: 1, SUGAR_ORGANIC: 1}],
         budget_cents=850,
         hard=[{"type": "all_items", "select": {"tags_all": ["organic", "vegan"]}}],
-        context={"dietary_rule": "Every purchased product must explicitly say Organic and Vegan.", "budget": "$8.50"},
+        context={"organic_vegan_list": ["Simple Truth Organic 100% Whole Grain Rolled 1 Minute Oats", "Simple Truth Organic Extra Firm Tofu", "Simple Truth Organic Cane Sugar"], "dietary_rule": "Every purchased product must explicitly say Organic and Vegan.", "budget": "$8.50"},
     ),
     scenario(
         "K08", "constrained", "M", "Breakfast basket with an organic-oats preference",
@@ -302,7 +302,7 @@ SCENARIOS = [
         [need("rice", "one rice", [RICE_BASMATI]), need("pasta", "two pasta", [PASTA_DITALINI, PASTA_PENNE], minimum=2, maximum=2), need("oats", "one oats", [OATS_ORGANIC]), need("beans", "three beans", [BEANS, BEANS_NO_SALT], minimum=3, maximum=3), need("flour", "one flour", [FLOUR])],
         [{RICE_BASMATI: 1, PASTA_PENNE: 2, OATS_ORGANIC: 1, BEANS: 3, FLOUR: 1}],
         budget_cents=1500,
-        context={"pantry_sheet": [{"item": "Kroger Basmati Rice", "have": 1, "target": 2}, {"item": "approved Kroger pasta", "have": 0, "target": 2}, {"item": "Simple Truth Organic Rolled Oats", "have": 1, "target": 2}, {"item": "approved black-bean cans", "have": 1, "target": 4}, {"item": "Kroger 2 lb All Purpose Flour", "have": 0, "target": 1}], "rule": "Buy only the difference between have and target.", "budget": "$15.00"},
+        context={"pantry_sheet": [{"item": "Kroger Basmati Rice", "have": 1, "target": 2}, {"item": "approved Kroger pasta", "have": 0, "target": 2}, {"item": "Simple Truth Organic Rolled Oats", "have": 1, "target": 2}, {"item": "approved black-bean cans", "have": 1, "target": 4}, {"item": "Kroger 2 lb All Purpose Flour", "have": 0, "target": 1}], "approved_pasta": ["Kroger Ditalini Pasta", "Kroger Penne Rigate Pasta"], "approved_black_beans": ["Kroger Black Beans", "Kroger No Salt Added Black Beans"], "rule": "Buy only the difference between have and target.", "budget": "$15.00"},
     ),
     scenario(
         "K15", "goal", "H", "Clarify an unstated milk restriction",
@@ -360,7 +360,7 @@ SCENARIOS = [
     ),
     scenario(
         "K20", "recovery", "H", "Preserve cart through two stock failures",
-        "Keep the eggs and bread already in my cart. Add one Kroger pasta, one Kroger pasta sauce, and one bag of Kroger carrots. Spend at most $8.00 total and substitute approved alternatives if items become unavailable.",
+        "Keep the eggs and bread already in my cart. Try one Kroger Penne Rigate Pasta, one Kroger Marinara Pasta Sauce, and one Kroger Cut and Peeled Baby Carrots bag. Spend at most $8.00 total and use the approved substitutions if an item becomes unavailable.",
         "Do not change the existing eggs or bread; add pasta, sauce, and carrots under $8, recovering from stock failures.",
         "Finish my dinner order without changing the current cart.",
         [need("eggs", "existing eggs", [EGGS_12]), need("bread", "existing bread", [BREAD_WHEAT]), need("pasta", "one approved pasta", [PASTA_PENNE, PASTA_DITALINI]), need("sauce", "one approved sauce", [SAUCE_MARINARA, SAUCE_TOMATO_BASIL]), need("carrots", "one carrots", [CARROTS])],
@@ -369,21 +369,22 @@ SCENARIOS = [
         events=[{"product_id": PASTA_PENNE, "trigger": "first_attempt"}, {"product_id": SAUCE_MARINARA, "trigger": "first_attempt"}],
         budget_cents=800,
         hard=[{"type": "preserve_initial"}],
-        context={"keep": "Everything currently in the cart", "add": ["1 approved Kroger pasta", "1 approved Kroger pasta sauce", "1 Kroger carrot bag"], "substitutions": {"pasta": "Kroger Ditalini", "sauce": "Kroger Tomato Basil"}, "budget": "$8.00 total"},
+        context={"keep": "Everything currently in the cart", "preferred": {"pasta": "Kroger Penne Rigate Pasta", "sauce": "Kroger Marinara Pasta Sauce", "carrots": "Kroger Cut and Peeled Baby Carrots"}, "approved_pasta": ["Kroger Penne Rigate Pasta", "Kroger Ditalini Pasta"], "approved_sauces": ["Kroger Marinara Pasta Sauce", "Kroger Tomato Basil Pasta Sauce"], "approved_carrots": ["Kroger Cut and Peeled Baby Carrots"], "substitutions": {"pasta": "Kroger Ditalini Pasta", "sauce": "Kroger Tomato Basil Pasta Sauce"}, "budget": "$8.00 total"},
     ),
 ]
 
 
 def main() -> None:
     payload = {
-        "version": "1.1.0-kroger-snapshot-audited",
+        "version": "1.1.1-kroger-snapshot-audited",
         "catalog": "kroger_snapshots/02100946-20261116.json",
         "notes": (
             "Twenty fixed tasks backed by the Kroger - Mt Zion snapshot retrieved on 2026-11-16. "
             "Product selectors use real Kroger UPCs. Dietary and protein constraints require explicit API metadata; "
             "unknown values never satisfy a constraint. Hidden acceptance predicates are not exposed to agents. "
             "Version 1.1 audits public wording against hidden UPC sets and exhaustively derives attribute-defined "
-            "milk, salsa, cheese, and protein-bar candidate sets from the frozen catalog."
+            "milk, salsa, cheese, and protein-bar candidate sets from the frozen catalog. Version 1.1.1 makes all "
+            "approved-product lists and preferred recovery products explicitly visible in K07, K14, and K20."
         ),
         "scenarios": SCENARIOS,
     }

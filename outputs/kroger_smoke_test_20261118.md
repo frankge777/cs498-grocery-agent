@@ -6,7 +6,7 @@ This run checks the complete paid-model experiment path before launching the
 full benchmark. It is not a final performance result: only four selected tasks,
 the high-explicitness variant, and one stochastic run per task were used.
 
-This smoke run predates the final `1.1.0-kroger-snapshot-audited` task freeze.
+This smoke run predates the final `1.1.1-kroger-snapshot-audited` task freeze.
 Its scenario hash is retained below for provenance; its scores must not be
 combined with or directly compared to results from the frozen release.
 

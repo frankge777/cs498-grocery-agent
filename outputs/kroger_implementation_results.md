@@ -35,9 +35,9 @@ nutrition from product names and does not invent meal portions.
 
 `benchmark/scenarios_kroger.json` contains 20 fixed tasks:
 
-- Frozen release: `1.1.0-kroger-snapshot-audited`
+- Frozen release: `1.1.1-kroger-snapshot-audited`
 - Catalog SHA-256: `2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce`
-- Scenario SHA-256: `e954e387b96346cee6ae4b93c00fcebf4140fa0ad11a6bfbb5b8b74803ebb0e8`
+- Scenario SHA-256: `590c01667f938ab7e3509da03539b94e548906fa1da99e128af37272cfa3442e`
 
 - 5 explicit-list tasks
 - 5 constrained tasks

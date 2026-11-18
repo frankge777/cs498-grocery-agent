@@ -178,18 +178,32 @@ class KrogerBenchmarkTests(unittest.TestCase):
         self.assertEqual(selected("K15", "milk"), expected_milk)
         self.assertEqual(selected("K16", "milk"), expected_milk)
 
-    def test_public_approved_breakfast_choices_match_hidden_selectors(self):
+    def test_public_approved_product_lists_match_hidden_selectors(self):
         by_id = {scenario.id: scenario for scenario in self.scenarios}
+
+        def names(scenario_id, need_id):
+            need = next(value for value in by_id[scenario_id].needs if value["id"] == need_id)
+            return {
+                self.catalog[pid].name.replace("®", "").replace("™", "")
+                for pid in need["select"]["product_ids"]
+            }
+
         for scenario_id in ("K06", "K08"):
             scenario = by_id[scenario_id]
-            oats = next(value for value in scenario.needs if value["id"] == "oats")
-            breads = next(value for value in scenario.needs if value["id"] == "bread")
             visible_oats = set(scenario.context["approved_oats"])
             visible_breads = set(scenario.context["approved_breads"])
-            hidden_oats = {self.catalog[pid].name.replace("®", "").replace("™", "") for pid in oats["select"]["product_ids"]}
-            hidden_breads = {self.catalog[pid].name.replace("®", "").replace("™", "") for pid in breads["select"]["product_ids"]}
-            self.assertEqual(visible_oats, hidden_oats, scenario_id)
-            self.assertEqual(visible_breads, hidden_breads, scenario_id)
+            self.assertEqual(visible_oats, names(scenario_id, "oats"), scenario_id)
+            self.assertEqual(visible_breads, names(scenario_id, "bread"), scenario_id)
+
+        self.assertEqual(
+            set(by_id["K07"].context["organic_vegan_list"]),
+            names("K07", "oats") | names("K07", "tofu") | names("K07", "sugar"),
+        )
+        self.assertEqual(set(by_id["K14"].context["approved_pasta"]), names("K14", "pasta"))
+        self.assertEqual(set(by_id["K14"].context["approved_black_beans"]), names("K14", "beans"))
+        self.assertEqual(set(by_id["K20"].context["approved_pasta"]), names("K20", "pasta"))
+        self.assertEqual(set(by_id["K20"].context["approved_sauces"]), names("K20", "sauce"))
+        self.assertEqual(set(by_id["K20"].context["approved_carrots"]), names("K20", "carrots"))
 
 
 if __name__ == "__main__":
