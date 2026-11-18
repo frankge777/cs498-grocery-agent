@@ -1,6 +1,6 @@
 {
   "catalog_sha256": "2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce",
-  "scenarios_sha256": "2df62aab3da3ccc7e63eb247e5d00dca00ce26d582973e4c73cbcde232cd8b8f",
+  "scenarios_sha256": "e954e387b96346cee6ae4b93c00fcebf4140fa0ad11a6bfbb5b8b74803ebb0e8",
   "catalog_path": "benchmark/kroger_snapshots/02100946-20261116.json",
   "scenarios_path": "benchmark/scenarios_kroger.json",
   "tool_schema_version": "1.0.0",

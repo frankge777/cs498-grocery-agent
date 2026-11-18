@@ -35,6 +35,10 @@ nutrition from product names and does not invent meal portions.
 
 `benchmark/scenarios_kroger.json` contains 20 fixed tasks:
 
+- Frozen release: `1.1.0-kroger-snapshot-audited`
+- Catalog SHA-256: `2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce`
+- Scenario SHA-256: `e954e387b96346cee6ae4b93c00fcebf4140fa0ad11a6bfbb5b8b74803ebb0e8`
+
 - 5 explicit-list tasks
 - 5 constrained tasks
 - 5 goal/planning tasks
@@ -52,9 +56,12 @@ metadata-backed dietary/protein constraints, the absence of invented portion
 measures, recovery alternatives, and end-to-end feasibility through the public
 shopping tools.
 
-At implementation time, all 10 Kroger benchmark test methods passed. Every
-reference cart for every task passed in all three instruction variants. This is
-a feasibility/implementation result, not an LLM performance score: the oracle
+At freeze time, all 12 Kroger benchmark test methods passed. All 102 reference
+cart/variant combinations passed through the public tools. The acceptance audit
+also recomputes every attribute-defined candidate set from all 722 snapshot
+products, so a qualifying product cannot be silently omitted. See
+`outputs/kroger_benchmark_audit_20261118.md` for the complete audit. This is a
+feasibility/implementation result, not an LLM performance score: the oracle
 replays hidden reference carts and must never be reported as an agent baseline.
 
 ## Experiment commands
@@ -63,6 +70,7 @@ Offline validation:
 
 ```bash
 PYTHONPATH=src python3 -m unittest tests.test_kroger_benchmark -v
+python3 scripts/audit_kroger_benchmark.py
 python3 scripts/run_benchmark.py --dataset kroger --agent oracle_validation --runs 1
 ```
 

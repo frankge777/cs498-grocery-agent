@@ -53,6 +53,8 @@ OAT_BARISTA = "0004410019092"
 OATLY_CHURROS = "0019064663242"
 BREAD_WHEAT = "0001111008450"
 BREAD_WHITE = "0001111008485"
+BREAD_WHITE_SANDWICH = "0001111008486"
+BREAD_HONEY_WHEAT = "0001111008449"
 EGGS_24 = "0001111015097"
 EGGS_12 = "0001111060903"
 EGGS_6 = "0001111060906"
@@ -78,8 +80,20 @@ SALSA_ALT = "0001111066759"
 CHEESE = "0001111050170"
 CHEESE_ALT = "0001111050159"
 CHEESE_MEXICAN = "0001111050204"
+CHEESE_SHARP = "0001111050158"
+CHEESE_REDUCED_MEXICAN = "0001111050171"
+CHEESE_COLBY_JACK = "0001111050174"
+CHEESE_CHEDDAR_JACK = "0001111050183"
+CHEESE_MONTEREY_JACK = "0001111050202"
+CHEESE_ITALIAN = "0001111050205"
+CHEESE_MEDIUM_CHEDDAR = "0001111050339"
 BAR_KROGER = "0001111011125"
+BAR_KROGER_ALMOND = "0001111011126"
 BAR_PURE = "0074982600016"
+BAR_PURE_PEANUT = "0074982600010"
+BAR_LARABAR_PEANUT = "0002190814256"
+BAR_LARABAR_CINNAMON = "0002190814302"
+BAR_QUEST = "0088884900385"
 YOGURT = "0003663201953"
 PROTEIN_POWDER = "0085177000392"
 CREATINE = "0074892707339"
@@ -100,6 +114,30 @@ DAIRY_NUT_FREE_OAT_OR_SOY_MILKS = [
     OATLY_CHURROS,
     SOY_VANILLA,
 ]
+
+KROGER_WHITE_OR_WHEAT_BREADS = [BREAD_WHEAT, BREAD_WHITE, BREAD_WHITE_SANDWICH, BREAD_HONEY_WHEAT]
+KROGER_8OZ_SHREDDED_CHEESES = [
+    CHEESE_SHARP,
+    CHEESE_ALT,
+    CHEESE,
+    CHEESE_REDUCED_MEXICAN,
+    CHEESE_COLBY_JACK,
+    CHEESE_CHEDDAR_JACK,
+    CHEESE_MONTEREY_JACK,
+    CHEESE_MEXICAN,
+    CHEESE_ITALIAN,
+    CHEESE_MEDIUM_CHEDDAR,
+]
+GF_PROTEIN_BARS_10G_4_TO_6_COUNT = [
+    BAR_KROGER,
+    BAR_KROGER_ALMOND,
+    BAR_PURE,
+    BAR_LARABAR_PEANUT,
+    BAR_LARABAR_CINNAMON,
+    BAR_PURE_PEANUT,
+    BAR_QUEST,
+]
+GF_PROTEIN_BARS_20G_4_COUNT = [BAR_PURE, BAR_PURE_PEANUT, BAR_QUEST]
 
 
 SCENARIOS = [
@@ -151,8 +189,8 @@ SCENARIOS = [
     ),
     scenario(
         "K05", "explicit", "M", "Correct a prefilled cart",
-        "Fix my cart so it has one Planet Oat Original Oat Milk, one Kroger White Bread, and twelve Kroger large white eggs. Remove everything else.",
-        "Replace the whole milk with Planet Oat Original, reduce the white bread to one, add a dozen Kroger eggs, and remove the sugar.",
+        "Fix my cart so it has one 52 fl oz Planet Oat Dairy Free Original Oat Milk, one Kroger White Bread, and twelve Kroger large white eggs. Remove everything else.",
+        "Replace the whole milk with the 52 fl oz Planet Oat Original, reduce the white bread to one, add a dozen Kroger eggs, and remove the sugar.",
         "Make the current cart match my corrected list.",
         [
             need("oat_milk", "one Planet Oat Original", [OAT_ORIGINAL]),
@@ -161,22 +199,22 @@ SCENARIOS = [
         ],
         [{OAT_ORIGINAL: 1, BREAD_WHITE: 1, EGGS_12: 1}],
         initial_cart={WHOLE_HALF: 1, BREAD_WHITE: 2, SUGAR: 1},
-        context={"corrected_list": ["1 Planet Oat Original Oat Milk", "1 Kroger White Bread", "12 Kroger large white eggs"]},
+        context={"corrected_list": ["1 Planet Oat Dairy Free Original Oat Milk 52 fl oz", "1 Kroger White Bread", "12 Kroger large white eggs"]},
     ),
     scenario(
         "K06", "constrained", "M", "Breakfast basics under ten dollars",
-        "Buy one package of rolled oats, one half-gallon whole milk, twelve eggs, and one loaf of bread for at most $10.00.",
-        "Get oats, a half-gallon of whole milk, a dozen eggs, and bread; keep the total under ten dollars.",
+        "Buy one of my approved Simple Truth rolled oats, one Kroger half-gallon whole milk, twelve Kroger large white eggs, and one Kroger white or wheat bread for at most $10.00.",
+        "Get one approved oats, Kroger half-gallon whole milk, a dozen Kroger large white eggs, and one approved Kroger bread; keep the total under ten dollars.",
         "Restock my breakfast basics within my $10 budget.",
         [
             need("oats", "one oats", [OATS_ORGANIC, OATS_PROTEIN]),
             need("milk", "one half-gallon whole milk", [WHOLE_HALF]),
             need("eggs", "twelve eggs", [EGGS_12, EGGS_6], "count", 12, 12),
-            need("bread", "one bread", [BREAD_WHEAT, BREAD_WHITE]),
+            need("bread", "one approved Kroger white or wheat bread", KROGER_WHITE_OR_WHEAT_BREADS),
         ],
         [{OATS_ORGANIC: 1, WHOLE_HALF: 1, EGGS_12: 1, BREAD_WHITE: 1}],
         budget_cents=1000,
-        context={"breakfast_list": ["rolled oats", "half-gallon whole milk", "12 eggs", "bread"], "budget": "$10.00"},
+        context={"approved_oats": ["Simple Truth Organic 100% Whole Grain Rolled 1 Minute Oats", "Simple Truth Protein Classic Rolled Oats"], "breakfast_list": ["1 approved oats", "1 Kroger Vitamin D Whole Milk Half Gallon", "12 Kroger Grade A Large White Eggs", "1 Kroger white or wheat bread"], "approved_breads": ["Kroger Soft Wheat Bread", "Kroger White Bread", "Kroger White Sandwich Bread", "Kroger Honey Wheat Bread"], "budget": "$10.00"},
     ),
     scenario(
         "K07", "constrained", "M", "Explicitly organic and vegan basket",
@@ -191,27 +229,27 @@ SCENARIOS = [
     ),
     scenario(
         "K08", "constrained", "M", "Breakfast basket with an organic-oats preference",
-        "Buy rolled oats, a half-gallon whole milk, twelve eggs, and bread for at most $12.00. Prefer organic oats if the budget allows.",
-        "Get my four breakfast basics under $12, choosing organic oats when possible.",
+        "Buy one of my approved Simple Truth rolled oats, one Kroger half-gallon whole milk, twelve Kroger large white eggs, and one approved Kroger white or wheat bread for at most $12.00. Prefer the organic oats if the budget allows.",
+        "Get my four approved breakfast basics under $12, choosing the organic oats when possible.",
         "Restock breakfast within budget and honor my oats preference if possible.",
         [
             need("oats", "one oats", [OATS_ORGANIC, OATS_PROTEIN]),
             need("milk", "one milk", [WHOLE_HALF]),
             need("eggs", "twelve eggs", [EGGS_12, EGGS_6], "count", 12, 12),
-            need("bread", "one bread", [BREAD_WHEAT, BREAD_WHITE]),
+            need("bread", "one approved Kroger white or wheat bread", KROGER_WHITE_OR_WHEAT_BREADS),
         ],
         [{OATS_ORGANIC: 1, WHOLE_HALF: 1, EGGS_12: 1, BREAD_WHITE: 1}, {OATS_PROTEIN: 1, WHOLE_HALF: 1, EGGS_12: 1, BREAD_WHEAT: 1}],
         budget_cents=1200,
         preferences=[{"id": "organic_oats", "weight": 1, "scope": {"product_ids": [OATS_ORGANIC, OATS_PROTEIN]}, "prefer": {"tags_all": ["organic"]}}],
-        context={"breakfast_list": ["rolled oats", "half-gallon whole milk", "12 eggs", "bread"], "preference": "Organic oats preferred", "budget": "$12.00"},
+        context={"approved_oats": ["Simple Truth Organic 100% Whole Grain Rolled 1 Minute Oats", "Simple Truth Protein Classic Rolled Oats"], "breakfast_list": ["1 approved oats", "1 Kroger Vitamin D Whole Milk Half Gallon", "12 Kroger Grade A Large White Eggs", "1 approved Kroger white or wheat bread"], "approved_breads": ["Kroger Soft Wheat Bread", "Kroger White Bread", "Kroger White Sandwich Bread", "Kroger Honey Wheat Bread"], "preference": "Organic oats preferred", "budget": "$12.00"},
     ),
     scenario(
         "K09", "constrained", "M", "Four to six verified high-protein bars",
         "Buy 4 to 6 protein bars total. Every selected bar must be explicitly gluten-free and list at least 10 g protein per labeled serving. Spend at most $8.00.",
         "Get 4-6 gluten-free bars with at least 10 g protein per serving, under $8.",
         "Get the verified protein bars for my trip within the snack budget.",
-        [need("bars", "four to six qualifying bars", [BAR_KROGER, BAR_PURE], "count", 4, 6, tags_all=["gluten_free"], min_protein_g=10)],
-        [{BAR_KROGER: 1}, {BAR_PURE: 1}],
+        [need("bars", "four to six qualifying bars", GF_PROTEIN_BARS_10G_4_TO_6_COUNT, "count", 4, 6, tags_all=["gluten_free"], min_protein_g=10)],
+        [{BAR_KROGER: 1}, {BAR_KROGER_ALMOND: 1}, {BAR_PURE: 1}, {BAR_PURE_PEANUT: 1}],
         budget_cents=800,
         context={"trip_snacks": "4-6 bars; each product must explicitly be gluten-free and show at least 10 g protein per labeled serving.", "budget": "$8.00"},
     ),
@@ -220,7 +258,7 @@ SCENARIOS = [
         "Buy one package of Kroger soft taco tortillas, exactly two cans of black beans, one Kroger mild salsa, and one 8 oz bag of Kroger shredded cheese. Spend at most $8.00.",
         "Get tortillas, two black-bean cans, mild salsa, and an 8 oz shredded cheese for taco night, under $8.",
         "Get my taco-night list without going over the saved budget.",
-        [need("tortillas", "one tortillas", [TORTILLAS]), need("beans", "two bean cans", [BEANS, BEANS_NO_SALT], minimum=2, maximum=2), need("salsa", "one salsa", [SALSA, SALSA_ALT]), need("cheese", "one cheese", [CHEESE, CHEESE_ALT, CHEESE_MEXICAN])],
+        [need("tortillas", "one tortillas", [TORTILLAS]), need("beans", "two bean cans", [BEANS, BEANS_NO_SALT], minimum=2, maximum=2), need("salsa", "one salsa", [SALSA, SALSA_ALT]), need("cheese", "one 8 oz Kroger shredded cheese", KROGER_8OZ_SHREDDED_CHEESES)],
         [{TORTILLAS: 1, BEANS: 2, SALSA: 1, CHEESE: 1}, {TORTILLAS: 1, BEANS: 2, SALSA_ALT: 1, CHEESE_MEXICAN: 1}],
         budget_cents=800,
         context={"taco_list": ["1 Kroger soft taco tortillas", "2 black bean cans", "1 Kroger mild salsa", "1 Kroger 8 oz shredded cheese"], "budget": "$8.00"},
@@ -251,7 +289,7 @@ SCENARIOS = [
         "Restock one Orgain Organic Vegan Protein Powder, one Optimum Nutrition Creatine Stick Pack box, exactly four gluten-free protein bars with at least 20 g protein per labeled serving, and one four-count Oikos high-protein yogurt. Spend at most $50.00.",
         "Get my powder, creatine, four qualifying 20 g gluten-free bars, and the four-pack Oikos yogurt within $50.",
         "Complete my saved fitness restock without exceeding its budget.",
-        [need("powder", "one named protein powder", [PROTEIN_POWDER]), need("creatine", "one named creatine", [CREATINE]), need("bars", "exactly four qualifying bars", [BAR_PURE], "count", 4, 4, tags_all=["gluten_free"], min_protein_g=20), need("yogurt", "one named yogurt four-pack", [YOGURT])],
+        [need("powder", "one named protein powder", [PROTEIN_POWDER]), need("creatine", "one named creatine", [CREATINE]), need("bars", "exactly four qualifying bars", GF_PROTEIN_BARS_20G_4_COUNT, "count", 4, 4, tags_all=["gluten_free"], min_protein_g=20), need("yogurt", "one named yogurt four-pack", [YOGURT])],
         [{PROTEIN_POWDER: 1, CREATINE: 1, BAR_PURE: 1, YOGURT: 1}],
         budget_cents=5000,
         context={"fitness_list": ["Orgain Organic Vegan 21g Protein Powder", "Optimum Nutrition Creatine Stick Packs", "4 gluten-free bars with >=20g protein per labeled serving", "Oikos Triple Zero high-protein yogurt 4-pack"], "budget": "$50.00"},
@@ -303,22 +341,22 @@ SCENARIOS = [
         "Buy Kroger soft taco tortillas, exactly two black-bean cans, Kroger mild salsa, and one 8 oz Kroger shredded cheese for at most $8.00. If the mild cheddar is unavailable, substitute another approved 8 oz Kroger shredded cheese.",
         "Get the taco-night list under $8 and replace the cheese if it goes out of stock.",
         "Finish my taco-night basket using the saved substitutions and budget.",
-        [need("tortillas", "one tortillas", [TORTILLAS]), need("beans", "two beans", [BEANS, BEANS_NO_SALT], minimum=2, maximum=2), need("salsa", "one salsa", [SALSA]), need("cheese", "one cheese", [CHEESE, CHEESE_ALT])],
-        [{TORTILLAS: 1, BEANS: 2, SALSA: 1, CHEESE_ALT: 1}],
+        [need("tortillas", "one tortillas", [TORTILLAS]), need("beans", "two beans", [BEANS, BEANS_NO_SALT], minimum=2, maximum=2), need("salsa", "one salsa", [SALSA, SALSA_ALT]), need("cheese", "one approved cheese", [CHEESE, CHEESE_ALT])],
+        [{TORTILLAS: 1, BEANS: 2, SALSA: 1, CHEESE_ALT: 1}, {TORTILLAS: 1, BEANS_NO_SALT: 2, SALSA_ALT: 1, CHEESE_ALT: 1}],
         events=[{"product_id": CHEESE, "trigger": "first_attempt"}],
         budget_cents=800,
         context={"taco_list": ["Kroger soft taco tortillas", "2 black bean cans", "Kroger mild salsa", "Kroger 8 oz shredded cheese"], "preferred_cheese": "Kroger Mild Cheddar 8 oz", "substitution": "Kroger Mozzarella 8 oz is approved", "budget": "$8.00"},
     ),
     scenario(
         "K19", "recovery", "H", "Replace unavailable preferred coffee",
-        "Buy one 11 oz Kroger Breakfast Blend Ground Coffee and one Planet Oat Original Oat Milk for at most $10.00. If the coffee is unavailable, use the approved 11 oz Kroger Colombian Ground Coffee.",
+        "Buy one 11 oz Kroger Breakfast Blend Ground Coffee and one 52 fl oz Planet Oat Dairy Free Original Oat Milk for at most $10.00. If the coffee is unavailable, use the approved 11 oz Kroger Colombian Ground Coffee.",
         "Get the breakfast-blend coffee and Planet Oat milk under $10; use the approved Colombian coffee if needed.",
         "Get my coffee supplies within the saved budget and substitution rule.",
         [need("coffee", "one approved coffee", [COFFEE_BREAKFAST, COFFEE_COLOMBIAN]), need("milk", "one Planet Oat Original", [OAT_ORIGINAL])],
         [{COFFEE_COLOMBIAN: 1, OAT_ORIGINAL: 1}],
         events=[{"product_id": COFFEE_BREAKFAST, "trigger": "first_attempt"}],
         budget_cents=1000,
-        context={"coffee_supplies": ["Kroger Breakfast Blend Ground Coffee 11 oz", "Planet Oat Original Oat Milk"], "coffee_substitute": "Kroger Colombian Ground Coffee 11 oz", "budget": "$10.00"},
+        context={"coffee_supplies": ["Kroger Breakfast Blend Ground Coffee 11 oz", "Planet Oat Dairy Free Original Oat Milk 52 fl oz"], "coffee_substitute": "Kroger Colombian Ground Coffee 11 oz", "budget": "$10.00"},
     ),
     scenario(
         "K20", "recovery", "H", "Preserve cart through two stock failures",
@@ -338,12 +376,14 @@ SCENARIOS = [
 
 def main() -> None:
     payload = {
-        "version": "1.0.0-kroger-snapshot",
+        "version": "1.1.0-kroger-snapshot-audited",
         "catalog": "kroger_snapshots/02100946-20261116.json",
         "notes": (
             "Twenty fixed tasks backed by the Kroger - Mt Zion snapshot retrieved on 2026-11-16. "
             "Product selectors use real Kroger UPCs. Dietary and protein constraints require explicit API metadata; "
-            "unknown values never satisfy a constraint. Hidden acceptance predicates are not exposed to agents."
+            "unknown values never satisfy a constraint. Hidden acceptance predicates are not exposed to agents. "
+            "Version 1.1 audits public wording against hidden UPC sets and exhaustively derives attribute-defined "
+            "milk, salsa, cheese, and protein-bar candidate sets from the frozen catalog."
         ),
         "scenarios": SCENARIOS,
     }

@@ -116,8 +116,17 @@ Validate and run the fixed real-data benchmark without making network calls:
 
 ```bash
 PYTHONPATH=src python3 -m unittest tests.test_kroger_benchmark -v
+python3 scripts/audit_kroger_benchmark.py
 python3 scripts/run_benchmark.py --dataset kroger --agent oracle_validation --runs 1
 ```
+
+The frozen task release is `1.1.0-kroger-snapshot-audited`. Its catalog and
+scenario SHA-256 hashes are `2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce`
+and `e954e387b96346cee6ae4b93c00fcebf4140fa0ad11a6bfbb5b8b74803ebb0e8`.
+The audit checks all attribute-defined candidate sets against the complete
+snapshot and replays all 102 accepted reference carts. See
+`outputs/kroger_benchmark_audit_20261118.md` for the scenario-by-scenario
+decisions.
 
 Run the three LLM systems on the real snapshot (this uses the configured model
 API and therefore may incur model cost):
@@ -133,8 +142,9 @@ catalog.
 
 A four-task, high-explicitness smoke test is recorded under
 `results/llm_smoke_kroger_20261118_final/`. It is a pipeline check, not a final
-benchmark result: each task was sampled only once. See
-`outputs/kroger_smoke_test_20261118.md` for the audited result and limitations.
+benchmark result: each task was sampled only once, and it predates the final
+`1.1.0` acceptance-set audit. See `outputs/kroger_smoke_test_20261118.md` for
+the result and limitations.
 
 The command writes:
 

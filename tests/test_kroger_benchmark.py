@@ -123,6 +123,74 @@ class KrogerBenchmarkTests(unittest.TestCase):
         env.finish("equivalent labeled oat milk")
         self.assertEqual(evaluate_env(env).success, 1)
 
+    def test_attribute_defined_candidate_sets_are_complete(self):
+        by_id = {scenario.id: scenario for scenario in self.scenarios}
+
+        def selected(scenario_id, need_id):
+            scenario = by_id[scenario_id]
+            need = next(value for value in scenario.needs if value["id"] == need_id)
+            return set(need["select"]["product_ids"])
+
+        expected_k09 = {
+            product.id for product in self.catalog.values()
+            if product.stock > 0
+            and "protein bar" in product.name.lower()
+            and "gluten_free" in product.tags
+            and (product.protein_g or 0) >= 10
+            and product.unit == "ct"
+            and 4 <= product.size <= 6
+        }
+        expected_k13 = {
+            product.id for product in self.catalog.values()
+            if product.stock > 0
+            and "protein bar" in product.name.lower()
+            and "gluten_free" in product.tags
+            and (product.protein_g or 0) >= 20
+            and product.unit == "ct"
+            and product.size == 4
+        }
+        expected_salsa = {
+            product.id for product in self.catalog.values()
+            if product.stock > 0
+            and product.brand == "Kroger"
+            and "salsa" in product.name.lower()
+            and "mild" in product.name.lower()
+        }
+        expected_cheese = {
+            product.id for product in self.catalog.values()
+            if product.stock > 0
+            and product.brand == "Kroger"
+            and "shredded cheese" in product.name.lower()
+            and product.raw_size == "8 oz"
+        }
+        expected_milk = {
+            product.id for product in self.catalog.values()
+            if product.stock > 0
+            and any(label in product.name.lower() for label in ("oatmilk", "oat milk", "soymilk"))
+            and {"dairy_free", "nut_free"}.issubset(product.tags)
+        }
+
+        self.assertEqual(selected("K09", "bars"), expected_k09)
+        self.assertEqual(selected("K13", "bars"), expected_k13)
+        self.assertEqual(selected("K10", "salsa"), expected_salsa)
+        self.assertEqual(selected("K18", "salsa"), expected_salsa)
+        self.assertEqual(selected("K10", "cheese"), expected_cheese)
+        self.assertEqual(selected("K15", "milk"), expected_milk)
+        self.assertEqual(selected("K16", "milk"), expected_milk)
+
+    def test_public_approved_breakfast_choices_match_hidden_selectors(self):
+        by_id = {scenario.id: scenario for scenario in self.scenarios}
+        for scenario_id in ("K06", "K08"):
+            scenario = by_id[scenario_id]
+            oats = next(value for value in scenario.needs if value["id"] == "oats")
+            breads = next(value for value in scenario.needs if value["id"] == "bread")
+            visible_oats = set(scenario.context["approved_oats"])
+            visible_breads = set(scenario.context["approved_breads"])
+            hidden_oats = {self.catalog[pid].name.replace("®", "").replace("™", "") for pid in oats["select"]["product_ids"]}
+            hidden_breads = {self.catalog[pid].name.replace("®", "").replace("™", "") for pid in breads["select"]["product_ids"]}
+            self.assertEqual(visible_oats, hidden_oats, scenario_id)
+            self.assertEqual(visible_breads, hidden_breads, scenario_id)
+
 
 if __name__ == "__main__":
     unittest.main()

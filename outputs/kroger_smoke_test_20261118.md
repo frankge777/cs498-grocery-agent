@@ -6,6 +6,10 @@ This run checks the complete paid-model experiment path before launching the
 full benchmark. It is not a final performance result: only four selected tasks,
 the high-explicitness variant, and one stochastic run per task were used.
 
+This smoke run predates the final `1.1.0-kroger-snapshot-audited` task freeze.
+Its scenario hash is retained below for provenance; its scores must not be
+combined with or directly compared to results from the frozen release.
+
 Configuration:
 
 - Dataset: fixed Kroger - Mt Zion snapshot
@@ -17,7 +21,7 @@ Configuration:
 - Runs: 1
 - Total episodes: 12
 
-## Audited final result
+## Smoke-run result
 
 - Intent-grounded: 4/4 success; estimated cost `$0.015113`; 103,218 input tokens and 4,445 output tokens.
 - ReAct: 4/4 success; estimated cost `$0.014399`; 130,684 input tokens and 3,632 output tokens.

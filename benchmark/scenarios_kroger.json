@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0-kroger-snapshot",
+  "version": "1.1.0-kroger-snapshot-audited",
   "catalog": "kroger_snapshots/02100946-20261116.json",
-  "notes": "Twenty fixed tasks backed by the Kroger - Mt Zion snapshot retrieved on 2026-11-16. Product selectors use real Kroger UPCs. Dietary and protein constraints require explicit API metadata; unknown values never satisfy a constraint. Hidden acceptance predicates are not exposed to agents.",
+  "notes": "Twenty fixed tasks backed by the Kroger - Mt Zion snapshot retrieved on 2026-11-16. Product selectors use real Kroger UPCs. Dietary and protein constraints require explicit API metadata; unknown values never satisfy a constraint. Hidden acceptance predicates are not exposed to agents. Version 1.1 audits public wording against hidden UPC sets and exhaustively derives attribute-defined milk, salsa, cheese, and protein-bar candidate sets from the frozen catalog.",
   "scenarios": [
     {
       "id": "K01",
@@ -239,13 +239,13 @@
       "difficulty": "M",
       "title": "Correct a prefilled cart",
       "variants": {
-        "high": "Fix my cart so it has one Planet Oat Original Oat Milk, one Kroger White Bread, and twelve Kroger large white eggs. Remove everything else.",
-        "medium": "Replace the whole milk with Planet Oat Original, reduce the white bread to one, add a dozen Kroger eggs, and remove the sugar.",
+        "high": "Fix my cart so it has one 52 fl oz Planet Oat Dairy Free Original Oat Milk, one Kroger White Bread, and twelve Kroger large white eggs. Remove everything else.",
+        "medium": "Replace the whole milk with the 52 fl oz Planet Oat Original, reduce the white bread to one, add a dozen Kroger eggs, and remove the sugar.",
         "low": "Make the current cart match my corrected list."
       },
       "context": {
         "corrected_list": [
-          "1 Planet Oat Original Oat Milk",
+          "1 Planet Oat Dairy Free Original Oat Milk 52 fl oz",
           "1 Kroger White Bread",
           "12 Kroger large white eggs"
         ]
@@ -307,16 +307,26 @@
       "difficulty": "M",
       "title": "Breakfast basics under ten dollars",
       "variants": {
-        "high": "Buy one package of rolled oats, one half-gallon whole milk, twelve eggs, and one loaf of bread for at most $10.00.",
-        "medium": "Get oats, a half-gallon of whole milk, a dozen eggs, and bread; keep the total under ten dollars.",
+        "high": "Buy one of my approved Simple Truth rolled oats, one Kroger half-gallon whole milk, twelve Kroger large white eggs, and one Kroger white or wheat bread for at most $10.00.",
+        "medium": "Get one approved oats, Kroger half-gallon whole milk, a dozen Kroger large white eggs, and one approved Kroger bread; keep the total under ten dollars.",
         "low": "Restock my breakfast basics within my $10 budget."
       },
       "context": {
+        "approved_oats": [
+          "Simple Truth Organic 100% Whole Grain Rolled 1 Minute Oats",
+          "Simple Truth Protein Classic Rolled Oats"
+        ],
         "breakfast_list": [
-          "rolled oats",
-          "half-gallon whole milk",
-          "12 eggs",
-          "bread"
+          "1 approved oats",
+          "1 Kroger Vitamin D Whole Milk Half Gallon",
+          "12 Kroger Grade A Large White Eggs",
+          "1 Kroger white or wheat bread"
+        ],
+        "approved_breads": [
+          "Kroger Soft Wheat Bread",
+          "Kroger White Bread",
+          "Kroger White Sandwich Bread",
+          "Kroger Honey Wheat Bread"
         ],
         "budget": "$10.00"
       },
@@ -362,11 +372,13 @@
         },
         {
           "id": "bread",
-          "desc": "one bread",
+          "desc": "one approved Kroger white or wheat bread",
           "select": {
             "product_ids": [
               "0001111008450",
-              "0001111008485"
+              "0001111008485",
+              "0001111008486",
+              "0001111008449"
             ]
           },
           "measure": "units",
@@ -461,16 +473,26 @@
       "difficulty": "M",
       "title": "Breakfast basket with an organic-oats preference",
       "variants": {
-        "high": "Buy rolled oats, a half-gallon whole milk, twelve eggs, and bread for at most $12.00. Prefer organic oats if the budget allows.",
-        "medium": "Get my four breakfast basics under $12, choosing organic oats when possible.",
+        "high": "Buy one of my approved Simple Truth rolled oats, one Kroger half-gallon whole milk, twelve Kroger large white eggs, and one approved Kroger white or wheat bread for at most $12.00. Prefer the organic oats if the budget allows.",
+        "medium": "Get my four approved breakfast basics under $12, choosing the organic oats when possible.",
         "low": "Restock breakfast within budget and honor my oats preference if possible."
       },
       "context": {
+        "approved_oats": [
+          "Simple Truth Organic 100% Whole Grain Rolled 1 Minute Oats",
+          "Simple Truth Protein Classic Rolled Oats"
+        ],
         "breakfast_list": [
-          "rolled oats",
-          "half-gallon whole milk",
-          "12 eggs",
-          "bread"
+          "1 approved oats",
+          "1 Kroger Vitamin D Whole Milk Half Gallon",
+          "12 Kroger Grade A Large White Eggs",
+          "1 approved Kroger white or wheat bread"
+        ],
+        "approved_breads": [
+          "Kroger Soft Wheat Bread",
+          "Kroger White Bread",
+          "Kroger White Sandwich Bread",
+          "Kroger Honey Wheat Bread"
         ],
         "preference": "Organic oats preferred",
         "budget": "$12.00"
@@ -534,11 +556,13 @@
         },
         {
           "id": "bread",
-          "desc": "one bread",
+          "desc": "one approved Kroger white or wheat bread",
           "select": {
             "product_ids": [
               "0001111008450",
-              "0001111008485"
+              "0001111008485",
+              "0001111008486",
+              "0001111008449"
             ]
           },
           "measure": "units",
@@ -583,7 +607,12 @@
           "select": {
             "product_ids": [
               "0001111011125",
-              "0074982600016"
+              "0001111011126",
+              "0074982600016",
+              "0002190814256",
+              "0002190814302",
+              "0074982600010",
+              "0088884900385"
             ],
             "tags_all": [
               "gluten_free"
@@ -600,7 +629,13 @@
           "0001111011125": 1
         },
         {
+          "0001111011126": 1
+        },
+        {
           "0074982600016": 1
+        },
+        {
+          "0074982600010": 1
         }
       ]
     },
@@ -665,12 +700,19 @@
         },
         {
           "id": "cheese",
-          "desc": "one cheese",
+          "desc": "one 8 oz Kroger shredded cheese",
           "select": {
             "product_ids": [
-              "0001111050170",
+              "0001111050158",
               "0001111050159",
-              "0001111050204"
+              "0001111050170",
+              "0001111050171",
+              "0001111050174",
+              "0001111050183",
+              "0001111050202",
+              "0001111050204",
+              "0001111050205",
+              "0001111050339"
             ]
           },
           "measure": "units",
@@ -884,7 +926,9 @@
           "desc": "exactly four qualifying bars",
           "select": {
             "product_ids": [
-              "0074982600016"
+              "0074982600016",
+              "0074982600010",
+              "0088884900385"
             ],
             "tags_all": [
               "gluten_free"
@@ -1299,7 +1343,8 @@
           "desc": "one salsa",
           "select": {
             "product_ids": [
-              "0001111002269"
+              "0001111002269",
+              "0001111066759"
             ]
           },
           "measure": "units",
@@ -1308,7 +1353,7 @@
         },
         {
           "id": "cheese",
-          "desc": "one cheese",
+          "desc": "one approved cheese",
           "select": {
             "product_ids": [
               "0001111050170",
@@ -1326,6 +1371,12 @@
           "0001111072567": 2,
           "0001111002269": 1,
           "0001111050159": 1
+        },
+        {
+          "0001111005265": 1,
+          "0001111012209": 2,
+          "0001111066759": 1,
+          "0001111050159": 1
         }
       ]
     },
@@ -1335,14 +1386,14 @@
       "difficulty": "H",
       "title": "Replace unavailable preferred coffee",
       "variants": {
-        "high": "Buy one 11 oz Kroger Breakfast Blend Ground Coffee and one Planet Oat Original Oat Milk for at most $10.00. If the coffee is unavailable, use the approved 11 oz Kroger Colombian Ground Coffee.",
+        "high": "Buy one 11 oz Kroger Breakfast Blend Ground Coffee and one 52 fl oz Planet Oat Dairy Free Original Oat Milk for at most $10.00. If the coffee is unavailable, use the approved 11 oz Kroger Colombian Ground Coffee.",
         "medium": "Get the breakfast-blend coffee and Planet Oat milk under $10; use the approved Colombian coffee if needed.",
         "low": "Get my coffee supplies within the saved budget and substitution rule."
       },
       "context": {
         "coffee_supplies": [
           "Kroger Breakfast Blend Ground Coffee 11 oz",
-          "Planet Oat Original Oat Milk"
+          "Planet Oat Dairy Free Original Oat Milk 52 fl oz"
         ],
         "coffee_substitute": "Kroger Colombian Ground Coffee 11 oz",
         "budget": "$10.00"
