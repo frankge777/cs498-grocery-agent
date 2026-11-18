@@ -101,6 +101,28 @@ class KrogerBenchmarkTests(unittest.TestCase):
         self.assertEqual(trials[0]["success"], 1)
         self.assertEqual(trials[0]["final_cart"], {"0001111040601": 2})
 
+    def test_k10_accepts_equivalent_real_kroger_salsa_and_cheese(self):
+        scenario = next(value for value in self.scenarios if value.id == "K10")
+        cart = {
+            "0001111005265": 1,
+            "0001111072567": 2,
+            "0001111066759": 1,
+            "0001111050204": 1,
+        }
+        env = GroceryEnv(self.catalog, scenario, "high")
+        for product_id, quantity in cart.items():
+            self.assertTrue(env.add_to_cart(product_id, quantity).ok)
+        env.finish("equivalent Kroger products")
+        self.assertEqual(evaluate_env(env).success, 1)
+
+    def test_k16_accepts_any_curated_explicit_dairy_and_nut_free_milk(self):
+        scenario = next(value for value in self.scenarios if value.id == "K16")
+        env = GroceryEnv(self.catalog, scenario, "high")
+        self.assertFalse(env.add_to_cart("0004410015618", 1).ok)
+        self.assertTrue(env.add_to_cart("0004410019080", 1).ok)
+        env.finish("equivalent labeled oat milk")
+        self.assertEqual(evaluate_env(env).success, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

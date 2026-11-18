@@ -63,7 +63,8 @@ INTENT_INSTRUCTIONS = """Return a json object with exactly these fields:
 }
 Guidance:
 - One requirement per distinct need. Choose the measure that matches how the need is stated:
-  "units" = number of packages (e.g. "1 loaf of bread", "2 cartons"); "count" = number of individual items when packs vary (e.g. "12 eggs", "6 apples");
+  "units" = number of purchasable packages, including cans, jars, bags, cartons, boxes and loaves (e.g. "2 cans of beans" -> units min=max=2; "1 jar of salsa" -> units min=max=1). Cart-tool quantities are also package units.
+  "count" = number of individual contents when package counts may vary (e.g. "12 eggs" or "4 protein bars" can be fulfilled by packages whose size unit is ct). Never use count merely because the package itself is called a can, jar, bag, carton or box;
   "volume_ml" / "weight_g" for stated volumes or weights (e.g. "exactly 1 L" -> min 1000, max 1000);
   "portions:<role>" when the context defines meals by portions (roles: fruit, vegetable, protein, grain, dairy, snack).
 - min/max: min is the amount actually needed. max is the most the shopper allows: if the request or context states an upper limit ("at most", "max", "don't overbuy: at most N"), use that limit as max, even when it is larger than min. Use min = max only when an exact amount is required ("exactly", "no leftovers", a fixed number of packages with no limit given). Packages come in fixed sizes, so a range is usually needed for portions.

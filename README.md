@@ -58,9 +58,13 @@ an agent framework.
 
 ## Run the tests
 
-The project has no third-party runtime dependencies and supports Python 3.9+.
+The core benchmark has no third-party runtime dependencies and supports Python
+3.9+. LLM experiments use the optional OpenAI-compatible client:
 
 ```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -e '.[llm]'
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
@@ -119,13 +123,18 @@ Run the three LLM systems on the real snapshot (this uses the configured model
 API and therefore may incur model cost):
 
 ```bash
-python3 scripts/run_llm_experiments.py --dataset kroger \
+.venv/bin/python scripts/run_llm_experiments.py --dataset kroger \
   --agents ours react direct_fc --runs 3 --workers 16
 ```
 
 Every output manifest records the selected catalog/scenario paths and their
 SHA-256 hashes, so a result cannot silently mix synthetic tasks with the Kroger
 catalog.
+
+A four-task, high-explicitness smoke test is recorded under
+`results/llm_smoke_kroger_20261118_final/`. It is a pipeline check, not a final
+benchmark result: each task was sampled only once. See
+`outputs/kroger_smoke_test_20261118.md` for the audited result and limitations.
 
 The command writes:
 

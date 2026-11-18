@@ -52,7 +52,7 @@ metadata-backed dietary/protein constraints, the absence of invented portion
 measures, recovery alternatives, and end-to-end feasibility through the public
 shopping tools.
 
-At implementation time, all 8 Kroger benchmark test methods passed. Every
+At implementation time, all 10 Kroger benchmark test methods passed. Every
 reference cart for every task passed in all three instruction variants. This is
 a feasibility/implementation result, not an LLM performance score: the oracle
 replays hidden reference carts and must never be reported as an agent baseline.
@@ -69,7 +69,7 @@ python3 scripts/run_benchmark.py --dataset kroger --agent oracle_validation --ru
 LLM evaluation (uses the configured model API and may cost money):
 
 ```bash
-python3 scripts/run_llm_experiments.py --dataset kroger \
+.venv/bin/python scripts/run_llm_experiments.py --dataset kroger \
   --agents ours react direct_fc --runs 3 --workers 16
 ```
 

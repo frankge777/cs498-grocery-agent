@@ -48,6 +48,9 @@ SOY_ORIGINAL = "0001111009431"
 SOY_VANILLA = "0001111009433"
 OAT_ORIGINAL = "0004410015618"
 OAT_CREAMY = "0004410015619"
+OAT_UNSWEETENED = "0004410019080"
+OAT_BARISTA = "0004410019092"
+OATLY_CHURROS = "0019064663242"
 BREAD_WHEAT = "0001111008450"
 BREAD_WHITE = "0001111008485"
 EGGS_24 = "0001111015097"
@@ -71,8 +74,10 @@ SPINACH = "0001111008631"
 CARROTS = "0001111091620"
 TORTILLAS = "0001111005265"
 SALSA = "0001111002269"
+SALSA_ALT = "0001111066759"
 CHEESE = "0001111050170"
 CHEESE_ALT = "0001111050159"
+CHEESE_MEXICAN = "0001111050204"
 BAR_KROGER = "0001111011125"
 BAR_PURE = "0074982600016"
 YOGURT = "0003663201953"
@@ -86,6 +91,15 @@ SAUCE_MARINARA = "0001111013416"
 SAUCE_TOMATO_BASIL = "0001111013414"
 COFFEE_BREAKFAST = "0001111010738"
 COFFEE_COLOMBIAN = "0001111010741"
+
+DAIRY_NUT_FREE_OAT_OR_SOY_MILKS = [
+    OAT_ORIGINAL,
+    OAT_CREAMY,
+    OAT_UNSWEETENED,
+    OAT_BARISTA,
+    OATLY_CHURROS,
+    SOY_VANILLA,
+]
 
 
 SCENARIOS = [
@@ -206,8 +220,8 @@ SCENARIOS = [
         "Buy one package of Kroger soft taco tortillas, exactly two cans of black beans, one Kroger mild salsa, and one 8 oz bag of Kroger shredded cheese. Spend at most $8.00.",
         "Get tortillas, two black-bean cans, mild salsa, and an 8 oz shredded cheese for taco night, under $8.",
         "Get my taco-night list without going over the saved budget.",
-        [need("tortillas", "one tortillas", [TORTILLAS]), need("beans", "two bean cans", [BEANS, BEANS_NO_SALT], minimum=2, maximum=2), need("salsa", "one salsa", [SALSA]), need("cheese", "one cheese", [CHEESE, CHEESE_ALT])],
-        [{TORTILLAS: 1, BEANS: 2, SALSA: 1, CHEESE: 1}],
+        [need("tortillas", "one tortillas", [TORTILLAS]), need("beans", "two bean cans", [BEANS, BEANS_NO_SALT], minimum=2, maximum=2), need("salsa", "one salsa", [SALSA, SALSA_ALT]), need("cheese", "one cheese", [CHEESE, CHEESE_ALT, CHEESE_MEXICAN])],
+        [{TORTILLAS: 1, BEANS: 2, SALSA: 1, CHEESE: 1}, {TORTILLAS: 1, BEANS: 2, SALSA_ALT: 1, CHEESE_MEXICAN: 1}],
         budget_cents=800,
         context={"taco_list": ["1 Kroger soft taco tortillas", "2 black bean cans", "1 Kroger mild salsa", "1 Kroger 8 oz shredded cheese"], "budget": "$8.00"},
     ),
@@ -257,10 +271,10 @@ SCENARIOS = [
         "Add one carton of milk. A household restriction is not written down, so ask about it before choosing.",
         "Get one milk that works with our unstated dietary restriction; ask first.",
         "Grab milk for the household.",
-        [need("milk", "one dairy-free nut-free milk", [OAT_ORIGINAL, OAT_CREAMY, SOY_VANILLA], tags_all=["dairy_free", "nut_free"])],
-        [{OAT_ORIGINAL: 1}, {OAT_CREAMY: 1}, {SOY_VANILLA: 1}],
+        [need("milk", "one dairy-free nut-free milk", DAIRY_NUT_FREE_OAT_OR_SOY_MILKS, tags_all=["dairy_free", "nut_free"])],
+        [{OAT_ORIGINAL: 1}, {OAT_CREAMY: 1}, {SOY_VANILLA: 1}, {OAT_UNSWEETENED: 1}],
         clarification=[{"id": "milk_restriction", "status": "required", "keywords": ["milk", "dairy", "nut", "allerg", "restriction", "diet"], "answer": "Choose exactly one product explicitly labeled both dairy-free and nut-free. Oat or soy is fine."}],
-        interactions=[{"type": "clarify_before_add", "topic": "milk_restriction", "select": {"product_ids": [OAT_ORIGINAL, OAT_CREAMY, SOY_VANILLA, WHOLE_HALF, SOY_ORIGINAL]}}],
+        interactions=[{"type": "clarify_before_add", "topic": "milk_restriction", "select": {"product_ids": DAIRY_NUT_FREE_OAT_OR_SOY_MILKS + [WHOLE_HALF, SOY_ORIGINAL]}}],
         context={"household_note": "A milk-related dietary restriction is missing from this note. Ask before selecting.", "quantity": "one carton"},
     ),
     scenario(
@@ -268,8 +282,8 @@ SCENARIOS = [
         "Buy one Planet Oat Dairy Free Original Oat Milk. If it becomes unavailable, substitute one other milk explicitly labeled dairy-free and nut-free.",
         "Get Planet Oat Original, or another dairy-free nut-free carton if it is out.",
         "Get my usual milk and use the saved substitution rule if needed.",
-        [need("milk", "one qualifying milk", [OAT_ORIGINAL, OAT_CREAMY, SOY_VANILLA], tags_all=["dairy_free", "nut_free"])],
-        [{OAT_CREAMY: 1}, {SOY_VANILLA: 1}],
+        [need("milk", "one qualifying milk", DAIRY_NUT_FREE_OAT_OR_SOY_MILKS, tags_all=["dairy_free", "nut_free"])],
+        [{OAT_CREAMY: 1}, {SOY_VANILLA: 1}, {OAT_UNSWEETENED: 1}],
         events=[{"product_id": OAT_ORIGINAL, "trigger": "first_attempt"}],
         context={"usual_milk": "Planet Oat Dairy Free Original Oat Milk", "substitution_rule": "One other product explicitly labeled dairy-free and nut-free."},
     ),

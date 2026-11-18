@@ -1,0 +1,32 @@
+{
+  "catalog_sha256": "2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce",
+  "scenarios_sha256": "2df62aab3da3ccc7e63eb247e5d00dca00ce26d582973e4c73cbcde232cd8b8f",
+  "catalog_path": "benchmark/kroger_snapshots/02100946-20261116.json",
+  "scenarios_path": "benchmark/scenarios_kroger.json",
+  "tool_schema_version": "1.0.0",
+  "agent": {
+    "name": "direct_fc",
+    "split": "main",
+    "dataset": "kroger",
+    "catalog_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/kroger_snapshots/02100946-20261116.json",
+    "scenario_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/scenarios_kroger.json",
+    "llm": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": false,
+      "temperature": 0.7,
+      "max_tokens": 4096
+    },
+    "runs": 1,
+    "variants": [
+      "high"
+    ],
+    "scenarios": [
+      "K10",
+      "K13",
+      "K15",
+      "K16"
+    ],
+    "started_utc": "2026-11-18T10:47:56.322812+00:00"
+  }
+}
