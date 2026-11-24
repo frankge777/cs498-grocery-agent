@@ -1,5 +1,30 @@
 # CS498 Intent-Grounded Grocery Agent
 
+## Web app (frontend + backend, deploys to Vercel)
+
+| Part | Path | What it does |
+|---|---|---|
+| Backend | `api/index.py` (FastAPI) → `src/grocery_web/service.py` | `GET /api/health`, `GET /api/locations?zip_code=`, `GET /api/products?q=`, `POST /api/agent/run` (runs the intent-grounded agent and returns cart, intent, questions asked, trajectory) |
+| Frontend | `web/` (Vite + React) | request form → cart table, parsed intent, tool trajectory |
+
+Data source is `live` (Kroger Public API; needs `KROGER_CLIENT_ID`/`KROGER_CLIENT_SECRET`)
+or `snapshot` (frozen Mt Zion snapshot; works without Kroger keys). `auto` picks
+live when the keys exist. The cart is a local simulation; pushing it to a real
+Kroger cart (OAuth authorization code, `cart.basic:write`) is not implemented yet.
+
+Local dev (two terminals):
+
+```bash
+.venv/bin/pip install -r requirements.txt uvicorn
+.venv/bin/uvicorn api.index:app --reload --port 8000
+cd web && npm install && npm run dev      # http://localhost:5173, /api proxied to :8000
+```
+
+Deploy: import the repo in Vercel (no framework preset; `vercel.json` sets the
+build), and add `DEEPSEEK_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`
+under Project → Settings → Environment Variables. Agent runs can take up to a
+few minutes; `maxDuration` is 300 s.
+
 ## Benchmark (draft release, follows the draft benchmark paper)
 
 `benchmark/` + `src/grocery_bench/` implement the benchmark described in the

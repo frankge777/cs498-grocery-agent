@@ -1,0 +1,9 @@
+.venv
+.env
+results
+outputs
+paper
+work
+tmp
+tests
+web/node_modules

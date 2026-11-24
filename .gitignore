@@ -18,3 +18,8 @@ paper/*.synctex.gz
 
 # secrets
 .env
+
+# web
+web/node_modules/
+web/dist/
+.vercel
