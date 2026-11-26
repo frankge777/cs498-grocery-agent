@@ -18,6 +18,7 @@ same caps. Agents only see the public observation and tool outputs.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, TypedDict
 
@@ -316,7 +317,7 @@ class IntentGroundedLLMAgent:
 MEASURES = ("units", "count", "volume_ml", "weight_g")
 
 
-def normalize_intent(raw: dict) -> dict:
+def normalize_intent(raw: dict, strict_upc: bool = False) -> dict:
     if not isinstance(raw, dict):
         raise ValueError("intent must be an object")
     requirements = []
@@ -334,7 +335,8 @@ def normalize_intent(raw: dict) -> dict:
             "min": int(low),
             "max": None if high is None else int(high),
             "required_tags": [str(t) for t in req.get("required_tags") or []],
-            "product_ids": [str(p) for p in req.get("product_ids") or []],
+            "product_ids": [str(p) for p in req.get("product_ids") or []
+                            if not strict_upc or re.fullmatch(r"\d{13}", str(p))],
             "brand": req.get("brand") or None,
         })
     budget = raw.get("budget_cents")
@@ -361,6 +363,27 @@ def amount_per_package(details: dict, measure: str) -> int:
     if measure.startswith("portions:"):
         return int((details.get("portions") or {}).get(measure.split(":", 1)[1], 0))
     return 0
+
+
+def brand_matches(requirement: dict, product: dict) -> bool:
+    """Use explicit name evidence when the API brand field is incomplete."""
+    required = " ".join(str(requirement.get("brand") or "").lower().split())
+    if not required:
+        return True
+    actual = " ".join(str(product.get("brand") or "").lower().split())
+    name = re.sub(r"[^a-z0-9 ]+", " ", str(product.get("name") or "").lower())
+    name = " ".join(name.split())
+    description = re.sub(r"[^a-z0-9 ]+", " ", str(requirement.get("description") or "").lower())
+    description = " ".join(description.split())
+    if actual == required:
+        return True
+    if actual.startswith(required + " ") and name.startswith(actual):
+        return True
+    # A missing brand is unknown, not evidence of a different brand. Require
+    # the exact catalog name to be present in the shopper-derived requirement.
+    if actual in {"", "unknown"} and name and name in description:
+        return True
+    return False
 
 
 def check_cart(intent: dict, cart: Dict[str, int], details: Dict[str, dict], assignments: List[dict],
@@ -397,7 +420,7 @@ def check_cart(intent: dict, cart: Dict[str, int], details: Dict[str, dict], ass
             violations.append(f"{pid} lacks required tags {sorted(missing)} for requirement {rid} (unlisted tags count as unknown)")
         if req["product_ids"] and pid not in req["product_ids"]:
             violations.append(f"{pid} is not one of the specified products {req['product_ids']} for {rid}")
-        if req["brand"] and info.get("brand") != req["brand"]:
+        if req["brand"] and not brand_matches(req, info):
             violations.append(f"{pid} is brand {info.get('brand')}, but {rid} requires {req['brand']}")
 
     for rid, req in reqs.items():

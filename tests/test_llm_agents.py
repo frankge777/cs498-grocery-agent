@@ -10,6 +10,7 @@ from grocery_agent.llm_agents import (
     IntentGroundedLLMAgent,
     ReActAgent,
     check_cart,
+    brand_matches,
     normalize_intent,
 )
 
@@ -161,6 +162,17 @@ class LLMAgentTests(unittest.TestCase):
         text = " ".join(report["violations"])
         self.assertIn("dairy_free", text)
         self.assertIn("exceeds budget", text)
+
+    def test_brand_verifier_uses_exact_name_evidence_for_missing_api_brand(self):
+        self.assertTrue(brand_matches(
+            {"brand": "Simple Truth", "description": "Simple Truth Organic Rolled Oats"},
+            {"brand": "Simple Truth Organic", "name": "Simple Truth Organic® Rolled Oats"}))
+        self.assertTrue(brand_matches(
+            {"brand": "Kroger", "description": "One Kroger Cut and Peeled Baby Carrots"},
+            {"brand": "Unknown", "name": "Kroger Cut and Peeled Baby Carrots"}))
+        self.assertFalse(brand_matches(
+            {"brand": "Kroger", "description": "Carrots"},
+            {"brand": "Unknown", "name": "Unbranded Baby Carrots"}))
 
 
 if __name__ == "__main__":

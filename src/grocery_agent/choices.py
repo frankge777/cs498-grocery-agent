@@ -8,20 +8,76 @@ from model-generated option text. This module makes no model calls.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from typing import Callable, Dict, List, Mapping, Optional, Sequence
 
 
 ChoiceProvider = Callable[[dict], dict]
+PACKAGING_WORDS = {"bag", "bags", "pack", "packs", "package", "packages"}
+
+
+def _core_query_terms(query: str) -> List[str]:
+    return [word.rstrip("s") for word in re.findall(r"[a-z]+", query.lower())
+            if word not in PACKAGING_WORDS]
+
+
+def _name_mentions_single_item(query: str, product: Mapping) -> bool:
+    terms = _core_query_terms(query)
+    if len(terms) != 1:
+        return True
+    name_words = {word.rstrip("s") for word in re.findall(r"[a-z]+", str(product.get("name") or "").lower())}
+    return terms[0] in name_words
+
+
+def _obvious_mixture(query: str, product: Mapping) -> bool:
+    """Exclude clear vegetable mixes from a single-vegetable search.
+
+    Keep uncertain products for the shopper to decide. This deliberately does
+    not try to infer ingredients or dietary claims from a product title.
+    """
+    terms = _core_query_terms(query)
+    if len(terms) != 1 or product.get("category") not in {"produce", "frozen"}:
+        return False
+    name = str(product.get("name") or "").lower()
+    if not _name_mentions_single_item(query, product):
+        return False
+    return " & " in name or ", " in name
 
 
 @dataclass
 class RequirementChoice:
     requirement_id: str
     question: str
+    search_query: str = ""
+    quantity: int = 1
+    required_tags: List[str] = field(default_factory=list)
+    required_brand: Optional[str] = None
+    required_product_ids: List[str] = field(default_factory=list)
     candidates: List[dict] = field(default_factory=list)
     selected_product_id: Optional[str] = None
     excluded_product_ids: set = field(default_factory=set)
     status: str = "unresolved"
+    force_user_choice: bool = False
+
+
+def coordinator_from_intent(intent: Mapping) -> "ChoiceCoordinator":
+    """Create one independently tracked product choice per unit-based need."""
+    requirements = []
+    for item in intent["requirements"]:
+        if item.get("measure", "units") != "units":
+            raise ValueError("Interactive product choice currently supports package units only")
+        minimum = item.get("min", 1)
+        maximum = item.get("max", minimum)
+        if not isinstance(minimum, int) or minimum < 1 or minimum != maximum:
+            raise ValueError("Interactive product choice requires an exact positive package quantity")
+        requirements.append(RequirementChoice(
+            requirement_id=item["id"], question=f"Which product for {item['description']}?",
+            search_query=item["search_query"], quantity=minimum,
+            required_tags=list(item.get("required_tags") or []),
+            required_brand=item.get("brand"),
+            required_product_ids=list(item.get("product_ids") or []),
+        ))
+    return ChoiceCoordinator(requirements)
 
 
 class ChoiceCoordinator:
@@ -47,13 +103,72 @@ class ChoiceCoordinator:
                 continue
             if product.get("in_stock") is not True:
                 continue
-            if not isinstance(product.get("price_cents"), int) or product["price_cents"] < 0:
+            # Zero means the feed did not provide a usable price, not a free item.
+            if not isinstance(product.get("price_cents"), int) or product["price_cents"] <= 0:
                 continue
             seen.add(product_id)
             candidates.append(dict(product))
         requirement.candidates = candidates
         if requirement.status != "added":
             requirement.status = "unresolved"
+
+    def search_unresolved(self, env, budget_cents: Optional[int] = None) -> dict:
+        """Search only unresolved needs using the public environment tools."""
+        counts = {}
+        for requirement in self.requirements.values():
+            if requirement.status != "unresolved":
+                continue
+            observation = env.search_products(requirement.search_query, max_results=20)
+            if not observation.ok:
+                raise ValueError(observation.message)
+            matched = []
+            for summary in observation.data["products"]:
+                product_id = str(summary["id"])
+                if not _name_mentions_single_item(requirement.search_query, summary):
+                    continue
+                if _obvious_mixture(requirement.search_query, summary):
+                    continue
+                if requirement.required_product_ids and product_id not in requirement.required_product_ids:
+                    continue
+                if budget_cents is not None and summary["price_cents"] * requirement.quantity > budget_cents:
+                    continue
+                if requirement.required_brand and summary.get("brand") not in (requirement.required_brand, "Unknown"):
+                    continue
+                if requirement.required_tags:
+                    detail = env.get_product(product_id)
+                    if not detail.ok or not set(requirement.required_tags).issubset(
+                        detail.data.get("dietary_tags", [])
+                    ):
+                        continue
+                matched.append(summary)
+            self.set_candidates(requirement.requirement_id, matched)
+            counts[requirement.requirement_id] = len(self.requirements[requirement.requirement_id].candidates)
+        return counts
+
+    def decide(self, auto_allowed: Sequence[str] = ()) -> dict:
+        """Select single options; batch the rest for the shopper.
+
+        The caller may authorize automatic cheapest-choice per requirement only
+        after interpreting the shopper's words. This method does not infer that
+        authorization from a product count or price.
+        """
+        allowed = set(auto_allowed)
+        if allowed - self.requirements.keys():
+            raise ValueError("Unknown requirement in auto_allowed")
+        auto_selected = {}
+        for requirement in self.requirements.values():
+            if requirement.status != "unresolved" or not requirement.candidates:
+                continue
+            if not requirement.force_user_choice and (
+                len(requirement.candidates) == 1 or requirement.requirement_id in allowed
+            ):
+                chosen = min(requirement.candidates,
+                             key=lambda product: (product["price_cents"], product["id"]))
+                requirement.selected_product_id = chosen["id"]
+                requirement.status = "selected"
+                auto_selected[requirement.requirement_id] = chosen["id"]
+        request = self.prepare_batch()
+        return {"auto_selected": auto_selected, **request}
 
     def prepare_batch(self, requirement_ids: Optional[Sequence[str]] = None) -> dict:
         """Make a serializable request for a future frontend or simulated user."""
@@ -110,6 +225,7 @@ class ChoiceCoordinator:
             requirement = self.requirements[decision["requirement_id"]]
             requirement.selected_product_id = option["product_id"]
             requirement.status = "selected"
+            requirement.force_user_choice = False
             self.history.append({"decision_id": decision["decision_id"],
                                  "requirement_id": requirement.requirement_id,
                                  "selected_option_id": option["option_id"],
@@ -136,6 +252,7 @@ class ChoiceCoordinator:
         requirement.selected_product_id = None
         requirement.candidates = [p for p in requirement.candidates if p["id"] != product_id]
         requirement.status = "unresolved"
+        requirement.force_user_choice = True
 
     def selected_total_cents(self, quantities: Mapping[str, int], initial_total_cents: int = 0) -> int:
         total = initial_total_cents
@@ -157,8 +274,12 @@ class ChoiceCoordinator:
         return {
             "requirements": [
                 {"requirement_id": item.requirement_id, "question": item.question,
+                 "search_query": item.search_query, "quantity": item.quantity,
+                 "required_tags": item.required_tags, "required_brand": item.required_brand,
+                 "required_product_ids": item.required_product_ids,
                  "candidates": item.candidates, "selected_product_id": item.selected_product_id,
                  "excluded_product_ids": sorted(item.excluded_product_ids), "status": item.status}
+                 | {"force_user_choice": item.force_user_choice}
                 for item in self.requirements.values()
             ],
             "next_decision": self._next_decision,
@@ -171,8 +292,13 @@ class ChoiceCoordinator:
         coordinator = cls([
             RequirementChoice(
                 requirement_id=item["requirement_id"], question=item["question"],
+                search_query=item.get("search_query", ""), quantity=item.get("quantity", 1),
+                required_tags=list(item.get("required_tags") or []),
+                required_brand=item.get("required_brand"),
+                required_product_ids=list(item.get("required_product_ids") or []),
                 candidates=list(item["candidates"]), selected_product_id=item["selected_product_id"],
                 excluded_product_ids=set(item["excluded_product_ids"]), status=item["status"],
+                force_user_choice=item.get("force_user_choice", False),
             )
             for item in snapshot["requirements"]
         ])

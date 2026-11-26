@@ -4,7 +4,7 @@
 
 | Part | Path | What it does |
 |---|---|---|
-| Backend | `api/index.py` (FastAPI) → `src/grocery_web/service.py` | `GET /api/health`, `GET /api/locations?zip_code=`, `GET /api/products?q=`, `POST /api/agent/run` (runs the intent-grounded agent and returns cart, intent, questions asked, trajectory) |
+| Backend | `api/index.py` (FastAPI) → `src/grocery_web/service.py` / `interactive_service.py` | `GET /api/health`, `GET /api/locations?zip_code=`, `GET /api/products?q=`, `POST /api/agent/run`, `POST /api/agent/interactive/start`, `POST /api/agent/interactive/resume` |
 | Frontend | `web/` (Vite + React) | request form → cart table, parsed intent, tool trajectory |
 
 Data source is `live` (Kroger Public API; needs `KROGER_CLIENT_ID`/`KROGER_CLIENT_SECRET`)
@@ -21,7 +21,8 @@ cd web && npm install && npm run dev      # http://localhost:5173, /api proxied 
 ```
 
 Deploy: import the repo in Vercel (no framework preset; `vercel.json` sets the
-build), and add `DEEPSEEK_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`
+build), and add `DEEPSEEK_API_KEY`, `KROGER_CLIENT_ID`, `KROGER_CLIENT_SECRET`,
+and a random `GROCERY_SESSION_SECRET` of at least 32 characters
 under Project → Settings → Environment Variables. Agent runs can take up to a
 few minutes; `maxDuration` is 300 s.
 
@@ -138,10 +139,50 @@ the next batch includes only the affected requirement. Use
 before adding products. `SimulatedChoiceProvider` implements the same response
 contract for deterministic offline tests, with ranked fallback products.
 
-This protocol is an integration point, not yet the default agent workflow:
-the current `IntentGroundedLLMAgent` still uses its existing free-text
-`ask_user` and shopping loop. A future frontend and agent choice policy can
-use the protocol without changing the request/response format.
+The protocol now runs through an **opt-in interactive session** in
+`src/grocery_agent/interactive.py` and `src/grocery_web/interactive_service.py`.
+It is separate from the frozen benchmark agent and does not change its past
+results. The React frontend still calls `/api/agent/run`; it has not been wired
+to the new choice endpoints yet.
+
+Start a session with `POST /api/agent/interactive/start`:
+
+```json
+{"instruction":"Buy one bag of carrots and one yogurt under $5. Let me choose.","source":"snapshot"}
+```
+
+The response has `status: "waiting_for_user"`, a `questions` array (one entry
+per item), and a signed `session_token`. Each question contains a `decision_id`,
+`requirement_id`, and `options` with `option_id`, UPC, name, size, and price.
+Show all questions together. Send one answer per decision to
+`POST /api/agent/interactive/resume`:
+
+```json
+{"session_token":"<token from start>","answers":{"answers":[{"decision_id":"d1","selected_option_id":"d1_o2"},{"decision_id":"d2","selected_option_id":"d2_o1"}]}}
+```
+
+Use the actual IDs from the response. The response may be `complete`,
+`waiting_for_user` (a replacement choice after stock changes),
+`budget_conflict`, `no_candidates`, or `round_limit`. For `budget_conflict`,
+call resume with `{"session_token":"<token>",
+"reconsider_requirement_ids":["r1"]}` to reopen one or more item choices.
+The frontend should keep the latest token and show the latest questions.
+Tokens expire after 30 minutes; the signed state contains the instruction and
+selection history, so treat it as private user data. No database is needed for
+this demo. Both snapshot and live modes only simulate the cart locally.
+
+The choice workflow currently supports exact positive package quantities.
+Requests for a weight, volume, number of contents inside a pack, or mandatory
+free-text clarification return a validation error. The UI also needs to be
+connected to these endpoints. Search can return many candidates; the UI can
+display them but a ranking/shortlist policy is still needed for a compact
+shopping experience.
+
+For offline development validation, run
+`.venv/bin/python scripts/run_choice_validation.py`. Its three scenarios use
+real Kroger snapshot products and a scripted shopper, but the input intent is
+provided by the scenario. This checks the choice loop, stock recovery, and
+budget reconsideration; it is not a measured LLM benchmark result.
 
 Create an application in the Kroger Developer portal, then set its client
 credentials locally (never commit them):

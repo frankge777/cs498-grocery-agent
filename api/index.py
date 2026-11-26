@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field  # noqa: E402
 
 from grocery_bench.kroger import KrogerAPIError  # noqa: E402
 from grocery_web import service  # noqa: E402
+from grocery_web import interactive_service  # noqa: E402
 
 app = FastAPI(title="Grocery Agent API")
 
@@ -29,6 +30,20 @@ class AgentRequest(BaseModel):
     context: Dict[str, Any] = Field(default_factory=dict)
     clarification_answer: Optional[str] = Field(None, max_length=1000)
     use_verifier: bool = True
+
+
+class InteractiveStartRequest(BaseModel):
+    instruction: str = Field(..., max_length=2000)
+    source: Optional[str] = "auto"
+    zip_code: Optional[str] = None
+    location_id: Optional[str] = None
+    context: Dict[str, Any] = Field(default_factory=dict)
+
+
+class InteractiveResumeRequest(BaseModel):
+    session_token: str
+    answers: Optional[Dict[str, Any]] = None
+    reconsider_requirement_ids: Optional[list[str]] = None
 
 
 def _call(fn, *args, **kwargs):
@@ -74,3 +89,15 @@ def agent_run(request: AgentRequest) -> dict:
         clarification_answer=request.clarification_answer,
         use_verifier=request.use_verifier,
     )
+
+
+@app.post("/api/agent/interactive/start")
+def interactive_start(request: InteractiveStartRequest) -> dict:
+    return _call(interactive_service.start, request.instruction, source=request.source,
+                 zip_code=request.zip_code, location_id=request.location_id, context=request.context)
+
+
+@app.post("/api/agent/interactive/resume")
+def interactive_resume(request: InteractiveResumeRequest) -> dict:
+    return _call(interactive_service.resume, request.session_token,
+                 answers=request.answers, reconsider_requirement_ids=request.reconsider_requirement_ids)

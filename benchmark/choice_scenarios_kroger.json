@@ -1,0 +1,51 @@
+{
+  "version": "0.1.0-choice-development",
+  "catalog": "kroger_snapshots/02100946-20261116.json",
+  "notes": "Development tasks for the interactive-choice pipeline. User preferences and reference intent are private to the offline simulator; they are never passed to the shopping session. This is separate from the frozen 1.1.1 Kroger benchmark.",
+  "scenarios": [
+    {
+      "id": "C01",
+      "instruction": "Buy one bag of carrots and one yogurt, total at most $5. Let me choose between products.",
+      "budget_cents": 500,
+      "reference_intent": {
+        "requirements": [
+          {"id": "r1", "description": "one bag of carrots", "search_query": "carrots", "measure": "units", "min": 1, "max": 1},
+          {"id": "r2", "description": "one yogurt", "search_query": "yogurt", "measure": "units", "min": 1, "max": 1}
+        ]
+      },
+      "simulated_user": {"r1": ["0001111091620"], "r2": ["0003663200834"]},
+      "expected_cart": {"0001111091620": 1, "0003663200834": 1},
+      "expected_question_rounds": [["r1", "r2"]]
+    },
+    {
+      "id": "C02",
+      "instruction": "Buy carrots and one yogurt under $5. Ask me which products; if a selected yogurt is unavailable, ask me again for a substitute.",
+      "budget_cents": 500,
+      "reference_intent": {
+        "requirements": [
+          {"id": "r1", "description": "one bag of carrots", "search_query": "carrots", "measure": "units", "min": 1, "max": 1},
+          {"id": "r2", "description": "one yogurt", "search_query": "yogurt", "measure": "units", "min": 1, "max": 1}
+        ]
+      },
+      "stock_events": [{"product_id": "0003663200834", "trigger": "first_attempt"}],
+      "simulated_user": {"r1": ["0001111091620"], "r2": ["0003663200834", "0003663202024"]},
+      "expected_cart": {"0001111091620": 1, "0003663202024": 1},
+      "expected_question_rounds": [["r1", "r2"], ["r2"]]
+    },
+    {
+      "id": "C03",
+      "instruction": "Buy carrots and one yogurt for at most $3 total. Let me choose, and ask me to reconsider if my choices exceed the budget.",
+      "budget_cents": 300,
+      "reference_intent": {
+        "requirements": [
+          {"id": "r1", "description": "one bag of carrots", "search_query": "carrots", "measure": "units", "min": 1, "max": 1},
+          {"id": "r2", "description": "one yogurt", "search_query": "yogurt", "measure": "units", "min": 1, "max": 1}
+        ]
+      },
+      "simulated_user": {"r1": ["0001111091659"], "r2": ["0003663200834"]},
+      "budget_reconsider": {"requirement_ids": ["r1"], "simulated_user": {"r1": ["0001111091620"]}},
+      "expected_cart": {"0001111091620": 1, "0003663200834": 1},
+      "expected_question_rounds": [["r1", "r2"], ["r1"]]
+    }
+  ]
+}
