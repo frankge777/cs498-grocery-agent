@@ -117,6 +117,32 @@ There are now two Kroger modes:
 Both modes keep cart operations inside the local environment. They cannot add
 to a Kroger account cart, check out, or place an order.
 
+### Product choice interface for a future frontend
+
+`src/grocery_agent/choices.py` provides a backend-only product-choice protocol.
+Create one `RequirementChoice` per requested item, supply candidate product
+summaries from `search_products`, and call `ChoiceCoordinator.prepare_batch()`.
+It returns a JSON-ready `{"questions": [...]}` with stable `decision_id`,
+`requirement_id`, `option_id`, and product ID for each option. Render the
+product names, sizes and prices from those options in the frontend. Submit a
+JSON response of the form
+`{"answers": [{"decision_id": "d1", "selected_option_id": "d1_o2"}]}`
+to `apply_answers()`. The coordinator validates all answers before changing
+any selection; `selected_product_id` then contains the chosen product ID.
+
+The frontend can persist `checkpoint()` as JSON while awaiting a reply and
+restore it with `ChoiceCoordinator.from_checkpoint()`. If a selected item
+becomes unavailable, call `mark_unavailable(requirement_id, product_id)`;
+the next batch includes only the affected requirement. Use
+`selected_total_cents()` to check the combined basket against the budget
+before adding products. `SimulatedChoiceProvider` implements the same response
+contract for deterministic offline tests, with ranked fallback products.
+
+This protocol is an integration point, not yet the default agent workflow:
+the current `IntentGroundedLLMAgent` still uses its existing free-text
+`ask_user` and shopping loop. A future frontend and agent choice policy can
+use the protocol without changing the request/response format.
+
 Create an application in the Kroger Developer portal, then set its client
 credentials locally (never commit them):
 
