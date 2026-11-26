@@ -151,10 +151,26 @@ Start a session with `POST /api/agent/interactive/start`:
 {"instruction":"Buy one bag of carrots and one yogurt under $5. Let me choose.","source":"snapshot"}
 ```
 
-The response has `status: "waiting_for_user"`, a `questions` array (one entry
-per item), and a signed `session_token`. Each question contains a `decision_id`,
-`requirement_id`, and `options` with `option_id`, UPC, name, size, and price.
-Show all questions together. Send one answer per decision to
+If a required quantity is missing, the first response has
+`status: "needs_clarification"` and quantity questions. For example, `"Buy
+yogurt"` pauses with `q_r1_quantity`; submit the answer to the resume endpoint:
+
+```json
+{"session_token":"<token from start>","clarification_answers":{"answers":[{"question_id":"q_r1_quantity","amount":2,"measure":"units"}]}}
+```
+
+`measure` may be `units` (packages), `count` (contents), `volume_ml`, or
+`weight_g`. Mandatory free-text questions use the same endpoint with
+`{"question_id":"q_open_1","text":"..."}`; the model extracts intent again
+from the answer. The frontend should show all clarification questions together
+and use the latest returned token on every resume call.
+
+After clarification, the response has `status: "waiting_for_user"`, a
+`questions` array (one entry per product), and a signed `session_token`. Each
+question has a `decision_id`, `requirement_id`, and `options` with `option_id`,
+UPC, name, size, price, required package quantity, and line total. For example,
+the choice for twelve eggs may show two cartons of six eggs. Show all questions
+together. Send one answer per decision to
 `POST /api/agent/interactive/resume`:
 
 ```json
@@ -162,8 +178,10 @@ Show all questions together. Send one answer per decision to
 ```
 
 Use the actual IDs from the response. The response may be `complete`,
-`waiting_for_user` (a replacement choice after stock changes),
-`budget_conflict`, `no_candidates`, or `round_limit`. For `budget_conflict`,
+`needs_clarification`, `waiting_for_user` (including a replacement choice after
+stock changes), `budget_conflict`, `no_candidates`, `clarification_limit`,
+`verification_failed`, or `round_limit`. A complete response includes a
+deterministic `verification` report. For `budget_conflict`,
 call resume with `{"session_token":"<token>",
 "reconsider_requirement_ids":["r1"]}` to reopen one or more item choices.
 The frontend should keep the latest token and show the latest questions.
@@ -171,12 +189,14 @@ Tokens expire after 30 minutes; the signed state contains the instruction and
 selection history, so treat it as private user data. No database is needed for
 this demo. Both snapshot and live modes only simulate the cart locally.
 
-The choice workflow currently supports exact positive package quantities.
-Requests for a weight, volume, number of contents inside a pack, or mandatory
-free-text clarification return a validation error. The UI also needs to be
-connected to these endpoints. Search can return many candidates; the UI can
-display them but a ranking/shortlist policy is still needed for a compact
-shopping experience.
+The choice workflow supports positive package counts and exact or bounded
+counts, weights, and volumes when package metadata is sufficient. Missing
+quantities remain unknown until the shopper answers; optional brand or flavor
+fields do not create mandatory questions. Product choice and final hard checks
+run in Python. The UI still needs to be connected to these endpoints. Search
+can return many candidates; a ranking/shortlist policy is still needed for a
+compact shopping experience. Meal-portion goals depend on portion metadata,
+which is usually unknown for real Kroger products.
 
 For offline development validation, run
 `.venv/bin/python scripts/run_choice_validation.py`. Its three scenarios use

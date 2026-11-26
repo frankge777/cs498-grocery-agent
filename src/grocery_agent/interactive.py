@@ -9,8 +9,10 @@ from __future__ import annotations
 import json
 from typing import Mapping, Optional, Sequence
 
-from .choices import ChoiceCoordinator, coordinator_from_intent
-from .llm_agents import normalize_intent, task_message
+from .choices import ChoiceCoordinator, choice_brand_matches, coordinator_from_intent, packages_for
+from .interactive_intent import (INTERACTIVE_INTENT_GUIDANCE, clarification_questions,
+                                 normalize_interactive_intent)
+from .llm_agents import amount_per_package, task_message
 from . import prompts
 
 
@@ -19,31 +21,190 @@ class InteractiveShoppingSession:
                  auto_allowed: Sequence[str] = (), max_rounds: int = 8):
         self.env = env
         self.intent = dict(intent)
-        self.choices = coordinator or coordinator_from_intent(intent)
+        self.choices = coordinator
+        if self.choices is None and not clarification_questions(self.intent):
+            self.choices = coordinator_from_intent(intent)
         self.auto_allowed = list(auto_allowed)
         self.rounds = 0
         self.max_rounds = max_rounds
+        self.pending_clarifications = []
+        self.clarifications = []
+        self.quantity_overrides = {}
+        self.clarification_rounds = 0
+
+    @staticmethod
+    def extract_intent(env, llm, clarifications=()) -> dict:
+        user = task_message(env, env.view_cart().data)
+        if clarifications:
+            user += "\n\nAnswers from the shopper:\n" + json.dumps(list(clarifications))
+        messages = [
+            {"role": "system", "content": prompts.INTENT_SYSTEM},
+            {"role": "user", "content": user + "\n\n" + prompts.INTENT_INSTRUCTIONS
+             + "\n\n" + INTERACTIVE_INTENT_GUIDANCE},
+        ]
+        reply = llm.chat(messages, json_mode=True, env=env)
+        return normalize_interactive_intent(json.loads(reply.content))
 
     @classmethod
     def from_model(cls, env, llm, auto_allowed: Sequence[str] = ()) -> "InteractiveShoppingSession":
-        """One model call extracts intent; tool/search/selection stay in Python."""
-        messages = [
-            {"role": "system", "content": prompts.INTENT_SYSTEM},
-            {"role": "user", "content": task_message(env, env.view_cart().data) + "\n\n" + prompts.INTENT_INSTRUCTIONS},
-        ]
-        reply = llm.chat(messages, json_mode=True, env=env)
-        intent = normalize_intent(json.loads(reply.content), strict_upc=True)
-        if intent["open_questions"]:
-            raise ValueError("Free-text clarification must be resolved before product choices")
-        if not intent["requirements"]:
-            raise ValueError("No shopping requirements were extracted")
+        """Extract a fact-preserving intent; missing facts become questions."""
+        intent = cls.extract_intent(env, llm)
         return cls(env, intent, auto_allowed=auto_allowed)
+
+    def answer_clarifications(self, response: Mapping, llm=None) -> None:
+        """Validate a whole clarification batch, then update intent atomically."""
+        answers = response.get("answers")
+        if not isinstance(answers, list) or len(answers) != len(self.pending_clarifications):
+            raise ValueError("One answer is required for each clarification")
+        pending = {item["question_id"]: item for item in self.pending_clarifications}
+        validated = []
+        for answer in answers:
+            if not isinstance(answer, dict) or answer.get("question_id") not in pending:
+                raise ValueError("Unknown clarification question")
+            question = pending.pop(answer["question_id"])
+            if question["kind"] == "quantity":
+                amount = answer.get("amount")
+                measure = answer.get("measure") or question["suggested_measure"]
+                if isinstance(amount, bool) or not isinstance(amount, int) or amount <= 0:
+                    raise ValueError("Quantity must be a positive integer")
+                if measure not in question["allowed_measures"]:
+                    raise ValueError("Unsupported quantity measure")
+                validated.append((question, {"amount": amount, "measure": measure}))
+            else:
+                value = answer.get("text")
+                if not isinstance(value, str) or not value.strip() or len(value) > 1000:
+                    raise ValueError("Clarification text is required (maximum 1000 characters)")
+                validated.append((question, value.strip()))
+        if pending:
+            raise ValueError("Duplicate clarification question")
+        free_text = [(question, value) for question, value in validated
+                     if question["kind"] == "free_text"]
+        if free_text and llm is None:
+            raise ValueError("A model is required to interpret free-text clarification")
+        for question, value in validated:
+            if question["kind"] == "quantity":
+                self.quantity_overrides[question["requirement_id"]] = value
+            else:
+                self.clarifications.append({"question": question["question"], "answer": value})
+        if free_text:
+            self.intent = self.extract_intent(self.env, llm, self.clarifications)
+        else:
+            self.intent["open_questions"] = []
+        for item in self.intent["requirements"]:
+            override = self.quantity_overrides.get(item["id"])
+            if override:
+                item.update({"measure": override["measure"], "min": override["amount"],
+                             "max": override["amount"]})
+        self.pending_clarifications = []
+        self.clarification_rounds += 1
+        if not clarification_questions(self.intent):
+            self.choices = coordinator_from_intent(self.intent)
+
+    def _remove_added(self, requirement) -> None:
+        product_id = requirement.selected_product_id
+        current = self.env.cart.get(product_id, 0)
+        remaining = current - requirement.quantity
+        if remaining < 0:
+            raise ValueError(f"Cart quantity is inconsistent for {product_id}")
+        if remaining == 0:
+            result = self.env.remove_from_cart(product_id)
+        else:
+            result = self.env.update_quantity(product_id, remaining)
+        if not result.ok:
+            raise ValueError(result.message)
+
+    def _refresh_selected(self) -> bool:
+        """Refresh every chosen UPC, including items already in the local cart."""
+        invalidated = False
+        for requirement in self.choices.requirements.values():
+            if requirement.status not in {"selected", "added"}:
+                continue
+            product_id = requirement.selected_product_id
+            observed = self.env.get_product(product_id)
+            detail = observed.data if observed.ok else None
+            valid = bool(detail and detail.get("in_stock")
+                         and set(requirement.required_tags).issubset(detail.get("dietary_tags", []))
+                         and (not requirement.required_product_ids
+                              or product_id in requirement.required_product_ids)
+                         and choice_brand_matches(requirement.required_brand,
+                                                  requirement.question, detail))
+            quantity = packages_for(requirement, detail) if valid else None
+            if quantity is None or (requirement.status == "added" and quantity != requirement.quantity):
+                if requirement.status == "added":
+                    self._remove_added(requirement)
+                self.choices.mark_unavailable(requirement.requirement_id, product_id)
+                invalidated = True
+                continue
+            requirement.quantity = quantity
+            for product in requirement.candidates:
+                if product["id"] == product_id:
+                    product["price_cents"] = detail["price_cents"]
+                    product["quantity"] = quantity
+                    break
+        return invalidated
+
+    def _planned_total_cents(self) -> int:
+        total = self.env.total_cents
+        for requirement in self.choices.requirements.values():
+            if requirement.status == "added":
+                continue
+            product = next((item for item in requirement.candidates
+                            if item["id"] == requirement.selected_product_id), None)
+            if product is None:
+                raise ValueError(f"No selected candidate for {requirement.requirement_id}")
+            total += product["price_cents"] * requirement.quantity
+        return total
+
+    def verify_cart(self) -> dict:
+        """Check the complete basket against each requirement and hard constraint."""
+        violations = []
+        expected = {}
+        for requirement in self.choices.requirements.values():
+            if requirement.status != "added":
+                violations.append(f"{requirement.requirement_id} is not in the cart")
+                continue
+            product_id = requirement.selected_product_id
+            expected[product_id] = expected.get(product_id, 0) + requirement.quantity
+            product = self.env.catalog.get(product_id)
+            if product is None:
+                violations.append(f"{product_id} has no product details")
+                continue
+            details = product.public_details(self.env.stock.get(product_id, 0) > 0)
+            if not details["in_stock"]:
+                violations.append(f"{product_id} is unavailable")
+            if not set(requirement.required_tags).issubset(details.get("dietary_tags", [])):
+                violations.append(f"{product_id} lacks required dietary evidence")
+            if requirement.required_product_ids and product_id not in requirement.required_product_ids:
+                violations.append(f"{product_id} is not an allowed product")
+            if not choice_brand_matches(requirement.required_brand,
+                                        requirement.question, details):
+                violations.append(f"{product_id} does not meet the required brand")
+            amount = amount_per_package(details, requirement.measure) * requirement.quantity
+            if amount < requirement.target_min or (requirement.target_max is not None
+                                                   and amount > requirement.target_max):
+                violations.append(f"{requirement.requirement_id} supplies {amount} {requirement.measure}, "
+                                  f"needs {requirement.target_min}..{requirement.target_max}")
+        if dict(self.env.cart) != expected:
+            violations.append("Cart contents do not match selected requirements")
+        budget = self.intent.get("budget_cents")
+        if budget is not None and self.env.total_cents > budget:
+            violations.append(f"Cart total {self.env.total_cents} exceeds budget {budget}")
+        return {"ok": not violations, "violations": violations,
+                "total_cents": self.env.total_cents, "expected_cart": expected}
 
     def advance(self, answers: Optional[Mapping] = None) -> dict:
         """Run to the next user-choice boundary, completion, or explicit error."""
         if self.env.done:
             return {"status": "complete", "cart": dict(self.env.cart),
                     "total_cents": self.env.total_cents}
+        if self.pending_clarifications:
+            return {"status": "needs_clarification", "questions": self.pending_clarifications}
+        needed = clarification_questions(self.intent)
+        if needed:
+            if self.clarification_rounds >= 3:
+                return {"status": "clarification_limit", "questions": needed}
+            self.pending_clarifications = needed
+            return {"status": "needs_clarification", "questions": needed}
         if answers is not None:
             self.choices.apply_answers(answers)
         elif self.choices._pending:
@@ -63,35 +224,10 @@ class InteractiveShoppingSession:
             if decision["questions"]:
                 return {"status": "waiting_for_user", "questions": decision["questions"]}
 
-            # Live prices and fulfillment can change while the user is choosing.
-            refreshed = False
-            for requirement in self.choices.requirements.values():
-                if requirement.status != "selected":
-                    continue
-                product_id = requirement.selected_product_id
-                detail = self.env.get_product(product_id)
-                if not detail.ok or not detail.data.get("in_stock", False):
-                    self.choices.mark_unavailable(requirement.requirement_id, product_id)
-                    refreshed = True
-                    continue
-                if not set(requirement.required_tags).issubset(detail.data.get("dietary_tags", [])):
-                    self.choices.mark_unavailable(requirement.requirement_id, product_id)
-                    refreshed = True
-                    continue
-                for product in requirement.candidates:
-                    if product["id"] == product_id:
-                        product["price_cents"] = detail.data["price_cents"]
-                        break
-            if refreshed:
+            if self._refresh_selected():
                 continue
 
-            total = self.env.total_cents
-            for requirement in self.choices.requirements.values():
-                if requirement.status == "added":
-                    continue
-                product = next(p for p in requirement.candidates
-                               if p["id"] == requirement.selected_product_id)
-                total += product["price_cents"] * requirement.quantity
+            total = self._planned_total_cents()
             budget = self.intent.get("budget_cents")
             if budget is not None and total > budget:
                 return {"status": "budget_conflict", "total_cents": total,
@@ -116,9 +252,18 @@ class InteractiveShoppingSession:
                     retry = True
             if retry:
                 continue
+            if self._refresh_selected():
+                continue
+            if budget is not None and self.env.total_cents > budget:
+                return {"status": "budget_conflict", "total_cents": self.env.total_cents,
+                        "budget_cents": budget, "cart": dict(self.env.cart)}
+            verification = self.verify_cart()
+            if not verification["ok"]:
+                return {"status": "verification_failed", "verification": verification,
+                        "cart": dict(self.env.cart)}
             self.env.finish("interactive choices complete")
             return {"status": "complete", "cart": dict(self.env.cart),
-                    "total_cents": self.env.total_cents}
+                    "total_cents": self.env.total_cents, "verification": verification}
         return {"status": "round_limit", "rounds": self.rounds}
 
     def reconsider(self, requirement_ids: Sequence[str]) -> dict:
@@ -128,22 +273,31 @@ class InteractiveShoppingSession:
         for requirement_id in requirement_ids:
             requirement = self.choices.requirements[requirement_id]
             if requirement.status == "added":
-                self.env.remove_from_cart(requirement.selected_product_id)
+                self._remove_added(requirement)
             requirement.selected_product_id = None
             requirement.status = "unresolved"
             requirement.force_user_choice = True
         return self.advance()
 
     def checkpoint(self) -> dict:
-        return {"intent": self.intent, "choices": self.choices.checkpoint(),
+        return {"intent": self.intent, "choices": self.choices.checkpoint() if self.choices else None,
                 "auto_allowed": self.auto_allowed, "rounds": self.rounds,
-                "max_rounds": self.max_rounds, "cart": dict(self.env.cart)}
+                "max_rounds": self.max_rounds, "cart": dict(self.env.cart),
+                "pending_clarifications": self.pending_clarifications,
+                "clarifications": self.clarifications,
+                "quantity_overrides": self.quantity_overrides,
+                "clarification_rounds": self.clarification_rounds}
 
     @classmethod
     def from_checkpoint(cls, env, snapshot: Mapping) -> "InteractiveShoppingSession":
-        session = cls(env, snapshot["intent"], ChoiceCoordinator.from_checkpoint(snapshot["choices"]),
+        session = cls(env, snapshot["intent"], ChoiceCoordinator.from_checkpoint(snapshot["choices"])
+                      if snapshot["choices"] else None,
                       snapshot.get("auto_allowed", ()), snapshot.get("max_rounds", 8))
         session.rounds = snapshot["rounds"]
+        session.pending_clarifications = list(snapshot.get("pending_clarifications") or [])
+        session.clarifications = list(snapshot.get("clarifications") or [])
+        session.quantity_overrides = dict(snapshot.get("quantity_overrides") or {})
+        session.clarification_rounds = snapshot.get("clarification_rounds", 0)
         for product_id, quantity in snapshot["cart"].items():
             if product_id not in env.catalog:
                 details = env.get_product(product_id)

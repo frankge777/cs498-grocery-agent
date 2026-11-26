@@ -87,18 +87,30 @@ def start(instruction: str, source: Optional[str] = None, zip_code: Optional[str
 
 
 def resume(session_token: str, answers: Optional[Mapping] = None,
+           clarification_answers: Optional[Mapping] = None,
            reconsider_requirement_ids: Optional[Sequence[str]] = None,
-           signing_secret: Optional[str] = None) -> dict:
+           signing_secret: Optional[str] = None, llm=None) -> dict:
     """Continue a saved session after choices, or reopen budget-conflicting needs."""
     secret = _secret(signing_secret)
     payload = _decode(session_token, secret)
-    if answers is not None and reconsider_requirement_ids:
-        raise service.ServiceError("Provide answers or reconsider_requirement_ids, not both")
+    if sum(value is not None for value in (answers, clarification_answers,
+                                           reconsider_requirement_ids)) > 1:
+        raise service.ServiceError("Provide only one kind of answer per request")
     env = service.build_env(payload["source"], payload["instruction"], payload["context"],
                             payload.get("zip_code"), payload.get("location_id"),
                             lambda q: service.DEFAULT_CLARIFICATION_ANSWER)
     try:
         session = InteractiveShoppingSession.from_checkpoint(env, payload["session"])
+        if clarification_answers is not None:
+            if not session.pending_clarifications:
+                raise ValueError("No clarification is pending")
+            needs_model = any(q["kind"] == "free_text" for q in session.pending_clarifications)
+            if needs_model and llm is None and not service.deepseek_configured():
+                raise service.ServiceError("DEEPSEEK_API_KEY is not configured on the server", status=503)
+            session.answer_clarifications(clarification_answers,
+                                          llm or (DeepSeekClient(temperature=0) if needs_model else None))
+        elif session.pending_clarifications and (answers is not None or reconsider_requirement_ids):
+            raise ValueError("Answer the pending clarification first")
         result = (session.reconsider(reconsider_requirement_ids)
                   if reconsider_requirement_ids else session.advance(answers))
     except (ValueError, KeyError, TypeError) as error:

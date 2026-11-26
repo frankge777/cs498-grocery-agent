@@ -2,6 +2,7 @@
 
 import json
 import unittest
+from dataclasses import replace
 
 from grocery_agent.choices import SimulatedChoiceProvider
 from grocery_agent.interactive import InteractiveShoppingSession
@@ -85,6 +86,77 @@ class InteractiveTests(unittest.TestCase):
         self.assertEqual(again["status"], "waiting_for_user")
         self.assertEqual([q["requirement_id"] for q in again["questions"]], ["r1"])
         self.assertEqual(restarted_env.cart, {"0003663200834": 1})
+
+    def test_count_and_volume_use_package_sizes_before_asking_for_choices(self):
+        scenario = Scenario(
+            id="package-math", category="choice", difficulty="M", title="Eggs and milk",
+            variants={v: "Buy 12 eggs and 1 L milk" for v in ("high", "medium", "low")},
+            context={}, needs=[], extras_allowed=True,
+        )
+        env = GroceryEnv(load_catalog(), scenario, "high")
+        intent = normalize_intent({"budget_cents": 900, "requirements": [
+            {"id": "r1", "description": "12 eggs", "search_query": "eggs",
+             "measure": "count", "min": 12, "max": 12},
+            {"id": "r2", "description": "1 L milk", "search_query": "milk",
+             "measure": "volume_ml", "min": 1000, "max": 1000},
+        ]})
+        session = InteractiveShoppingSession(env, intent)
+        first = session.advance()
+        self.assertEqual(first["status"], "waiting_for_user")
+        eggs, milk = first["questions"]
+        six_eggs = next(option for option in eggs["options"]
+                        if option["product_id"] == "eggs_value_6")
+        half_liter = next(option for option in milk["options"]
+                          if option["product_id"] == "milk_value_whole_500")
+        self.assertEqual(six_eggs["quantity"], 2)
+        self.assertEqual(half_liter["quantity"], 2)
+        self.assertFalse(any(option["product_id"] == "milk_value_whole_2l"
+                             for option in milk["options"]))
+        complete = session.advance({"answers": [
+            {"decision_id": eggs["decision_id"], "selected_option_id": six_eggs["option_id"]},
+            {"decision_id": milk["decision_id"], "selected_option_id": half_liter["option_id"]},
+        ]})
+        self.assertEqual(complete["status"], "complete")
+        self.assertEqual(complete["cart"], {"eggs_value_6": 2, "milk_value_whole_500": 2})
+        self.assertEqual(complete["total_cents"], 836)
+
+    def test_price_change_after_user_choice_blocks_over_budget_cart(self):
+        env = self.env()
+        session = InteractiveShoppingSession(env, self.intent())
+        session.intent["budget_cents"] = 300
+        first = session.advance()
+        env.catalog["yogurt_value_cup"] = replace(env.catalog["yogurt_value_cup"], price_cents=300)
+        choice = SimulatedChoiceProvider({"r2": "yogurt_value_cup"})({"questions": first["questions"]})
+        conflict = session.advance(choice)
+        self.assertEqual(conflict["status"], "budget_conflict")
+        self.assertEqual(env.cart, {})
+        self.assertGreater(conflict["total_cents"], 300)
+
+    def test_two_requirements_can_share_one_upc_and_final_verifier_checks_total(self):
+        scenario = Scenario(
+            id="shared-upc", category="choice", difficulty="M", title="Two carrot needs",
+            variants={v: "Buy two carrots" for v in ("high", "medium", "low")},
+            context={}, needs=[], extras_allowed=True,
+        )
+        env = GroceryEnv(load_catalog(), scenario, "high")
+        intent = normalize_intent({"requirements": [
+            {"id": "r1", "description": "carrots for lunch", "search_query": "carrots", "min": 1, "max": 1},
+            {"id": "r2", "description": "carrots for dinner", "search_query": "carrots", "min": 1, "max": 1},
+        ]})
+        session = InteractiveShoppingSession(env, intent)
+        complete = session.advance()
+        self.assertEqual(complete["status"], "complete")
+        self.assertEqual(complete["cart"], {"carrots_value_1lb": 2})
+        self.assertTrue(complete["verification"]["ok"])
+
+    def test_global_dietary_requirement_filters_every_product(self):
+        intent = normalize_intent({"all_items_required_tags": ["vegan"], "requirements": [
+            {"id": "r1", "description": "yogurt", "search_query": "yogurt", "min": 1, "max": 1},
+        ]})
+        session = InteractiveShoppingSession(self.env(), intent)
+        result = session.advance()
+        self.assertEqual(result["status"], "no_candidates")
+        self.assertEqual(session.env.cart, {})
 
 
 if __name__ == "__main__":

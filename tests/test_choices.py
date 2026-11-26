@@ -5,7 +5,8 @@ import unittest
 
 from grocery_bench import GroceryEnv, load_catalog, load_scenarios
 from grocery_bench.data import KROGER_CATALOG_PATH, Scenario
-from grocery_agent.choices import ChoiceCoordinator, RequirementChoice, SimulatedChoiceProvider, coordinator_from_intent
+from grocery_agent.choices import (ChoiceCoordinator, RequirementChoice, SimulatedChoiceProvider,
+                                   choice_brand_matches, coordinator_from_intent)
 from grocery_agent.llm_agents import normalize_intent
 
 
@@ -15,6 +16,12 @@ def product(product_id, name, price):
 
 
 class ChoiceTests(unittest.TestCase):
+    def test_required_brand_uses_catalog_name_when_brand_field_is_unknown(self):
+        self.assertTrue(choice_brand_matches(
+            "Kroger", "carrots", {"brand": "Unknown", "name": "Kroger® Baby Carrots"}))
+        self.assertFalse(choice_brand_matches(
+            "Kroger", "carrots", {"brand": "Unknown", "name": "Unbranded Carrots"}))
+
     def test_single_vegetable_search_excludes_obvious_mixed_vegetables(self):
         scenario = Scenario(
             id="relevance", category="choice", difficulty="M", title="Carrots",
