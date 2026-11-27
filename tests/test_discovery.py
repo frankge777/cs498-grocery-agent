@@ -152,6 +152,59 @@ class DiscoveryTests(unittest.TestCase):
             with self.assertRaises(DiscoveryError):
                 ModelDiscovery(llm).review(env, self.intent()["requirements"][0], products)
 
+    def test_title_whitespace_is_anchored_to_original_field_without_inventing_words(self):
+        env = self.env()
+        product = {**env.catalog["eggs_value_12"].public_summary(True), "name": "Large\u00a0White Eggs\u200b"}
+        llm = ScriptedLLM(lambda *args: {"content": json.dumps({"reviews": [{
+            "product_id": product["id"], "verdict": "related", "reason": "Observed title",
+            "evidence": [{"field": "name", "quote": "Large White Eggs"}]}]})})
+        row = ModelDiscovery(llm).review(env, self.intent()["requirements"][0], [product])[0]
+        evidence = row["evidence"][0]
+        self.assertIn(evidence["quote"], product["name"])
+        self.assertEqual(evidence["model_quote"], "Large White Eggs")
+        self.assertEqual(env.model_calls, 1)
+
+    def test_malformed_review_gets_one_repair_and_keeps_diagnostic(self):
+        env = self.env()
+        p = env.catalog["eggs_value_12"].public_summary(True)
+        def respond(messages, tools, json_mode):
+            payload = json.loads(messages[-1]["content"])
+            if "previous_error" not in payload:
+                return {"content": '{"reviews": []}'}
+            self.assertEqual(payload["products"], [p])
+            return {"content": json.dumps({"reviews": [{"product_id": p["id"], "verdict": "related",
+                "reason": "Observed eggs", "evidence": [{"field": "name", "quote": p["name"]}]}]})}
+        diagnostics = []
+        rows = ModelDiscovery(ScriptedLLM(respond)).review(env, self.intent()["requirements"][0], [p], diagnostics)
+        self.assertEqual(rows[0]["product_id"], p["id"])
+        self.assertEqual(env.model_calls, 2)
+        self.assertEqual(len(diagnostics), 1)
+        self.assertIn('"reviews": []', diagnostics[0]["raw_response"])
+
+    def test_repair_is_bounded_and_cannot_make_fabricated_evidence_acceptable(self):
+        env = self.env()
+        p = env.catalog["eggs_value_12"].public_summary(True)
+        llm = ScriptedLLM(lambda *args: {"content": json.dumps({"reviews": [{
+            "product_id": p["id"], "verdict": "related", "reason": "Fake certification",
+            "evidence": [{"field": "name", "quote": "certified organic"}]}]})})
+        diagnostics = []
+        with self.assertRaises(DiscoveryError):
+            ModelDiscovery(llm).review(env, self.intent()["requirements"][0], [p], diagnostics)
+        self.assertEqual(env.model_calls, 2)
+        self.assertEqual(len(diagnostics), 2)
+
+    def test_provider_quota_error_propagates_without_semantic_repair_or_reasoning_failure(self):
+        class ProviderQuotaError(Exception):
+            __module__ = "openai"
+        env = self.env()
+        p = env.catalog["eggs_value_12"].public_summary(True)
+        def respond(*args):
+            raise ProviderQuotaError("Insufficient Balance")
+        llm = ScriptedLLM(respond)
+        with self.assertRaises(ProviderQuotaError):
+            ModelDiscovery(llm).review(env, self.intent()["requirements"][0], [p])
+        self.assertEqual(llm.calls, 1)
+
     def test_uncertain_candidate_requires_explicit_confirmation_and_survives_checkpoint(self):
         env = self.env()
         discovery = ModelDiscovery(reviewer(classify=lambda p: "uncertain"))
@@ -185,7 +238,7 @@ class DiscoveryTests(unittest.TestCase):
             return {"content": json.dumps({"requirements": [{"id": "r1", "description": "one yogurt",
                                                               "min": 1, "max": 1}]})}
         llm = ScriptedLLM(respond)
-        first = interactive_service.start("Buy one yogurt", source="snapshot", llm=llm, signing_secret=secret)
+        first = interactive_service.start("Buy one yogurt", source="snapshot", selection_mode="user_choice", llm=llm, signing_secret=secret)
         self.assertEqual(first["status"], "needs_candidate_review")
         q = first["questions"][0]
         final = interactive_service.resume(first["session_token"], candidate_review_answers={"answers": [

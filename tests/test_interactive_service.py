@@ -41,7 +41,7 @@ class InteractiveServiceTests(unittest.TestCase):
             {"id": "r2", "description": "yogurt", "search_query": "yogurt", "min": 1, "max": 1},
         ]}
         llm = ScriptedLLM(lambda messages, tools, json_mode: {"content": json.dumps(intent)})
-        started = interactive_service.start("Buy carrots and yogurt under $8", source="snapshot",
+        started = interactive_service.start("Buy carrots and yogurt under $8", source="snapshot", selection_mode="user_choice",
                                             llm=llm, signing_secret=self.SECRET)
         self.assertEqual(started["status"], "waiting_for_user")
         self.assertEqual([q["requirement_id"] for q in started["questions"]], ["r1", "r2"])
@@ -70,7 +70,7 @@ class InteractiveServiceTests(unittest.TestCase):
              "quantity_explicit": False, "min": None, "max": None},
         ]}
         llm = ScriptedLLM(lambda messages, tools, json_mode: {"content": json.dumps(intent)})
-        started = interactive_service.start("Buy carrots and yogurt", source="snapshot",
+        started = interactive_service.start("Buy carrots and yogurt", source="snapshot", selection_mode="user_choice",
                                             llm=llm, signing_secret=self.SECRET)
         self.assertEqual(started["status"], "waiting_for_user")
         self.assertEqual([q["requirement_id"] for q in started["questions"]], ["r1", "r2"])
@@ -106,7 +106,7 @@ class InteractiveServiceTests(unittest.TestCase):
                 intent = {"requirements": [{"id": "r1", "description": "12 eggs",
                            "search_query": "eggs", "measure": "count", "min": 12, "max": 12}]}
                 llm = ScriptedLLM(lambda messages, tools, json_mode: {"content": json.dumps(intent)})
-                started = interactive_service.start("Buy exactly 12 eggs", source="snapshot",
+                started = interactive_service.start("Buy exactly 12 eggs", source="snapshot", selection_mode="user_choice",
                                                     llm=llm, signing_secret=self.SECRET)
                 question = started["questions"][0]
                 option = next(p for p in question["options"] if p["product_id"] == product_id)
@@ -122,7 +122,7 @@ class InteractiveServiceTests(unittest.TestCase):
         intent = {"requirements": [{"id": "r1", "description": "yogurt",
                                     "search_query": "yogurt", "quantity_explicit": False}]}
         llm = ScriptedLLM(lambda messages, tools, json_mode: {"content": json.dumps(intent)})
-        started = interactive_service.start("Buy yogurt", source="snapshot",
+        started = interactive_service.start("Buy yogurt", source="snapshot", selection_mode="user_choice",
                                             llm=llm, signing_secret=self.SECRET)
         question = started["questions"][0]
         started = interactive_service.resume(started["session_token"], answers={"answers": [
@@ -146,7 +146,7 @@ class InteractiveServiceTests(unittest.TestCase):
             })}
         llm = ScriptedLLM(response)
         started = interactive_service.start("Buy one yogurt for my dietary restriction",
-                                            source="snapshot", llm=llm,
+                                            source="snapshot", selection_mode="user_choice", llm=llm,
                                             signing_secret=self.SECRET)
         self.assertEqual(started["status"], "needs_clarification")
         resumed = interactive_service.resume(started["session_token"], clarification_answers={"answers": [
@@ -162,7 +162,7 @@ class InteractiveServiceTests(unittest.TestCase):
                               "min": 1, "max": 1}] if answered else [])
             return {"content": json.dumps({"requirements": requirements})}
         llm = ScriptedLLM(response)
-        started = interactive_service.start("Buy something", source="snapshot",
+        started = interactive_service.start("Buy something", source="snapshot", selection_mode="user_choice",
                                             llm=llm, signing_secret=self.SECRET)
         self.assertEqual(started["status"], "needs_clarification")
         self.assertEqual(started["questions"][0]["question_id"], "q_product")
@@ -181,7 +181,7 @@ class InteractiveServiceTests(unittest.TestCase):
                     {"question": "What restriction must the yogurt satisfy?"}],
             })}
         llm = ScriptedLLM(response)
-        started = interactive_service.start("Buy yogurt for my dietary restriction", source="snapshot",
+        started = interactive_service.start("Buy yogurt for my dietary restriction", source="snapshot", selection_mode="user_choice",
                                             llm=llm, signing_secret=self.SECRET)
         self.assertEqual(started["status"], "needs_clarification")
         self.assertEqual([q["kind"] for q in started["questions"]], ["free_text"])

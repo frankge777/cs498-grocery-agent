@@ -43,6 +43,11 @@ def estimate_cost_usd(model: str, input_tokens: int, cached_input_tokens: int, o
     return (cached_input_tokens * price["cache_hit"] + miss * price["cache_miss"] + output_tokens * price["output"]) / 1e6
 
 
+def is_provider_error(error: Exception) -> bool:
+    """Keep SDK transport/auth/quota failures out of agent reasoning failures."""
+    return type(error).__module__.split(".", 1)[0] == "openai"
+
+
 @dataclass
 class ToolCall:
     id: str

@@ -80,6 +80,7 @@ class RequirementChoice:
     semantic_reviews: List[dict] = field(default_factory=list)
     uncertain_candidates: List[dict] = field(default_factory=list)
     discovery_reason: Optional[str] = None
+    discovery_errors: List[dict] = field(default_factory=list)
 
 
 def coordinator_from_intent(intent: Mapping) -> "ChoiceCoordinator":
@@ -195,6 +196,7 @@ class ChoiceCoordinator:
                 requirement.search_attempts.extend(result["attempts"])
                 requirement.semantic_reviews.extend(result["reviews"])
                 requirement.discovery_reason = result["reason"]
+                requirement.discovery_errors.extend(result.get("errors", []))
                 verdicts = {row["product_id"]: row["verdict"] for row in result["reviews"]}
                 approved = [p for p in result["products"] if verdicts[p["id"]] == "related"]
                 uncertain = [p for p in result["products"] if verdicts[p["id"]] == "uncertain"]
@@ -359,7 +361,7 @@ class ChoiceCoordinator:
                     "quantity_product_id": item.quantity_product_id,
                     "search_attempts": item.search_attempts, "semantic_reviews": item.semantic_reviews,
                     "uncertain_candidates": item.uncertain_candidates,
-                    "discovery_reason": item.discovery_reason}
+                    "discovery_reason": item.discovery_reason, "discovery_errors": item.discovery_errors}
                 for item in self.requirements.values()
             ],
             "next_decision": self._next_decision,
@@ -386,6 +388,7 @@ class ChoiceCoordinator:
                 semantic_reviews=list(item.get("semantic_reviews") or []),
                 uncertain_candidates=list(item.get("uncertain_candidates") or []),
                 discovery_reason=item.get("discovery_reason"),
+                discovery_errors=list(item.get("discovery_errors") or []),
             )
             for item in snapshot["requirements"]
         ])

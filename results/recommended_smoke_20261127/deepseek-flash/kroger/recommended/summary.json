@@ -1,0 +1,52 @@
+{
+  "agent": null,
+  "n_trials": 3,
+  "n_scored": 0,
+  "n_infra_failures": 3,
+  "macro_success": null,
+  "macro_success_ci95": null,
+  "success_by_variant": {},
+  "success_by_category": {},
+  "success_by_difficulty": {},
+  "success_by_scenario": {},
+  "secondary": {
+    "coverage": null,
+    "hard_violation_rate": null,
+    "budget_compliance": {
+      "rate": null,
+      "n": 0
+    },
+    "preference_score": {
+      "mean": null,
+      "n": 0
+    },
+    "missed_required_clarification": {
+      "rate": null,
+      "n": 0
+    },
+    "unnecessary_clarification_rate": null
+  },
+  "efficiency_all": {
+    "tool_calls": null,
+    "model_calls": null,
+    "input_tokens": null,
+    "cached_input_tokens": null,
+    "output_tokens": null,
+    "runtime_seconds": null,
+    "cart_modifications": null,
+    "n": 0
+  },
+  "efficiency_successful": {
+    "tool_calls": null,
+    "model_calls": null,
+    "input_tokens": null,
+    "cached_input_tokens": null,
+    "output_tokens": null,
+    "runtime_seconds": null,
+    "cart_modifications": null,
+    "n": 0
+  },
+  "termination_reasons": {
+    "infrastructure_error": 3
+  }
+}

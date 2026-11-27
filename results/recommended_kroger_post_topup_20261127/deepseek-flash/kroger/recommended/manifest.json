@@ -1,0 +1,75 @@
+{
+  "catalog_sha256": "2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce",
+  "scenarios_sha256": "590c01667f938ab7e3509da03539b94e548906fa1da99e128af37272cfa3442e",
+  "catalog_path": "benchmark/kroger_snapshots/02100946-20261116.json",
+  "scenarios_path": "benchmark/scenarios_kroger.json",
+  "tool_schema_version": "1.0.0",
+  "agent": {
+    "name": "recommended",
+    "split": "main",
+    "dataset": "kroger",
+    "catalog_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/kroger_snapshots/02100946-20261116.json",
+    "scenario_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/scenarios_kroger.json",
+    "llm": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "runs": 1,
+    "variants": [
+      "high",
+      "medium",
+      "low"
+    ],
+    "scenarios": [
+      "K01",
+      "K02",
+      "K03",
+      "K04",
+      "K05",
+      "K06",
+      "K07",
+      "K08",
+      "K09",
+      "K10",
+      "K11",
+      "K12",
+      "K13",
+      "K14",
+      "K15",
+      "K16",
+      "K17",
+      "K18",
+      "K19",
+      "K20"
+    ],
+    "started_utc": "2026-11-27T22:11:11.858004+00:00",
+    "workflow": "InteractiveShoppingSession with ModelDiscovery + ModelBasketRecommender + explicit draft acceptance + target cart diff",
+    "shopper_policy": {
+      "selection": "model recommends; simulator selects only deferred/replacement choices",
+      "free_text": "environment ask_user only",
+      "quantity": "scripted shopper profile after question",
+      "unresolved_semantics": "stop; no hidden needs or reference carts accessed",
+      "comparison_note": "interactive workflow with simulated shopper, separate from legacy ours",
+      "basket_review": "accept all drafts"
+    },
+    "user_profiles_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/interactive_user_profiles_kroger.json",
+    "user_profiles_sha256": "f1dc17946967f8e46cadf2f14c6aa07d6efd1b54e7db81d17d97e97715372dc0",
+    "protocol_version": "recommended-v1-development",
+    "comparison_note": "Frozen goals unchanged. Accept-all is compatibility, not preference adaptation evidence.",
+    "initial_recommendation_metric": "Original frozen needs and hard constraints at first draft; execution interaction predicates excluded. Missing drafts reported separately.",
+    "code_sha256": {
+      "src/grocery_agent/interactive.py": "df6bb5bb38ccb17445224a57aeb7c0794ddd39e54894b57ffcfd42977cb35b41",
+      "src/grocery_agent/interactive_intent.py": "e7e63c67d9eee26e3f952249c280508ad6e548e07fad1d5601f6c4f7668441dc",
+      "src/grocery_agent/choices.py": "2fa9d86b962cd0e1e24364fa2a1357b853f06d4f931d6d016c841af2a8ba7537",
+      "src/grocery_agent/discovery.py": "7c8ee95d027365c03b30d2e06ba9d5f43d70381c7df5fc2176449f73657b57e1",
+      "src/grocery_agent/interactive_benchmark.py": "eb3d1aeb6145b157d00be31faac14a7dd0a7c719a387055f025a54c700230b13",
+      "src/grocery_agent/simulated_user.py": "294c11a47598dc50e48ca25c279b5c26cb9b9f4174e788a208e7a5f65147ccfd",
+      "src/grocery_agent/recommendation.py": "c413ffa0fe8c9789561823fb9f5a48953082fa12ce6461e705227ecec9ddd08a",
+      "src/grocery_agent/prompts.py": "9e0a4ab355984fe584ae5d9e3b9d6d5656b5b87f4bc441e2512b8b911ea602a3",
+      "src/grocery_agent/llm.py": "28b81da331eacfab3c07376020237b8e6fa47836d7a0d3ef13752e1f2f3ee367"
+    }
+  }
+}

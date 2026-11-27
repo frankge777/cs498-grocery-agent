@@ -7,7 +7,7 @@ It cannot resolve semantic uncertainty or read the benchmark's hidden needs.
 """
 
 from .interactive import InteractiveShoppingSession
-from .simulated_user import QuantityAnswerUnavailable
+from .simulated_user import QuantityAnswerUnavailable, BasketAnswerUnavailable, ScriptedBasketUser
 
 
 class InteractiveBenchmarkAgent:
@@ -16,6 +16,8 @@ class InteractiveBenchmarkAgent:
     def __init__(self, llm, quantity_user=None):
         self.llm = llm
         self.quantity_user = quantity_user
+        self.selection_mode = "user_choice"
+        self.basket_user = None
         self.notes = {"llm": llm.describe(), "shopper_policy": "cheapest_offered_line_then_upc",
                       "interaction_events": [], "quantity_dialogue": []}
 
@@ -29,23 +31,32 @@ class InteractiveBenchmarkAgent:
             self.notes["error"] = f"{type(error).__name__}: {error}"
 
     def _run(self, env):
-        session = InteractiveShoppingSession.from_model(env, self.llm)
+        session = InteractiveShoppingSession.from_model(env, self.llm, selection_mode=self.selection_mode)
         result = session.advance()
         self.continue_session(env, session, result)
 
     def continue_session(self, env, session, result):
         """Also permits an explicitly labeled replay from a saved checkpoint."""
-        for _ in range(16):
+        for _ in range(32):
             self.notes["interaction_events"].append({
                 "status": result["status"], "questions": result.get("questions", []),
                 "reasons": result.get("reasons"),
+                "recommendation": result.get("recommendation"),
+                "error": result.get("error"),
             })
             if result["status"] == "waiting_for_user":
                 answers = []
                 for question in result["questions"]:
-                    chosen = min(question["options"],
+                    try:
+                        chosen = (self.basket_user.choose(env.observation()["scenario_id"], question)
+                                  if self.basket_user else min(question["options"],
                                  key=lambda p: (p["line_total_cents"] if p["line_total_cents"] is not None
-                                                else p["price_cents"], p["product_id"]))
+                                                else p["price_cents"], p["product_id"])))
+                    except BasketAnswerUnavailable as error:
+                        self.notes["stop_reason"] = "basket_answer_unavailable"
+                        self.notes["basket_error"] = str(error)
+                        self.notes["session"] = session.checkpoint()
+                        return
                     answers.append({"decision_id": question["decision_id"],
                                     "selected_option_id": chosen["option_id"]})
                 result = session.advance({"answers": answers})
@@ -69,7 +80,40 @@ class InteractiveBenchmarkAgent:
                 self.notes["quantity_dialogue"].extend(dialogue)
                 session.answer_clarifications({"answers": answers}, self.llm)
                 result = session.advance()
+            elif result["status"] == "awaiting_basket_confirmation":
+                draft = result["recommendation"]
+                if "first_recommendation" not in self.notes:
+                    self.notes["first_recommendation"] = {
+                        "cart": {p["product_id"]: p["quantity"] for p in draft["items"]},
+                        "trajectory": list(env.trajectory),
+                        "model_calls": env.model_calls,
+                        "unavailable": sorted(env.unavailable_products()),
+                    }
+                answer = self.basket_user.review(env.observation()["scenario_id"], draft)
+                self.notes.setdefault("basket_dialogue", []).append({"question": draft, "answer": answer})
+                session.answer_recommendation(answer)
+                result = session.advance()
             else:
                 self.notes["stop_reason"] = result["status"]
                 break
+        else:
+            self.notes["stop_reason"] = "interaction_limit"
+        events = self.notes["interaction_events"]
+        self.notes["dialogue_metrics"] = {
+            "prompt_batches": sum(e["status"] in {"waiting_for_user", "needs_clarification", "awaiting_basket_confirmation"}
+                                  for e in events),
+            "questions": sum(len(e["questions"]) + (e["status"] == "awaiting_basket_confirmation") for e in events),
+            "replacement_requests": sum(d["answer"]["action"] == "replace" for d in self.notes.get("basket_dialogue", [])),
+        }
         self.notes["session"] = session.checkpoint()
+
+
+class RecommendedBenchmarkAgent(InteractiveBenchmarkAgent):
+    """Separate protocol label; legacy interactive scores retain their meaning."""
+    name = "recommended"
+
+    def __init__(self, llm, quantity_user=None, basket_user=None):
+        super().__init__(llm, quantity_user)
+        self.selection_mode = "recommend"
+        self.basket_user = basket_user or ScriptedBasketUser()
+        self.notes["shopper_policy"] = "accept_draft_or_request_profile_preference_replacement"

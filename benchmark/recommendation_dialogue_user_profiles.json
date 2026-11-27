@@ -1,0 +1,11 @@
+{
+  "version": "recommended-dialogue-shopper-development-v1",
+  "notes": "Private simulated user intentions. Name matching is a simulator fixture only, not a production shopping rule. No UPCs, evaluator predicates or reference carts. RD03 prefers Greek but can accept any approved Greek flavor. Missing profile means accept the draft; unknown quantity without a matching intention is unanswered.",
+  "profiles": {
+    "RD01": [{"words": ["bread"], "measure": "units", "min": 1, "max": 1}, {"words": ["eggs"], "measure": "count", "min": 12, "max": 12}],
+    "RD02": [{"words": ["yogurt"], "measure": "units", "min": 2, "max": 2}, {"words": ["carrots"], "measure": "units", "min": 1, "max": 1}],
+    "RD03": [{"words": ["yogurt"], "measure": "units", "min": 2, "max": 2}, {"words": ["carrots"], "measure": "units", "min": 1, "max": 1}],
+    "RD04": [{"words": ["eggs"], "measure": "count", "min": 12, "max": 12}, {"words": ["bread"], "measure": "units", "min": 1, "max": 1}, {"words": ["carrots"], "measure": "units", "min": 1, "max": 1}]
+  },
+  "basket_profiles": {"RD03": [{"need_words": ["yogurt"], "prefer_words": ["Greek"]}]}
+}

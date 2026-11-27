@@ -17,6 +17,7 @@ import json
 import sys
 import time
 from datetime import datetime, timezone
+from dataclasses import replace
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,8 +25,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from grocery_agent.llm import DEFAULT_MODEL, DeepSeekClient, estimate_cost_usd  # noqa: E402
 from grocery_agent.llm_agents import DirectFunctionCallingAgent, IntentGroundedLLMAgent, ReActAgent  # noqa: E402
-from grocery_agent.interactive_benchmark import InteractiveBenchmarkAgent  # noqa: E402
-from grocery_agent.simulated_user import ScriptedQuantityUser  # noqa: E402
+from grocery_agent.interactive_benchmark import InteractiveBenchmarkAgent, RecommendedBenchmarkAgent  # noqa: E402
+from grocery_agent.simulated_user import ScriptedQuantityUser, ScriptedBasketUser  # noqa: E402
+from grocery_bench.evaluator import evaluate  # noqa: E402
 from grocery_bench import load_catalog, load_scenarios, run_trials, write_outputs  # noqa: E402
 from grocery_bench.data import (  # noqa: E402
     BENCHMARK_DIR,
@@ -36,9 +38,10 @@ from grocery_bench.data import (  # noqa: E402
 )
 
 
-def factories(llm, quantity_user=None):
+def factories(llm, quantity_user=None, basket_user=None):
     return {
         "interactive": lambda: InteractiveBenchmarkAgent(llm, quantity_user=quantity_user),
+        "recommended": lambda: RecommendedBenchmarkAgent(llm, quantity_user=quantity_user, basket_user=basket_user),
         "ours": lambda: IntentGroundedLLMAgent(llm),
         "ours_noverify": lambda: IntentGroundedLLMAgent(llm, use_verifier=False),
         "ours_noclarify": lambda: IntentGroundedLLMAgent(llm, use_clarify=False),
@@ -67,6 +70,7 @@ def main() -> None:
     parser.add_argument("--scenario-path", type=Path, help="override the selected scenario JSON")
     parser.add_argument("--output-root", type=Path, default=ROOT / "results" / "llm")
     parser.add_argument("--user-profiles", type=Path, help="scripted quantity-answer profiles for interactive evaluation")
+    parser.add_argument("--basket-profiles", type=Path, help="private development shopper preferences; omitted = accept all drafts")
     parser.add_argument("--quantity-user", choices=["profiles", "none"], default="profiles",
                         help="profiles answers quantity questions; none preserves the original stop-on-question policy")
     args = parser.parse_args()
@@ -93,8 +97,10 @@ def main() -> None:
     if profiles_path is None and args.dataset == "kroger" and not args.scenario_path:
         profiles_path = BENCHMARK_DIR / "interactive_user_profiles_kroger.json"
     quantity_user = (ScriptedQuantityUser.load(profiles_path)
-                     if args.quantity_user == "profiles" and profiles_path and "interactive" in args.agents else None)
-    available = factories(llm, quantity_user=quantity_user)
+                     if args.quantity_user == "profiles" and profiles_path
+                     and {"interactive", "recommended"}.intersection(args.agents) else None)
+    basket_user = ScriptedBasketUser.load(args.basket_profiles) if args.basket_profiles else ScriptedBasketUser()
+    available = factories(llm, quantity_user=quantity_user, basket_user=basket_user)
     for name in args.agents:
         if name not in available:
             sys.exit(f"unknown agent {name}; choose from {sorted(available)}")
@@ -116,7 +122,7 @@ def main() -> None:
                 "catalog_path": str(catalog_path), "scenario_path": str(scenario_path),
                 "llm": llm.describe(), "runs": args.runs, "variants": args.variants,
                 "scenarios": [s.id for s in scenarios], "started_utc": datetime.now(timezone.utc).isoformat()}
-        if name == "interactive":
+        if name in {"interactive", "recommended"}:
             meta["workflow"] = "InteractiveShoppingSession with ModelDiscovery"
             meta["shopper_policy"] = {
                 "selection": "cheapest offered line total (unit price if quantity unknown), then UPC",
@@ -128,10 +134,27 @@ def main() -> None:
             if quantity_user:
                 meta["user_profiles_path"] = str(profiles_path)
                 meta["user_profiles_sha256"] = hashlib.sha256(profiles_path.read_bytes()).hexdigest()
+            if name == "recommended":
+                meta["workflow"] += " + ModelBasketRecommender + explicit draft acceptance + target cart diff"
+                meta["shopper_policy"]["selection"] = "model recommends; simulator selects only deferred/replacement choices"
+                meta["shopper_policy"]["basket_review"] = "private scripted preferences" if args.basket_profiles else "accept all drafts"
+                meta["protocol_version"] = "recommended-v1-development"
+                meta["comparison_note"] = "Frozen goals unchanged. Accept-all is compatibility, not preference adaptation evidence."
+                if args.basket_profiles:
+                    meta["basket_profiles_path"] = str(args.basket_profiles)
+                    meta["basket_profiles_sha256"] = hashlib.sha256(args.basket_profiles.read_bytes()).hexdigest()
+                scenario_map = {s.id: s for s in scenarios}
+                for trial in trials:
+                    draft = (trial.get("agent_notes") or {}).get("first_recommendation")
+                    trial["initial_recommendation_goal_success"] = (
+                        evaluate(replace(scenario_map[trial["scenario_id"]], interactions=[]),
+                                 trial["variant"], draft["cart"], catalog,
+                                 unavailable=set(draft["unavailable"])).success if draft else None)
+                meta["initial_recommendation_metric"] = "Original frozen needs and hard constraints at first draft; execution interaction predicates excluded. Missing drafts reported separately."
             meta["code_sha256"] = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in [ROOT / "src/grocery_agent" / filename for filename in (
                     "interactive.py", "interactive_intent.py", "choices.py", "discovery.py",
-                    "interactive_benchmark.py", "simulated_user.py", "prompts.py", "llm.py")]}
+                    "interactive_benchmark.py", "simulated_user.py", "recommendation.py", "prompts.py", "llm.py")]}
         summary = write_outputs(trials, out, agent_meta=meta, catalog_path=catalog_path, scenarios_path=scenario_path)
         cost = sum(estimate_cost_usd(args.model, t["input_tokens"], t["cached_input_tokens"], t["output_tokens"])
                    for t in trials)

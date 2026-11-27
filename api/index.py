@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Literal
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -38,6 +38,7 @@ class InteractiveStartRequest(BaseModel):
     zip_code: Optional[str] = None
     location_id: Optional[str] = None
     context: Dict[str, Any] = Field(default_factory=dict)
+    selection_mode: Literal["recommend", "user_choice"] = "recommend"
 
 
 class InteractiveResumeRequest(BaseModel):
@@ -46,6 +47,7 @@ class InteractiveResumeRequest(BaseModel):
     clarification_answers: Optional[Dict[str, Any]] = None
     candidate_review_answers: Optional[Dict[str, Any]] = None
     reconsider_requirement_ids: Optional[list[str]] = None
+    recommendation_answer: Optional[Dict[str, Any]] = None
 
 
 def _call(fn, *args, **kwargs):
@@ -96,7 +98,8 @@ def agent_run(request: AgentRequest) -> dict:
 @app.post("/api/agent/interactive/start")
 def interactive_start(request: InteractiveStartRequest) -> dict:
     return _call(interactive_service.start, request.instruction, source=request.source,
-                 zip_code=request.zip_code, location_id=request.location_id, context=request.context)
+                 zip_code=request.zip_code, location_id=request.location_id, context=request.context,
+                 selection_mode=request.selection_mode)
 
 
 @app.post("/api/agent/interactive/resume")
@@ -104,4 +107,5 @@ def interactive_resume(request: InteractiveResumeRequest) -> dict:
     return _call(interactive_service.resume, request.session_token,
                  answers=request.answers, clarification_answers=request.clarification_answers,
                  candidate_review_answers=request.candidate_review_answers,
-                 reconsider_requirement_ids=request.reconsider_requirement_ids)
+                 reconsider_requirement_ids=request.reconsider_requirement_ids,
+                 recommendation_answer=request.recommendation_answer)

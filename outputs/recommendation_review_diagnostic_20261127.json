@@ -1,0 +1,408 @@
+{
+  "note": "Fresh diagnostic review call, not the original failed response",
+  "scenario_id": "RD03",
+  "products": [
+    {
+      "id": "0007047000300",
+      "name": "Yoplait\u2122 Original Low Fat Strawberry Yogurt Cup",
+      "brand": "Yoplait",
+      "category": "dairy",
+      "size": 170,
+      "unit": "g",
+      "price_cents": 69,
+      "in_stock": true,
+      "upc": "0007047000300",
+      "raw_size": "6 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0007047000301",
+      "name": "Yoplait\u2122 Original Low Fat Red Raspberry Yogurt Cup",
+      "brand": "Yoplait",
+      "category": "dairy",
+      "size": 170,
+      "unit": "g",
+      "price_cents": 69,
+      "in_stock": true,
+      "upc": "0007047000301",
+      "raw_size": "6 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0007047000303",
+      "name": "Yoplait\u2122 Original Low Fat Cherry Orchard Yogurt Cup",
+      "brand": "Yoplait",
+      "category": "dairy",
+      "size": 170,
+      "unit": "g",
+      "price_cents": 69,
+      "in_stock": true,
+      "upc": "0007047000303",
+      "raw_size": "6 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0007047000307",
+      "name": "Yoplait\u2122 Original Low Fat Harvest Peach Yogurt Cup",
+      "brand": "Yoplait",
+      "category": "dairy",
+      "size": 170,
+      "unit": "g",
+      "price_cents": 69,
+      "in_stock": true,
+      "upc": "0007047000307",
+      "raw_size": "6 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0007047000310",
+      "name": "Yoplait\u2122 Original Low Fat Mixed Berry Yogurt Cup",
+      "brand": "Yoplait",
+      "category": "dairy",
+      "size": 170,
+      "unit": "g",
+      "price_cents": 69,
+      "in_stock": true,
+      "upc": "0007047000310",
+      "raw_size": "6 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0007047000319",
+      "name": "Yoplait\u2122 Original Orange Creme Flavored Low Fat Yogurt Cup",
+      "brand": "Yoplait",
+      "category": "dairy",
+      "size": 170,
+      "unit": "g",
+      "price_cents": 69,
+      "in_stock": true,
+      "upc": "0007047000319",
+      "raw_size": "6 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0007047000323",
+      "name": "Yoplait\u2122 Original Low Fat French Vanilla Yogurt Cup",
+      "brand": "Yoplait",
+      "category": "dairy",
+      "size": 170,
+      "unit": "g",
+      "price_cents": 69,
+      "in_stock": true,
+      "upc": "0007047000323",
+      "raw_size": "6 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0001111005235",
+      "name": "Kroger\u00ae Protein Strawberry Yogurt Cup",
+      "brand": "Kroger",
+      "category": "dairy",
+      "size": 150,
+      "unit": "g",
+      "price_cents": 129,
+      "in_stock": true,
+      "upc": "0001111005235",
+      "raw_size": "5.3 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663200834",
+      "name": "Oikos Triple Zero Vanilla High Protein Nonfat Greek Yogurt Cup",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 150,
+      "unit": "g",
+      "price_cents": 139,
+      "in_stock": true,
+      "upc": "0003663200834",
+      "raw_size": "5.3 oz.",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663200839",
+      "name": "Oikos Triple Zero Banana Creme High Protein Nonfat Greek Yogurt Cup",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 150,
+      "unit": "g",
+      "price_cents": 139,
+      "in_stock": false,
+      "upc": "0003663200839",
+      "raw_size": "5.3 oz.",
+      "source": "kroger_live",
+      "stock_level": "TEMPORARILY_OUT_OF_STOCK",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663202024",
+      "name": "Oikos Triple Zero Blueberry High Protein Nonfat Greek Yogurt Cup",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 150,
+      "unit": "g",
+      "price_cents": 139,
+      "in_stock": true,
+      "upc": "0003663202024",
+      "raw_size": "5.3 oz.",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663202411",
+      "name": "Oikos REMIX Salted Caramel High Protein Nonfat Greek Yogurt Cup",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 133,
+      "unit": "ml",
+      "price_cents": 167,
+      "in_stock": true,
+      "upc": "0003663202411",
+      "raw_size": "4.5 fl oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663204257",
+      "name": "Oikos Pro 20g Protein Strawberry Yogurt-Cultured Ultra-Filtered Milk\u00a0Product Cup\u200b",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 157,
+      "unit": "ml",
+      "price_cents": 189,
+      "in_stock": true,
+      "upc": "0003663204257",
+      "raw_size": "5.3 fl oz",
+      "source": "kroger_live",
+      "stock_level": "LOW",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0002529300280",
+      "name": "Silk Vanilla Dairy Free Vegan Soy Milk Yogurt Alternative Cup",
+      "brand": "Silk",
+      "category": "natural_organic",
+      "size": 157,
+      "unit": "ml",
+      "price_cents": 199,
+      "in_stock": true,
+      "upc": "0002529300280",
+      "raw_size": "5.3 fl oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663203249",
+      "name": "Dannon Light + Fit Vanilla Greek Fat Free\u00a0Yogurt Cups",
+      "brand": "Light + Fit",
+      "category": "dairy",
+      "size": 4,
+      "unit": "ct",
+      "price_cents": 429,
+      "in_stock": true,
+      "upc": "0003663203249",
+      "raw_size": "4 ct / 5.3 fl oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0004667501351",
+      "name": "YoCrunch Vanilla Low Fat Yogurt Cups with Mini M&Ms(R)",
+      "brand": "YoCrunch",
+      "category": "dairy",
+      "size": 4,
+      "unit": "ct",
+      "price_cents": 439,
+      "in_stock": true,
+      "upc": "0004667501351",
+      "raw_size": "4 oz., 4 pack",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663201953",
+      "name": "Oikos Triple Zero Vanilla High Protein Nonfat Greek Yogurt Cups",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 4,
+      "unit": "ct",
+      "price_cents": 499,
+      "in_stock": true,
+      "upc": "0003663201953",
+      "raw_size": "5.3 oz., 4 pack",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663201962",
+      "name": "Oikos Triple Zero Mixed Berry High Protein Nonfat Greek Yogurt Cups",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 4,
+      "unit": "ct",
+      "price_cents": 499,
+      "in_stock": true,
+      "upc": "0003663201962",
+      "raw_size": "5.3 oz., 4 pack",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0003663202016",
+      "name": "Oikos Triple Zero Cherry High Protein Nonfat Greek Yogurt Cups",
+      "brand": "Oikos",
+      "category": "dairy",
+      "size": 4,
+      "unit": "ct",
+      "price_cents": 499,
+      "in_stock": false,
+      "upc": "0003663202016",
+      "raw_size": "5.3 oz., 4 pack",
+      "source": "kroger_live",
+      "stock_level": "TEMPORARILY_OUT_OF_STOCK",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    },
+    {
+      "id": "0081829001626",
+      "name": "Chobani\u00ae Vanilla with Mixed Berry Low Fat Greek Yogurt Cups",
+      "brand": "Chobani",
+      "category": "dairy",
+      "size": 4,
+      "unit": "ct",
+      "price_cents": 499,
+      "in_stock": true,
+      "upc": "0081829001626",
+      "raw_size": "4 pk / 5.3 oz",
+      "source": "kroger_live",
+      "stock_level": "HIGH",
+      "availability": {
+        "curbside": true,
+        "delivery": true,
+        "inStore": true,
+        "shipToHome": false
+      }
+    }
+  ],
+  "raw_response": "{\"reviews\": [{\"product_id\": \"0007047000300\", \"verdict\": \"related\", \"reason\": \"Single yogurt cup matching an approved list item exactly (Yoplait Original Low Fat Strawberry Yogurt Cup).\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Yoplait\u2122 Original Low Fat Strawberry Yogurt Cup\"}]}, {\"product_id\": \"0007047000301\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but flavor Red Raspberry is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Yoplait\u2122 Original Low Fat Red Raspberry Yogurt Cup\"}]}, {\"product_id\": \"0007047000303\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but Cherry Orchard flavor is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Yoplait\u2122 Original Low Fat Cherry Orchard Yogurt Cup\"}]}, {\"product_id\": \"0007047000307\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but Harvest Peach flavor is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Yoplait\u2122 Original Low Fat Harvest Peach Yogurt Cup\"}]}, {\"product_id\": \"0007047000310\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but Mixed Berry flavor is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Yoplait\u2122 Original Low Fat Mixed Berry Yogurt Cup\"}]}, {\"product_id\": \"0007047000319\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but Orange Creme flavor is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Yoplait\u2122 Original Orange Creme Flavored Low Fat Yogurt Cup\"}]}, {\"product_id\": \"0007047000323\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but French Vanilla flavor is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Yoplait\u2122 Original Low Fat French Vanilla Yogurt Cup\"}]}, {\"product_id\": \"0001111005235\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but Kroger Protein Strawberry is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Kroger\u00ae Protein Strawberry Yogurt Cup\"}]}, {\"product_id\": \"0003663200834\", \"verdict\": \"related\", \"reason\": \"Single yogurt cup matching an approved list item exactly (Oikos Triple Zero Vanilla).\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos Triple Zero Vanilla High Protein Nonfat Greek Yogurt Cup\"}]}, {\"product_id\": \"0003663200839\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but Banana Creme flavor is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos Triple Zero Banana Creme High Protein Nonfat Greek Yogurt Cup\"}]}, {\"product_id\": \"0003663202024\", \"verdict\": \"related\", \"reason\": \"Single yogurt cup matching an approved list item exactly (Oikos Triple Zero Blueberry).\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos Triple Zero Blueberry High Protein Nonfat Greek Yogurt Cup\"}]}, {\"product_id\": \"0003663202411\", \"verdict\": \"unrelated\", \"reason\": \"Single yogurt cup but Salted Caramel REMIX is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos REMIX Salted Caramel High Protein Nonfat Greek Yogurt Cup\"}]}, {\"product_id\": \"0003663204257\", \"verdict\": \"unrelated\", \"reason\": \"Single cup but Oikos Pro Strawberry is not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos Pro 20g Protein Strawberry Yogurt-Cultured Ultra-Filtered Milk Product Cup\"}]}, {\"product_id\": \"0002529300280\", \"verdict\": \"unrelated\", \"reason\": \"Soy yogurt alternative, not an approved yogurt cup.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Silk Vanilla Dairy Free Vegan Soy Milk Yogurt Alternative Cup\"}]}, {\"product_id\": \"0003663203249\", \"verdict\": \"unrelated\", \"reason\": \"Multi-pack of 4 cups, not a single cup, and not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Dannon Light + Fit Vanilla Greek Fat Free Yogurt Cups\"}]}, {\"product_id\": \"0004667501351\", \"verdict\": \"unrelated\", \"reason\": \"Multi-pack with M&Ms, not an approved single yogurt cup.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"YoCrunch Vanilla Low Fat Yogurt Cups with Mini M&Ms(R)\"}]}, {\"product_id\": \"0003663201953\", \"verdict\": \"unrelated\", \"reason\": \"4-count multi-pack, not a single cup as required by the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos Triple Zero Vanilla High Protein Nonfat Greek Yogurt Cups\"}]}, {\"product_id\": \"0003663201962\", \"verdict\": \"unrelated\", \"reason\": \"4-count multi-pack and Mixed Berry flavor not on approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos Triple Zero Mixed Berry High Protein Nonfat Greek Yogurt Cups\"}]}, {\"product_id\": \"0003663202016\", \"verdict\": \"unrelated\", \"reason\": \"4-count multi-pack and Cherry flavor not on approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Oikos Triple Zero Cherry High Protein Nonfat Greek Yogurt Cups\"}]}, {\"product_id\": \"0081829001626\", \"verdict\": \"unrelated\", \"reason\": \"Multi-pack and Chobani brand not on the approved list.\", \"evidence\": [{\"field\": \"name\", \"quote\": \"Chobani\u00ae Vanilla with Mixed Berry Low Fat Greek Yogurt Cups\"}]}]}",
+  "validation_error": "Review evidence was not present in the observed product"
+}

@@ -14,6 +14,52 @@ class QuantityAnswerUnavailable(ValueError):
     pass
 
 
+class BasketAnswerUnavailable(ValueError):
+    pass
+
+
+class ScriptedBasketUser:
+    """Private shopper preferences, never injected into the recommending model.
+
+    This is a development simulator, not a general language understanding
+    policy. Rules use public names, not evaluator predicates or accepted UPCs.
+    An absent profile means accept the recommendation without preference feedback.
+    """
+
+    def __init__(self, profiles=None):
+        self.profiles = profiles or {}
+
+    @classmethod
+    def load(cls, path):
+        return cls(json.loads(path.read_text(encoding="utf-8"))["basket_profiles"])
+
+    def review(self, scenario_id, draft):
+        products = {p["product_id"]: p for p in draft["items"]}
+        replacements = []
+        for assignment in draft["assignments"]:
+            words = _words(products[assignment["product_id"]]["name"])
+            for preference in self.profiles.get(scenario_id, []):
+                if (_words(" ".join(preference["need_words"])).issubset(words)
+                        and not _words(" ".join(preference["prefer_words"])).issubset(words)):
+                    replacements.append(assignment["requirement_id"])
+        return {"recommendation_id": draft["recommendation_id"],
+                "action": "replace" if replacements else "accept",
+                **({"requirement_ids": sorted(set(replacements))} if replacements else {})}
+
+    def choose(self, scenario_id, question):
+        options = list(question["options"])
+        for preference in self.profiles.get(scenario_id, []):
+            need = _words(" ".join(preference["need_words"]))
+            if any(need.issubset(_words(p["name"])) for p in options):
+                wanted = _words(" ".join(preference["prefer_words"]))
+                options = [p for p in options if need.issubset(_words(p["name"]))
+                           and wanted.issubset(_words(p["name"]))]
+                if not options:
+                    raise BasketAnswerUnavailable("No offered option satisfies the shopper preference")
+        return min(options, key=lambda p: (p["line_total_cents"] if p["line_total_cents"] is not None
+                                          else p["price_cents"], p["product_id"]))
+
+
 def _words(text):
     return {word.rstrip("s") for word in re.findall(r"[a-z0-9]+", text.lower())}
 

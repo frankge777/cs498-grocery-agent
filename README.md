@@ -145,10 +145,15 @@ It is separate from the frozen benchmark agent and does not change its past
 results. The React frontend still calls `/api/agent/run`; it has not been wired
 to the new choice endpoints yet.
 
+The endpoint now defaults to model basket recommendation followed by explicit
+acceptance or local replacement. See [the current workflow](docs/recommended-basket-workflow.md)
+for the new contract and remaining work. The following examples explicitly
+select the retained `user_choice` mode.
+
 Start a session with `POST /api/agent/interactive/start`:
 
 ```json
-{"instruction":"Buy one bag of carrots and one yogurt under $5. Let me choose.","source":"snapshot"}
+{"instruction":"Buy one bag of carrots and one yogurt under $5. Let me choose.","source":"snapshot","selection_mode":"user_choice"}
 ```
 
 If only the quantity is missing, the first response offers product/package
@@ -333,6 +338,32 @@ To evaluate the newer resumable workflow, use the separate `interactive` name:
   --agents interactive --runs 1 --workers 8 --temperature 0 \
   --output-root results/interactive_kroger_quantity_user_20261127
 ```
+
+For the model-recommended basket workflow (separate result label):
+
+```bash
+.venv/bin/python scripts/run_llm_experiments.py --dataset kroger \
+  --agents recommended --runs 1 --workers 3 --temperature 0 \
+  --output-root results/recommended_kroger_new_run
+
+.venv/bin/python scripts/run_llm_experiments.py --dataset kroger \
+  --agents recommended --variants high --runs 1 --workers 3 --temperature 0 \
+  --scenario-path benchmark/recommendation_dialogue_kroger_development.json \
+  --user-profiles benchmark/recommendation_dialogue_user_profiles.json \
+  --basket-profiles benchmark/recommendation_dialogue_user_profiles.json \
+  --output-root results/recommended_dialogue_new_run
+```
+
+The first command accepts every draft and measures compatibility with the frozen
+goals. The second runs four development cases with a private Greek-yogurt
+preference in RD03 and explicit quantity answers. Neither is a held-out
+personalization benchmark. Initial draft goal checks exclude execution
+interaction predicates; final success retains the complete original evaluator.
+See [implementation and measured results](outputs/recommended_workflow_20261127.md)
+for version-specific results: 136 offline tests pass; the final frozen Kroger
+compatibility run passes 53/60 (88.3%), the four dialogue development cases pass
+4/4, and a live Kroger egg task completes in the local simulated cart.
+These are single-run development results, not a held-out architecture comparison.
 
 This calls the real model for intent extraction, fallback queries, and semantic
 review, while using the frozen Kroger snapshot for reproducibility. It retains

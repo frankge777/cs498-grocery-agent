@@ -1,0 +1,756 @@
+{
+  "instruction": "Buy exactly 12 large chicken eggs in total under $5, nothing else.",
+  "source": "live",
+  "cart_mode": "local simulation only",
+  "auto_accept_local_draft": true,
+  "steps": [
+    {
+      "status": "awaiting_basket_confirmation",
+      "recommendation": {
+        "recommendation_id": "basket_1",
+        "fingerprint": "348e58c11d536d31b7bb42c518bb6f603671876dd0610184c7c281708d37a1ad",
+        "items": [
+          {
+            "product_id": "0001111060903",
+            "name": "Kroger\u00ae Grade A Large White Eggs",
+            "package_size": "12 ct",
+            "quantity": 1,
+            "price_cents": 149,
+            "line_total_cents": 149
+          }
+        ],
+        "total_cents": 149,
+        "budget_cents": 500,
+        "operations": [
+          {
+            "product_id": "0001111060903",
+            "from_quantity": 0,
+            "to_quantity": 1,
+            "action": "add"
+          }
+        ],
+        "assignments": [
+          {
+            "requirement_id": "r1",
+            "product_id": "0001111060903",
+            "quantity": 1,
+            "reason": "12-count large white eggs at $1.49 meets exactly 12 large chicken eggs and stays well under the $5 budget."
+          }
+        ]
+      },
+      "data_source": "live",
+      "selection_mode": "recommend",
+      "location": {
+        "location_id": "02100946",
+        "name": "Kroger - Mt Zion",
+        "chain": "KROGER",
+        "address": {
+          "addressLine1": "1818 Airport Plz",
+          "city": "Decatur",
+          "state": "IL",
+          "zipCode": "62521",
+          "county": "MACON COUNTY"
+        }
+      },
+      "cart_mode": "local simulation only",
+      "cart": {
+        "items": [],
+        "total_cents": 0
+      },
+      "requirement_states": [
+        {
+          "requirement_id": "r1",
+          "status": "selected",
+          "selected_product_id": "0001111060903",
+          "quantity": 1,
+          "measure": "count",
+          "target_min": 12,
+          "target_max": 12
+        }
+      ],
+      "discovery": [
+        {
+          "requirement_id": "r1",
+          "reason": "reviewed",
+          "search_attempts": [
+            {
+              "query": "large chicken eggs",
+              "retry": 0,
+              "ok": true,
+              "count": 0,
+              "message": "0 live Kroger results"
+            },
+            {
+              "query": "eggs",
+              "retry": 0,
+              "ok": true,
+              "count": 20,
+              "message": "20 live Kroger results"
+            }
+          ],
+          "reviews": [
+            {
+              "product_id": "0001111060903",
+              "verdict": "related",
+              "reason": "Grade A Large white chicken eggs in a 12-count package, matching the requested large chicken eggs.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060933",
+              "verdict": "related",
+              "reason": "Grade A Large white chicken eggs; package size differs but the program handles package counts.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111079770",
+              "verdict": "related",
+              "reason": "Grade A Large brown chicken eggs, 12-count; large chicken eggs regardless of shell color.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060904",
+              "verdict": "unrelated",
+              "reason": "Extra Large eggs, not the requested large size.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Extra Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111015097",
+              "verdict": "related",
+              "reason": "Grade A Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "24"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060914",
+              "verdict": "related",
+              "reason": "Grade A Large white chicken eggs; package size differs but counts are handled downstream.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "60"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060906",
+              "verdict": "related",
+              "reason": "Grade A Large white chicken eggs; package size differs but counts are handled downstream.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "6"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060980",
+              "verdict": "unrelated",
+              "reason": "Medium eggs, not the requested large size.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Medium Grade A White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514150349",
+              "verdict": "related",
+              "reason": "Classic Large white chicken eggs in a 12-count package.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Classic Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111089310",
+              "verdict": "related",
+              "reason": "Grade A Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111006479",
+              "verdict": "related",
+              "reason": "Grade A Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111079772",
+              "verdict": "related",
+              "reason": "Cage Free Large brown chicken eggs in a 12-count package.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Cage Free Large Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514111357",
+              "verdict": "related",
+              "reason": "Classic Large white chicken eggs; package size differs but counts are handled downstream.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Classic Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060905",
+              "verdict": "unrelated",
+              "reason": "Jumbo eggs, not the requested large size.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Jumbo White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0081565200214",
+              "verdict": "related",
+              "reason": "Free Range Large chicken eggs in a 12-count package.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Large Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0088742200000",
+              "verdict": "related",
+              "reason": "Free Range Large brown chicken eggs in a 12-count package.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514151464",
+              "verdict": "related",
+              "reason": "Cage Free Large brown chicken eggs in a 12-count package.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Cage Free Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0081565200418",
+              "verdict": "related",
+              "reason": "Free Range Large chicken eggs in a 12-count package.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Eggs Large"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ]
+            },
+            {
+              "product_id": "0088742200006",
+              "verdict": "related",
+              "reason": "Free Range Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111087023",
+              "verdict": "unrelated",
+              "reason": "Medium eggs, not the requested large size.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Medium Brown Eggs"
+                }
+              ]
+            }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    {
+      "status": "complete",
+      "cart": {
+        "items": [
+          {
+            "id": "0001111060903",
+            "name": "Kroger\u00ae Grade A Large White Eggs",
+            "brand": "Kroger",
+            "category": "dairy",
+            "size": 12,
+            "unit": "ct",
+            "price_cents": 149,
+            "in_stock": true,
+            "upc": "0001111060903",
+            "raw_size": "12 ct",
+            "source": "kroger_live",
+            "stock_level": "HIGH",
+            "availability": {
+              "curbside": true,
+              "delivery": true,
+              "inStore": true,
+              "shipToHome": false
+            },
+            "quantity": 1,
+            "line_total_cents": 149
+          }
+        ],
+        "total_cents": 149
+      },
+      "total_cents": 149,
+      "verification": {
+        "ok": true,
+        "violations": [],
+        "total_cents": 149,
+        "expected_cart": {
+          "0001111060903": 1
+        }
+      },
+      "data_source": "live",
+      "selection_mode": "recommend",
+      "location": {
+        "location_id": "02100946",
+        "name": "Kroger - Mt Zion",
+        "chain": "KROGER",
+        "address": {
+          "addressLine1": "1818 Airport Plz",
+          "city": "Decatur",
+          "state": "IL",
+          "zipCode": "62521",
+          "county": "MACON COUNTY"
+        }
+      },
+      "cart_mode": "local simulation only",
+      "requirement_states": [
+        {
+          "requirement_id": "r1",
+          "status": "added",
+          "selected_product_id": "0001111060903",
+          "quantity": 1,
+          "measure": "count",
+          "target_min": 12,
+          "target_max": 12
+        }
+      ],
+      "discovery": [
+        {
+          "requirement_id": "r1",
+          "reason": "reviewed",
+          "search_attempts": [
+            {
+              "count": 0,
+              "message": "0 live Kroger results",
+              "ok": true,
+              "query": "large chicken eggs",
+              "retry": 0
+            },
+            {
+              "count": 20,
+              "message": "20 live Kroger results",
+              "ok": true,
+              "query": "eggs",
+              "retry": 0
+            }
+          ],
+          "reviews": [
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0001111060903",
+              "reason": "Grade A Large white chicken eggs in a 12-count package, matching the requested large chicken eggs.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ],
+              "product_id": "0001111060933",
+              "reason": "Grade A Large white chicken eggs; package size differs but the program handles package counts.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0001111079770",
+              "reason": "Grade A Large brown chicken eggs, 12-count; large chicken eggs regardless of shell color.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Extra Large White Eggs"
+                }
+              ],
+              "product_id": "0001111060904",
+              "reason": "Extra Large eggs, not the requested large size.",
+              "verdict": "unrelated"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "24"
+                }
+              ],
+              "product_id": "0001111015097",
+              "reason": "Grade A Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "60"
+                }
+              ],
+              "product_id": "0001111060914",
+              "reason": "Grade A Large white chicken eggs; package size differs but counts are handled downstream.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "6"
+                }
+              ],
+              "product_id": "0001111060906",
+              "reason": "Grade A Large white chicken eggs; package size differs but counts are handled downstream.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Medium Grade A White Eggs"
+                }
+              ],
+              "product_id": "0001111060980",
+              "reason": "Medium eggs, not the requested large size.",
+              "verdict": "unrelated"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Classic Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0071514150349",
+              "reason": "Classic Large white chicken eggs in a 12-count package.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ],
+              "product_id": "0001111089310",
+              "reason": "Grade A Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Grade A Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ],
+              "product_id": "0001111006479",
+              "reason": "Grade A Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Cage Free Large Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0001111079772",
+              "reason": "Cage Free Large brown chicken eggs in a 12-count package.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Classic Large White Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ],
+              "product_id": "0071514111357",
+              "reason": "Classic Large white chicken eggs; package size differs but counts are handled downstream.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Jumbo White Eggs"
+                }
+              ],
+              "product_id": "0001111060905",
+              "reason": "Jumbo eggs, not the requested large size.",
+              "verdict": "unrelated"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Large Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0081565200214",
+              "reason": "Free Range Large chicken eggs in a 12-count package.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0088742200000",
+              "reason": "Free Range Large brown chicken eggs in a 12-count package.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Cage Free Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0071514151464",
+              "reason": "Cage Free Large brown chicken eggs in a 12-count package.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Eggs Large"
+                },
+                {
+                  "field": "size",
+                  "quote": "12"
+                }
+              ],
+              "product_id": "0081565200418",
+              "reason": "Free Range Large chicken eggs in a 12-count package.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Free Range Large Brown Eggs"
+                },
+                {
+                  "field": "size",
+                  "quote": "18"
+                }
+              ],
+              "product_id": "0088742200006",
+              "reason": "Free Range Large brown chicken eggs; package size differs but counts are handled downstream.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Medium Brown Eggs"
+                }
+              ],
+              "product_id": "0001111087023",
+              "reason": "Medium eggs, not the requested large size.",
+              "verdict": "unrelated"
+            }
+          ],
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,34 @@ No model output may replace product metadata or relax a shopping requirement.
 from __future__ import annotations
 
 import json
+from .llm import is_provider_error
+
+
+def _observed_quote(text, quote):
+    """Anchor a quote back to the ORIGINAL field, allowing whitespace only.
+
+    Kroger titles contain NBSP/zero-width spaces. Recover the exact original
+    span rather than accepting fabricated words or changing stored facts.
+    """
+    if quote in text:
+        return quote
+    def normalize(value):
+        chars, offsets = [], []
+        for index, char in enumerate(value):
+            if char in {"\u200b", "\ufeff"}:
+                continue
+            char = " " if char.isspace() else char
+            if char == " " and chars and chars[-1] == " ":
+                continue
+            chars.append(char)
+            offsets.append(index)
+        return "".join(chars), offsets
+    source, offsets = normalize(text)
+    needle, _ = normalize(quote)
+    start = source.find(needle) if needle.strip() else -1
+    if start < 0:
+        return None
+    return text[offsets[start]:offsets[start + len(needle) - 1] + 1]
 
 
 QUERY_SYSTEM = """Task: search_query_fallback. Return JSON {"queries": ["...", "..."]}.
@@ -33,7 +61,9 @@ actions, add tags, modify metadata or relax requirements."""
 
 
 class DiscoveryError(ValueError):
-    pass
+    def __init__(self, message, raw_response=None):
+        super().__init__(message)
+        self.raw_response = raw_response
 
 
 class ModelDiscovery:
@@ -41,6 +71,7 @@ class ModelDiscovery:
         self.llm = llm
 
     def _json(self, system, payload, env):
+        reply = None
         try:
             reply = self.llm.chat([
                 {"role": "system", "content": system},
@@ -53,9 +84,10 @@ class ModelDiscovery:
         except Exception as error:
             # Environment caps must retain their existing termination behavior.
             from grocery_bench.environment import EpisodeTerminated
-            if isinstance(error, EpisodeTerminated):
+            if isinstance(error, EpisodeTerminated) or is_provider_error(error):
                 raise
-            raise DiscoveryError(f"Discovery model failed: {type(error).__name__}") from error
+            raise DiscoveryError(f"Discovery model failed: {type(error).__name__}: {str(error)[:500]}",
+                                 getattr(reply, "content", None)) from error
 
     def alternatives(self, env, requirement, attempts):
         data = self._json(QUERY_SYSTEM, {
@@ -78,11 +110,27 @@ class ModelDiscovery:
                 break
         return result
 
-    def review(self, env, requirement, products):
-        raw = self._json(REVIEW_SYSTEM, {
-            "request": env.observation(), "requirement": requirement,
-            "products": products,
-        }, env)
+    def review(self, env, requirement, products, diagnostics=None):
+        payload = {"request": env.observation(), "requirement": requirement, "products": products}
+        for attempt in range(2):
+            raw = None
+            try:
+                raw = self._json(REVIEW_SYSTEM, payload, env)
+                return self._validate_reviews(raw, products)
+            except DiscoveryError as error:
+                previous = raw if raw is not None else error.raw_response
+                diagnostic = {"stage": "candidate_review", "attempt": attempt,
+                              "error_type": type(error).__name__, "message": str(error),
+                              "raw_response": json.dumps(previous, ensure_ascii=False)[:12000]}
+                if diagnostics is not None:
+                    diagnostics.append(diagnostic)
+                if attempt:
+                    raise
+                payload = {**payload, "previous_error": str(error), "previous_output": previous,
+                           "repair_instruction": "Correct the output once. Keep all original requirements and observed facts. Quote actual supplied field substrings; review all products exactly once."}
+
+    @staticmethod
+    def _validate_reviews(raw, products):
         rows = raw.get("reviews")
         if not isinstance(rows, list) or len(rows) != len(products):
             raise DiscoveryError("One review is required for every observed product")
@@ -103,6 +151,7 @@ class ModelDiscovery:
             evidence = row.get("evidence", [])
             if not isinstance(evidence, list):
                 raise DiscoveryError("Evidence must be a list")
+            anchored = []
             for item in evidence:
                 if not isinstance(item, dict) or not isinstance(item.get("quote"), str):
                     raise DiscoveryError("Invalid evidence")
@@ -111,18 +160,21 @@ class ModelDiscovery:
                     raise DiscoveryError("Evidence field must be a top-level field name")
                 value = catalog[product_id].get(field)
                 text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
-                if field not in catalog[product_id] or not item["quote"] or item["quote"] not in text:
-                    raise DiscoveryError("Review evidence was not present in the observed product")
+                observed = _observed_quote(text, item["quote"]) if item["quote"] else None
+                if field not in catalog[product_id] or observed is None:
+                    raise DiscoveryError(f"Evidence for {product_id}.{field} was not present in the observed product")
+                anchored.append({"field": field, "quote": observed,
+                                 **({"model_quote": item["quote"]} if observed != item["quote"] else {})})
             if verdict != "uncertain" and not evidence:
                 raise DiscoveryError("A definite judgment needs observed evidence")
             seen.add(product_id)
             validated.append({"product_id": product_id, "verdict": verdict,
-                              "reason": row["reason"][:1000], "evidence": evidence})
+                              "reason": row["reason"][:1000], "evidence": anchored})
         return validated
 
     def discover(self, env, requirement):
         """At most three distinct queries; retry a failed tool call once in place."""
-        attempts, products = [], []
+        attempts, products, errors = [], [], []
         queries = [requirement["search_query"]]
         planned = False
         failure = None
@@ -143,17 +195,18 @@ class ModelDiscovery:
             if not planned:
                 try:
                     queries.extend(self.alternatives(env, requirement, attempts))
-                except DiscoveryError:
+                except DiscoveryError as error:
                     failure = "review_error"
+                    errors.append({"stage": "query_fallback", "message": str(error)})
                     break
                 planned = True
         if failure or not products:
             return {"attempts": attempts, "products": [], "reviews": [],
-                    "reason": failure or "empty_search"}
+                    "reason": failure or "empty_search", "errors": errors}
         # Initially use public summaries. For uncertain judgments, enrich a
         # bounded subset with actual details, then review that subset once more.
         try:
-            reviews = self.review(env, requirement, products)
+            reviews = self.review(env, requirement, products, errors)
             uncertain_ids = [r["product_id"] for r in reviews if r["verdict"] == "uncertain"][:5]
             enriched = []
             for product_id in uncertain_ids:
@@ -161,10 +214,10 @@ class ModelDiscovery:
                 if detail.ok:
                     enriched.append(detail.data)
             if enriched:
-                replacements = {r["product_id"]: r for r in self.review(env, requirement, enriched)}
+                replacements = {r["product_id"]: r for r in self.review(env, requirement, enriched, errors)}
                 reviews = [replacements.get(r["product_id"], r) for r in reviews]
                 actual = {p["id"]: p for p in enriched}
                 products = [actual.get(p["id"], p) for p in products]
         except DiscoveryError:
-            return {"attempts": attempts, "products": [], "reviews": [], "reason": "review_error"}
-        return {"attempts": attempts, "products": products, "reviews": reviews, "reason": "reviewed"}
+            return {"attempts": attempts, "products": [], "reviews": [], "reason": "review_error", "errors": errors}
+        return {"attempts": attempts, "products": products, "reviews": reviews, "reason": "reviewed", "errors": errors}

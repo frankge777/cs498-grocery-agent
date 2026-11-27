@@ -1,0 +1,49 @@
+{
+  "version": "recommended-dialogue-development-v1",
+  "notes": "Four development cases on the frozen real Kroger catalog. Not held-out or a replacement for the frozen 20-task benchmark. Variants deliberately share wording; run high only. Hidden goals and private shopper profiles are not passed to the agent. Feedback changes a soft preference, not a hard constraint or the scored goal.",
+  "scenarios": [
+    {
+      "id": "RD01", "category": "explicit", "difficulty": "E", "title": "Accept a model-selected basket",
+      "variants": {"high": "Buy exactly one Kroger White Bread loaf and twelve Kroger large white eggs, under $5, nothing else.", "medium": "Buy exactly one Kroger White Bread loaf and twelve Kroger large white eggs, under $5, nothing else.", "low": "Buy exactly one Kroger White Bread loaf and twelve Kroger large white eggs, under $5, nothing else."},
+      "context": {}, "budget_cents": 500,
+      "needs": [
+        {"id": "bread", "select": {"product_ids": ["0001111008485"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "eggs", "select": {"product_ids": ["0001111060903", "0001111060906"]}, "measure": "count", "min": 12, "max": 12}
+      ],
+      "reference_carts": [{"0001111008485": 1, "0001111060903": 1}]
+    },
+    {
+      "id": "RD02", "category": "goal", "difficulty": "M", "title": "Ask quantity after choosing yogurt cup",
+      "variants": {"high": "Buy yogurt cups and exactly one bag of Kroger Cut and Peeled Baby Carrots, under $8, nothing else.", "medium": "Buy yogurt cups and exactly one bag of Kroger Cut and Peeled Baby Carrots, under $8, nothing else.", "low": "Buy yogurt cups and exactly one bag of Kroger Cut and Peeled Baby Carrots, under $8, nothing else."},
+      "context": {"approved_yogurt_cups": ["Yoplait Original Low Fat Strawberry Yogurt Cup", "Oikos Triple Zero Vanilla High Protein Nonfat Greek Yogurt Cup", "Oikos Triple Zero Blueberry High Protein Nonfat Greek Yogurt Cup"]},
+      "budget_cents": 800,
+      "needs": [
+        {"id": "yogurt", "select": {"product_ids": ["0007047000300", "0003663200834", "0003663202024"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "carrots", "select": {"product_ids": ["0001111091620"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [{"0007047000300": 2, "0001111091620": 1}]
+    },
+    {
+      "id": "RD03", "category": "goal", "difficulty": "M", "title": "Private Greek preference triggers local replacement",
+      "variants": {"high": "Buy exactly two yogurt cups and one bag of Kroger Cut and Peeled Baby Carrots, under $8, nothing else.", "medium": "Buy exactly two yogurt cups and one bag of Kroger Cut and Peeled Baby Carrots, under $8, nothing else.", "low": "Buy exactly two yogurt cups and one bag of Kroger Cut and Peeled Baby Carrots, under $8, nothing else."},
+      "context": {"approved_yogurt_cups": ["Yoplait Original Low Fat Strawberry Yogurt Cup", "Oikos Triple Zero Vanilla High Protein Nonfat Greek Yogurt Cup", "Oikos Triple Zero Blueberry High Protein Nonfat Greek Yogurt Cup"]},
+      "budget_cents": 800,
+      "needs": [
+        {"id": "yogurt", "select": {"product_ids": ["0007047000300", "0003663200834", "0003663202024"]}, "measure": "units", "min": 2, "max": 2},
+        {"id": "carrots", "select": {"product_ids": ["0001111091620"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [{"0003663200834": 2, "0001111091620": 1}]
+    },
+    {
+      "id": "RD04", "category": "recovery", "difficulty": "M", "title": "Reconcile an existing cart without duplicate additions",
+      "variants": {"high": "Keep the twelve Kroger large white eggs in my cart. Reduce Kroger White Bread from two loaves to one, then add exactly one bag of Kroger Cut and Peeled Baby Carrots. Final total under $5, nothing else.", "medium": "Keep the twelve Kroger large white eggs in my cart. Reduce Kroger White Bread from two loaves to one, then add exactly one bag of Kroger Cut and Peeled Baby Carrots. Final total under $5, nothing else.", "low": "Keep the twelve Kroger large white eggs in my cart. Reduce Kroger White Bread from two loaves to one, then add exactly one bag of Kroger Cut and Peeled Baby Carrots. Final total under $5, nothing else."},
+      "context": {}, "initial_cart": {"0001111060903": 1, "0001111008485": 2}, "budget_cents": 500,
+      "needs": [
+        {"id": "eggs", "select": {"product_ids": ["0001111060903"]}, "measure": "count", "min": 12, "max": 12},
+        {"id": "bread", "select": {"product_ids": ["0001111008485"]}, "measure": "units", "min": 1, "max": 1},
+        {"id": "carrots", "select": {"product_ids": ["0001111091620"]}, "measure": "units", "min": 1, "max": 1}
+      ],
+      "reference_carts": [{"0001111060903": 1, "0001111008485": 1, "0001111091620": 1}]
+    }
+  ]
+}
