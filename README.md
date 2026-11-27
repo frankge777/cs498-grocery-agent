@@ -331,23 +331,40 @@ To evaluate the newer resumable workflow, use the separate `interactive` name:
 ```bash
 .venv/bin/python scripts/run_llm_experiments.py --dataset kroger \
   --agents interactive --runs 1 --workers 8 --temperature 0 \
-  --output-root results/interactive_kroger_20261127
+  --output-root results/interactive_kroger_quantity_user_20261127
 ```
 
 This calls the real model for intent extraction, fallback queries, and semantic
 review, while using the frozen Kroger snapshot for reproducibility. It retains
 the same evaluator and limits. A deterministic simulated shopper picks the
 lowest offered line total (unit price if quantity is unknown), breaking ties
-by UPC. Mandatory free-text answers come only from `ask_user`. It stops on
-unknown quantities or unresolved semantic confirmation rather than reading
-hidden needs/reference carts. Unsupported workflows, malformed model intent,
+by UPC. Mandatory free-text answers come only from `ask_user`. Quantity
+questions are answered from the separate scripted shopper intentions in
+`benchmark/interactive_user_profiles_kroger.json`, only after a specific package
+has been selected and a question asked. Profiles contain item names and amounts,
+not accepted UPC sets, scoring predicates, or reference carts. Every quantity
+question/answer and its profile source is recorded in `agent_notes.quantity_dialogue`.
+An unmatched or ambiguous intention remains unanswered; there is no blanket
+default of one. User intentions are not included in the shopping model's
+initial input. Unresolved semantic confirmation still stops the simulation.
+Unsupported workflows, malformed model intent,
 and unresolved interactions are scored failures, not silently skipped.
 Infrastructure failures are reported separately under the existing protocol.
 
 This is a development evaluation of a different workflow, not a replacement
 for the historical `ours` score or a controlled architecture comparison. In
 particular, cheap-choice simulation does not model individual preferences.
-Manifests record the user policy, dataset hashes, and relevant source hashes.
+Manifests record the user policy, quantity-profile hash, dataset hashes, and
+relevant source hashes. This is a development protocol change: profiles were
+added after inspecting the previous run, so new results must be stored
+separately. `--quantity-user none` retains the earlier stop-on-quantity-question
+policy. Custom scenario files require explicit matching `--user-profiles`.
+
+`scripts/replay_quantity_dialogues.py` resumes the ten quantity-blocked states
+from the original November 27 pilot, retaining their extracted intent and
+selected products. It is a checkpoint diagnostic; it does not rerun all 60
+instances or replace the original 60% result. See
+`outputs/quantity_dialogue_replay_20261127.md` for this diagnostic's outcome.
 
 Every output manifest records the selected catalog/scenario paths and their
 SHA-256 hashes, so a result cannot silently mix synthetic tasks with the Kroger

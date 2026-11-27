@@ -1,0 +1,77 @@
+{
+  "agent": "interactive_quantity_replay",
+  "n_trials": 10,
+  "n_scored": 10,
+  "n_infra_failures": 0,
+  "macro_success": 0.5714,
+  "macro_success_ci95": [
+    0.1429,
+    0.8571
+  ],
+  "success_by_variant": {
+    "high": 1,
+    "low": 0.5,
+    "medium": 0.6
+  },
+  "success_by_category": {
+    "constrained": 1,
+    "explicit": 0,
+    "goal": 1,
+    "recovery": 0.3333
+  },
+  "success_by_difficulty": {
+    "E": 0,
+    "H": 0.75,
+    "M": 0.5
+  },
+  "success_by_scenario": {
+    "K04": 0,
+    "K07": 1,
+    "K12": 1,
+    "K13": 1,
+    "K16": 0,
+    "K18": 1,
+    "K20": 0
+  },
+  "secondary": {
+    "coverage": 0.76,
+    "hard_violation_rate": 0.1,
+    "budget_compliance": {
+      "rate": 1.0,
+      "n": 8
+    },
+    "preference_score": {
+      "mean": null,
+      "n": 0
+    },
+    "missed_required_clarification": {
+      "rate": null,
+      "n": 0
+    },
+    "unnecessary_clarification_rate": 0.0
+  },
+  "efficiency_all": {
+    "tool_calls": 19.2,
+    "model_calls": 5.5,
+    "input_tokens": 14885,
+    "cached_input_tokens": 998.4,
+    "output_tokens": 5431.1,
+    "runtime_seconds": 0.528,
+    "cart_modifications": 2.5,
+    "n": 10
+  },
+  "efficiency_successful": {
+    "tool_calls": 21.8333,
+    "model_calls": 5.1667,
+    "input_tokens": 13852.3333,
+    "cached_input_tokens": 896,
+    "output_tokens": 5004.8333,
+    "runtime_seconds": 0.0005,
+    "cart_modifications": 3.3333,
+    "n": 6
+  },
+  "termination_reasons": {
+    "agent_returned": 3,
+    "finished": 7
+  }
+}

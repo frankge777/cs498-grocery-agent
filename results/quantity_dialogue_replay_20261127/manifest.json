@@ -1,0 +1,23 @@
+{
+  "catalog_sha256": "2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce",
+  "scenarios_sha256": "590c01667f938ab7e3509da03539b94e548906fa1da99e128af37272cfa3442e",
+  "catalog_path": "benchmark/kroger_snapshots/02100946-20261116.json",
+  "scenarios_path": "benchmark/scenarios_kroger.json",
+  "tool_schema_version": "1.0.0",
+  "agent": {
+    "name": "interactive_quantity_replay",
+    "protocol": "checkpoint-replay diagnostic",
+    "source": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/results/interactive_kroger_20261127/deepseek-flash/kroger/interactive",
+    "llm": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": false,
+      "temperature": 0,
+      "max_tokens": 4096
+    },
+    "user_profiles_sha256": "f1dc17946967f8e46cadf2f14c6aa07d6efd1b54e7db81d17d97e97715372dc0",
+    "source_trials_sha256": "5dbfac2c4edb1a36a664750105c343d26a02e3ab424d8235819c65683a72ed2f",
+    "source_trajectories_sha256": "51edd3638b56271e6e2163a5e318e8c60d3ae52d5e04b8336db44a2f021f6db3",
+    "runtime_note": "runtime_seconds measures resumed portion; tool/token counters include original prefix"
+  }
+}

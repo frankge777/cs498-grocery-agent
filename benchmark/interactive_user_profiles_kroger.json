@@ -1,0 +1,26 @@
+{
+  "version": "0.1.0-development-quantity-dialogue",
+  "notes": "Scripted shopper intentions for quantity questions, authored from the public task descriptions and detailed request variants. This is a new development interaction protocol after inspecting a previous pilot, not a held-out evaluation. Matching uses the product name shown to the shopper; no UPCs, accepted-product sets, reference carts or scoring predicates are included. The shopping model receives only answers to questions it actually asks. There is no default quantity for unmatched products.",
+  "profiles": {
+    "K01": [{"words": ["milk"], "measure": "units", "min": 2, "max": 2}],
+    "K02": [{"words": ["bread"], "measure": "units", "min": 1, "max": 1}, {"words": ["eggs"], "measure": "count", "min": 12, "max": 12}, {"words": ["orange"], "measure": "units", "min": 4, "max": 4}],
+    "K03": [{"words": ["eggs"], "measure": "count", "min": 24, "max": 24}],
+    "K04": [{"words": ["rice"], "measure": "units", "min": 1, "max": 1}, {"words": ["penne"], "measure": "units", "min": 1, "max": 1}, {"words": ["oats"], "measure": "units", "min": 1, "max": 1}, {"words": ["flour"], "measure": "units", "min": 1, "max": 1}, {"words": ["sugar"], "measure": "units", "min": 1, "max": 1}],
+    "K05": [{"words": ["oat", "milk"], "measure": "units", "min": 1, "max": 1}, {"words": ["bread"], "measure": "units", "min": 1, "max": 1}, {"words": ["eggs"], "measure": "count", "min": 12, "max": 12}],
+    "K06": [{"words": ["oats"], "measure": "units", "min": 1, "max": 1}, {"words": ["milk"], "measure": "units", "min": 1, "max": 1}, {"words": ["eggs"], "measure": "count", "min": 12, "max": 12}, {"words": ["bread"], "measure": "units", "min": 1, "max": 1}],
+    "K07": [{"words": ["oats"], "measure": "units", "min": 1, "max": 1}, {"words": ["tofu"], "measure": "units", "min": 1, "max": 1}, {"words": ["sugar"], "measure": "units", "min": 1, "max": 1}],
+    "K08": [{"words": ["oats"], "measure": "units", "min": 1, "max": 1}, {"words": ["milk"], "measure": "units", "min": 1, "max": 1}, {"words": ["eggs"], "measure": "count", "min": 12, "max": 12}, {"words": ["bread"], "measure": "units", "min": 1, "max": 1}],
+    "K09": [{"words": ["bar"], "measure": "units", "min": 4, "max": 6}],
+    "K10": [{"words": ["tortilla"], "measure": "units", "min": 1, "max": 1}, {"words": ["bean"], "measure": "units", "min": 2, "max": 2}, {"words": ["salsa"], "measure": "units", "min": 1, "max": 1}, {"words": ["cheese"], "measure": "units", "min": 1, "max": 1}],
+    "K11": [{"words": ["oats"], "measure": "units", "min": 1, "max": 1}, {"words": ["milk"], "measure": "units", "min": 1, "max": 1}, {"words": ["orange"], "measure": "units", "min": 3, "max": 3}],
+    "K12": [{"words": ["tofu"], "measure": "units", "min": 1, "max": 1}, {"words": ["rice"], "measure": "units", "min": 1, "max": 1}, {"words": ["spinach"], "measure": "units", "min": 1, "max": 1}],
+    "K13": [{"words": ["protein", "powder"], "measure": "units", "min": 1, "max": 1}, {"words": ["creatine"], "measure": "units", "min": 1, "max": 1}, {"words": ["bar"], "measure": "units", "min": 4, "max": 4}, {"words": ["yogurt"], "measure": "units", "min": 1, "max": 1}],
+    "K14": [{"words": ["rice"], "measure": "units", "min": 1, "max": 1}, {"words": ["pasta"], "measure": "units", "min": 2, "max": 2}, {"words": ["oats"], "measure": "units", "min": 1, "max": 1}, {"words": ["bean"], "measure": "units", "min": 3, "max": 3}, {"words": ["flour"], "measure": "units", "min": 1, "max": 1}],
+    "K15": [{"words": ["milk"], "measure": "units", "min": 1, "max": 1}],
+    "K16": [{"words": ["milk"], "measure": "units", "min": 1, "max": 1}],
+    "K17": [{"words": ["pasta"], "exclude_words": ["sauce"], "measure": "units", "min": 2, "max": 2}, {"words": ["spaghetti"], "exclude_words": ["sauce"], "measure": "units", "min": 2, "max": 2}, {"words": ["sauce"], "measure": "units", "min": 1, "max": 1}],
+    "K18": [{"words": ["tortilla"], "measure": "units", "min": 1, "max": 1}, {"words": ["bean"], "measure": "units", "min": 2, "max": 2}, {"words": ["salsa"], "measure": "units", "min": 1, "max": 1}, {"words": ["cheese"], "measure": "units", "min": 1, "max": 1}],
+    "K19": [{"words": ["coffee"], "measure": "units", "min": 1, "max": 1}, {"words": ["milk"], "measure": "units", "min": 1, "max": 1}],
+    "K20": [{"words": ["pasta"], "measure": "units", "min": 1, "max": 1}, {"words": ["sauce"], "measure": "units", "min": 1, "max": 1}, {"words": ["carrot"], "measure": "units", "min": 1, "max": 1}, {"words": ["bread"], "measure": "units", "min": 1, "max": 1}, {"words": ["eggs"], "measure": "units", "min": 1, "max": 1}]
+  }
+}

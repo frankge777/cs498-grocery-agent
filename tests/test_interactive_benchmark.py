@@ -31,7 +31,7 @@ class InteractiveBenchmarkTests(unittest.TestCase):
     def test_does_not_use_hidden_cart_to_guess_missing_quantity(self):
         env, agent = self.run_agent(False)
         self.assertEqual(env.cart, {})
-        self.assertEqual(agent.notes["stop_reason"], "quantity_not_specified")
+        self.assertEqual(agent.notes["stop_reason"], "quantity_answer_unavailable")
 
 
 if __name__ == "__main__":
