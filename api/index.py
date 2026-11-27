@@ -44,6 +44,7 @@ class InteractiveResumeRequest(BaseModel):
     session_token: str
     answers: Optional[Dict[str, Any]] = None
     clarification_answers: Optional[Dict[str, Any]] = None
+    candidate_review_answers: Optional[Dict[str, Any]] = None
     reconsider_requirement_ids: Optional[list[str]] = None
 
 
@@ -102,4 +103,5 @@ def interactive_start(request: InteractiveStartRequest) -> dict:
 def interactive_resume(request: InteractiveResumeRequest) -> dict:
     return _call(interactive_service.resume, request.session_token,
                  answers=request.answers, clarification_answers=request.clarification_answers,
+                 candidate_review_answers=request.candidate_review_answers,
                  reconsider_requirement_ids=request.reconsider_requirement_ids)

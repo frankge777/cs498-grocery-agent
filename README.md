@@ -207,6 +207,66 @@ Tokens expire after 30 minutes; the signed state contains the instruction and
 selection history, so treat it as private user data. No database is needed for
 this demo. Both snapshot and live modes only simulate the cart locally.
 
+### Search fallback and independent semantic review
+
+Sessions created through `interactive/start` now enable `ModelDiscovery`.
+Search first uses the intent's original query. An empty result triggers a
+separate model call proposing at most two distinct alternative search terms;
+the original intent, quantity, budget, and restrictions are never rewritten.
+There are at most three distinct queries per discovery pass. A failed search
+tool call is retried once with the same query; persistent failure returns
+`search_error`, not `no_candidates`. Query-planning or review-model failure
+returns `review_error`. These responses retain the session token; an explicit
+resume without an answer can retry discovery, within the session round limit.
+
+Nonempty search results go to an independent model review using the original
+request/context and current requirement. It returns `related`, `unrelated`,
+or `uncertain` per observed product. Definite judgments require evidence:
+`{"field":"name","quote":"exact text from the product"}`. The program
+rejects malformed reviews, unknown/duplicate IDs, omitted products, and quotes
+not present in the supplied fields. A model cannot supply replacement product
+metadata. Evidence anchoring checks what was cited; it does not prove that
+every model interpretation is correct.
+
+Initially the reviewer sees search summaries. For up to five uncertain items,
+the environment fetches real details and the model reviews those items once
+more. The program then applies stock, valid price, UPC, brand, required tags,
+package arithmetic, and budget checks using observed data. Confirmed semantic
+matches are offered as product choices. When there are no usable confirmed
+matches but some hard-eligible uncertain products, the response is
+`needs_candidate_review`. Its questions have `review_id`, `requirement_id`,
+and `options` containing observed product fields plus review reasons/evidence.
+The caller can confirm an item as the intended product:
+
+```json
+{"session_token":"<latest token>","candidate_review_answers":{"answers":[{"review_id":"<returned review_id>","selected_product_id":"<offered product id>"}]}}
+```
+
+Submit one answer for each pending review. A null `selected_product_id`
+declines all offered uncertain products for that requirement. Confirmation
+resolves product meaning only; it cannot fill missing allergy/dietary facts
+or override hard checks. A confirmed product goes to package-quantity questions
+if its quantity is still unknown, otherwise to pre-execution checks. Definite
+mismatches cannot be selected by forging a product ID.
+
+Each response's `discovery` field exposes query attempts, semantic reviews,
+and a diagnostic reason: `empty_search`, `semantic_mismatch`,
+`semantic_uncertainty`, or `hard_constraints`. Attempts, reviews, excluded
+products, and pending reviews also survive token checkpoints. The independent
+review applies to discovered candidates; final cart validation remains the
+existing deterministic checker. Resuming or repairing selected products uses
+the existing price/availability refresh behavior.
+
+The original three choice-development cases intentionally continue using
+reference intents and deterministic discovery, so they are not measurements
+of semantic review. Run `python -m unittest tests.test_discovery` for offline
+control-flow/evidence checks. `scripts/run_discovery_review.py` calls the real
+configured model (incurs API cost) on synthetic coffee, dish-detergent, and tea
+development fixtures in `benchmark/discovery_review_development.json`.
+Their expected labels are not sent to the model. This small development check
+is separate from the frozen Kroger benchmark and is not held-out evidence of
+generalization.
+
 The choice workflow supports positive package counts and exact or bounded
 counts, weights, and volumes when package metadata is sufficient. Missing
 quantities remain unknown until the shopper answers; optional brand or flavor

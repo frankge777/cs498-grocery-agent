@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-27",
+  "kind": "summary of observed development smoke tests, not a full benchmark",
+  "model": "deepseek-flash",
+  "live_case": {
+    "instruction": "Buy exactly 12 large chicken eggs under $10. Let me choose the carton size.",
+    "source": "Kroger Public API live",
+    "location_id": "02100946",
+    "queries": [
+      {"query": "large chicken eggs", "raw_results": 0},
+      {"query": "eggs", "raw_results": 20}
+    ],
+    "reviewed_products": 20,
+    "final_choice_count": 5,
+    "semantic_exclusions_observed": ["Extra Large eggs", "Medium eggs", "Jumbo eggs"],
+    "selected_product_id": "0001111060903",
+    "selected_name": "Kroger Grade A Large White Eggs",
+    "package_size": "12 ct",
+    "quantity": 1,
+    "total_cents": 149,
+    "http_start_status": 200,
+    "http_resume_status": 200,
+    "final_status": "complete",
+    "verification_ok": true,
+    "selection_source": "test script simulated the shopper's selection",
+    "cart_mode": "local simulation; no Kroger account cart writes or orders"
+  },
+  "semantic_development_cases": {
+    "source": "synthetic fixtures in benchmark/discovery_review_development.json",
+    "expected_labels_sent_to_model": false,
+    "passed_cases": 3,
+    "total_cases": 3,
+    "correct_product_labels": 9,
+    "total_product_labels": 9,
+    "categories": ["whole bean coffee", "automatic dishwasher tablets", "caffeine-free herbal tea bags"],
+    "runs_per_case": 1,
+    "limitation": "Small development check, not held-out generalization or a repeated performance estimate"
+  }
+}

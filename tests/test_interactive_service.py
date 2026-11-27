@@ -2,13 +2,38 @@
 
 import json
 import unittest
+from unittest.mock import patch
 
-from grocery_agent.llm import ScriptedLLM
+from grocery_agent.llm import ScriptedLLM as BaseScriptedLLM
 from grocery_web import interactive_service, service
+
+
+class ScriptedLLM(BaseScriptedLLM):
+    """Service-contract fixtures; semantic correctness has separate tests."""
+    def __init__(self, intent_responder):
+        def respond(messages, tools, json_mode):
+            if "Task: candidate_semantic_review" in messages[0]["content"]:
+                products = json.loads(messages[-1]["content"])["products"]
+                return {"content": json.dumps({"reviews": [
+                    {"product_id": p["id"], "verdict": "related", "reason": "Fixture match",
+                     "evidence": [{"field": "name", "quote": p["name"]}]} for p in products]})}
+            if "Task: search_query_fallback" in messages[0]["content"]:
+                return {"content": '{"queries": []}'}
+            return intent_responder(messages, tools, json_mode)
+        super().__init__(respond)
 
 
 class InteractiveServiceTests(unittest.TestCase):
     SECRET = "test-only-secret-must-have-32-chars"
+
+    def setUp(self):
+        model = patch("grocery_web.interactive_service.DeepSeekClient", return_value=ScriptedLLM(
+            lambda *args: {"content": '{"requirements": []}'}))
+        model.start()
+        self.addCleanup(model.stop)
+        configured = patch("grocery_web.service.deepseek_configured", return_value=True)
+        configured.start()
+        self.addCleanup(configured.stop)
 
     def test_snapshot_start_and_resume_with_two_product_answers(self):
         intent = {"budget_cents": 800, "requirements": [

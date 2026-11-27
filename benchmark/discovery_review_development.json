@@ -1,0 +1,39 @@
+{
+  "version": "0.1.0-development",
+  "notes": "Synthetic semantic-review challenge fixtures, separate from Kroger and frozen benchmark releases. Expected labels are never sent to the model. This small development set does not establish held-out generalization.",
+  "cases": [
+    {
+      "id": "D01",
+      "request": "Buy one bag of whole bean coffee, not ground coffee or capsules.",
+      "requirement": {"id": "r1", "description": "one bag of whole bean coffee", "search_query": "coffee", "measure": "units", "min": 1, "max": 1},
+      "products": [
+        {"id": "dev_coffee_1", "name": "Medium Roast Whole Bean Coffee", "category": "coffee", "raw_size": "12 oz"},
+        {"id": "dev_coffee_2", "name": "Medium Roast Ground Coffee", "category": "coffee", "raw_size": "12 oz"},
+        {"id": "dev_coffee_3", "name": "Espresso Coffee Capsules", "category": "coffee", "raw_size": "10 ct"}
+      ],
+      "expected": {"dev_coffee_1": "related", "dev_coffee_2": "unrelated", "dev_coffee_3": "unrelated"}
+    },
+    {
+      "id": "D02",
+      "request": "Buy one package of detergent tablets for an automatic dishwasher, not liquid for hand washing dishes.",
+      "requirement": {"id": "r1", "description": "dishwasher detergent tablets", "search_query": "dish detergent", "measure": "units", "min": 1, "max": 1},
+      "products": [
+        {"id": "dev_dish_1", "name": "Automatic Dishwasher Detergent Tablets", "category": "household", "raw_size": "24 ct"},
+        {"id": "dev_dish_2", "name": "Liquid Dish Soap for Hand Washing", "category": "household", "raw_size": "24 fl oz"},
+        {"id": "dev_dish_3", "name": "Dish Cleaning Product", "category": "household", "raw_size": "1 pack"}
+      ],
+      "expected": {"dev_dish_1": "related", "dev_dish_2": "unrelated", "dev_dish_3": "uncertain"}
+    },
+    {
+      "id": "D03",
+      "request": "Buy one box of caffeine-free herbal tea bags, not loose tea or black tea.",
+      "requirement": {"id": "r1", "description": "caffeine-free herbal tea bags", "search_query": "tea", "measure": "units", "min": 1, "max": 1},
+      "products": [
+        {"id": "dev_tea_1", "name": "Caffeine Free Chamomile Herbal Tea Bags", "category": "tea", "raw_size": "20 ct"},
+        {"id": "dev_tea_2", "name": "Loose Leaf Chamomile Herbal Tea", "category": "tea", "raw_size": "2 oz"},
+        {"id": "dev_tea_3", "name": "Classic Black Tea Bags", "category": "tea", "raw_size": "20 ct"}
+      ],
+      "expected": {"dev_tea_1": "related", "dev_tea_2": "unrelated", "dev_tea_3": "unrelated"}
+    }
+  ]
+}

@@ -13,6 +13,7 @@ from typing import Mapping, Optional, Sequence
 
 from grocery_agent.interactive import InteractiveShoppingSession
 from grocery_agent.llm import DeepSeekClient, load_dotenv
+from grocery_agent.discovery import ModelDiscovery
 
 from . import service
 
@@ -61,6 +62,11 @@ def _response(env, session, result, metadata, secret):
          "measure": item.measure, "target_min": item.target_min, "target_max": item.target_max}
         for item in session.choices.requirements.values()
     ] if session.choices else []
+    output["discovery"] = [
+        {"requirement_id": item.requirement_id, "reason": item.discovery_reason,
+         "search_attempts": item.search_attempts, "reviews": item.semantic_reviews}
+        for item in session.choices.requirements.values()
+    ] if session.choices else []
     if result["status"] != "complete":
         output["session_token"] = _encode({**metadata, "session": session.checkpoint(),
                                            "issued_at": time.time()}, secret)
@@ -94,19 +100,31 @@ def start(instruction: str, source: Optional[str] = None, zip_code: Optional[str
 
 def resume(session_token: str, answers: Optional[Mapping] = None,
            clarification_answers: Optional[Mapping] = None,
+           candidate_review_answers: Optional[Mapping] = None,
            reconsider_requirement_ids: Optional[Sequence[str]] = None,
            signing_secret: Optional[str] = None, llm=None) -> dict:
     """Continue a saved session after choices, or reopen budget-conflicting needs."""
     secret = _secret(signing_secret)
     payload = _decode(session_token, secret)
-    if sum(value is not None for value in (answers, clarification_answers,
+    if sum(value is not None for value in (answers, clarification_answers, candidate_review_answers,
                                            reconsider_requirement_ids)) > 1:
         raise service.ServiceError("Provide only one kind of answer per request")
     env = service.build_env(payload["source"], payload["instruction"], payload["context"],
                             payload.get("zip_code"), payload.get("location_id"),
                             lambda q: service.DEFAULT_CLARIFICATION_ANSWER)
     try:
-        session = InteractiveShoppingSession.from_checkpoint(env, payload["session"])
+        semantic = payload["session"].get("semantic_discovery", False)
+        if semantic and llm is None:
+            if not service.deepseek_configured():
+                raise service.ServiceError("DEEPSEEK_API_KEY is not configured on the server", status=503)
+            llm = DeepSeekClient(temperature=0)
+        session = InteractiveShoppingSession.from_checkpoint(env, payload["session"],
+                                                              ModelDiscovery(llm) if semantic else None)
+        if session.pending_candidate_reviews:
+            if answers is not None or clarification_answers is not None or reconsider_requirement_ids:
+                raise ValueError("Answer the pending candidate review first")
+        if candidate_review_answers is not None:
+            session.answer_candidate_reviews(candidate_review_answers)
         if clarification_answers is not None:
             if not session.pending_clarifications:
                 raise ValueError("No clarification is pending")

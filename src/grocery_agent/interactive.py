@@ -14,11 +14,12 @@ from .interactive_intent import (INTERACTIVE_INTENT_GUIDANCE, clarification_ques
                                  normalize_interactive_intent)
 from .llm_agents import amount_per_package, task_message
 from . import prompts
+from .discovery import ModelDiscovery
 
 
 class InteractiveShoppingSession:
     def __init__(self, env, intent: Mapping, coordinator: Optional[ChoiceCoordinator] = None,
-                 auto_allowed: Sequence[str] = (), max_rounds: int = 8):
+                 auto_allowed: Sequence[str] = (), max_rounds: int = 8, discovery=None):
         self.env = env
         self.intent = dict(intent)
         self.choices = coordinator
@@ -31,6 +32,9 @@ class InteractiveShoppingSession:
         self.clarifications = []
         self.quantity_overrides = {}
         self.clarification_rounds = 0
+        self.discovery = discovery
+        self.semantic_discovery = discovery is not None
+        self.pending_candidate_reviews = []
 
     @staticmethod
     def extract_intent(env, llm, clarifications=()) -> dict:
@@ -49,7 +53,57 @@ class InteractiveShoppingSession:
     def from_model(cls, env, llm, auto_allowed: Sequence[str] = ()) -> "InteractiveShoppingSession":
         """Extract a fact-preserving intent; missing facts become questions."""
         intent = cls.extract_intent(env, llm)
-        return cls(env, intent, auto_allowed=auto_allowed)
+        return cls(env, intent, auto_allowed=auto_allowed, discovery=ModelDiscovery(llm))
+
+    def _candidate_review_questions(self):
+        questions = []
+        for requirement in self.choices.requirements.values():
+            if requirement.candidates or not requirement.uncertain_candidates:
+                continue
+            reviews = {r["product_id"]: r for r in requirement.semantic_reviews}
+            questions.append({"review_id": f"review_{requirement.requirement_id}_{self.rounds}",
+                "requirement_id": requirement.requirement_id,
+                "question": "Product information is inconclusive. Is one of these the item you mean?",
+                "options": [{**p, "review": reviews[p["id"]]}
+                            for p in requirement.uncertain_candidates]})
+        return questions
+
+    def answer_candidate_reviews(self, response):
+        answers = response.get("answers")
+        if not self.pending_candidate_reviews or not isinstance(answers, list):
+            raise ValueError("No candidate review is pending, or answers are invalid")
+        pending = {q["review_id"]: q for q in self.pending_candidate_reviews}
+        if len(answers) != len(pending):
+            raise ValueError("One answer is required for each candidate review")
+        validated = []
+        for answer in answers:
+            if not isinstance(answer, dict) or answer.get("review_id") not in pending:
+                raise ValueError("Unknown or duplicate candidate review")
+            question = pending.pop(answer["review_id"])
+            product_id = answer.get("selected_product_id")
+            product = next((p for p in question["options"] if p["id"] == product_id), None)
+            if product_id is not None and product is None:
+                raise ValueError("Product was not offered for review")
+            validated.append((question, product))
+        for question, product in validated:
+            requirement = self.choices.requirements[question["requirement_id"]]
+            if product is None:
+                requirement.excluded_product_ids.update(p["id"] for p in requirement.uncertain_candidates)
+                requirement.discovery_reason = "user_declined"
+            else:
+                # Confirmation resolves semantics only. Hard product facts are
+                # read and checked by Python again before any cart action.
+                matched = self.choices.filter_products(self.env, requirement, [product],
+                                                       self.intent.get("budget_cents"))
+                self.choices.set_candidates(requirement.requirement_id, matched)
+                if matched:
+                    requirement.selected_product_id = product["id"]
+                    requirement.quantity = matched[0]["quantity"]
+                    requirement.status = "needs_quantity" if requirement.quantity is None else "selected"
+                    requirement.semantic_reviews.append({"product_id": product["id"],
+                        "verdict": "user_confirmed", "reason": "Shopper confirmed product meaning", "evidence": []})
+            requirement.uncertain_candidates = []
+        self.pending_candidate_reviews = []
 
     def answer_clarifications(self, response: Mapping, llm=None) -> None:
         """Validate a whole clarification batch, then update intent atomically."""
@@ -249,6 +303,8 @@ class InteractiveShoppingSession:
         if self.env.done:
             return {"status": "complete", "cart": dict(self.env.cart),
                     "total_cents": self.env.total_cents}
+        if self.pending_candidate_reviews:
+            return {"status": "needs_candidate_review", "questions": self.pending_candidate_reviews}
         if self.pending_clarifications:
             return {"status": "needs_clarification", "questions": self.pending_clarifications}
         needed = clarification_questions(self.intent)
@@ -266,11 +322,23 @@ class InteractiveShoppingSession:
             self.rounds += 1
             if any(r.status == "unresolved" and not r.candidates
                    for r in self.choices.requirements.values()):
-                self.choices.search_unresolved(self.env, self.intent.get("budget_cents"))
+                if self.semantic_discovery and self.discovery is None:
+                    raise ValueError("Semantic discovery needs a model to continue")
+                self.choices.search_unresolved(self.env, self.intent.get("budget_cents"),
+                                               self.discovery, self.intent)
             empty = [r.requirement_id for r in self.choices.requirements.values()
                      if r.status == "unresolved" and not r.candidates]
             if empty:
-                return {"status": "no_candidates", "requirement_ids": empty}
+                issues = {rid: self.choices.requirements[rid].discovery_reason for rid in empty}
+                error = next((reason for reason in issues.values()
+                              if reason in {"search_error", "review_error"}), None)
+                if error:
+                    return {"status": error, "requirement_ids": empty, "reasons": issues}
+                questions = self._candidate_review_questions()
+                if questions:
+                    self.pending_candidate_reviews = questions
+                    return {"status": "needs_candidate_review", "questions": questions}
+                return {"status": "no_candidates", "requirement_ids": empty, "reasons": issues}
 
             decision = self.choices.decide(self.auto_allowed)
             if decision["questions"]:
@@ -325,7 +393,7 @@ class InteractiveShoppingSession:
 
     def reconsider(self, requirement_ids: Sequence[str]) -> dict:
         """Reopen selected choices after a budget conflict or changed preference."""
-        if self.pending_clarifications or self.choices is None or self.choices._pending:
+        if self.pending_candidate_reviews or self.pending_clarifications or self.choices is None or self.choices._pending:
             raise ValueError("Answer the current choice request first")
         for requirement_id in requirement_ids:
             requirement = self.choices.requirements[requirement_id]
@@ -344,13 +412,17 @@ class InteractiveShoppingSession:
                 "pending_clarifications": self.pending_clarifications,
                 "clarifications": self.clarifications,
                 "quantity_overrides": self.quantity_overrides,
-                "clarification_rounds": self.clarification_rounds}
+                "clarification_rounds": self.clarification_rounds,
+                "semantic_discovery": self.semantic_discovery,
+                "pending_candidate_reviews": self.pending_candidate_reviews}
 
     @classmethod
-    def from_checkpoint(cls, env, snapshot: Mapping) -> "InteractiveShoppingSession":
+    def from_checkpoint(cls, env, snapshot: Mapping, discovery=None) -> "InteractiveShoppingSession":
         session = cls(env, snapshot["intent"], ChoiceCoordinator.from_checkpoint(snapshot["choices"])
                       if snapshot["choices"] else None,
-                      snapshot.get("auto_allowed", ()), snapshot.get("max_rounds", 8))
+                      snapshot.get("auto_allowed", ()), snapshot.get("max_rounds", 8), discovery)
+        session.semantic_discovery = snapshot.get("semantic_discovery", False)
+        session.pending_candidate_reviews = list(snapshot.get("pending_candidate_reviews") or [])
         session.rounds = snapshot["rounds"]
         session.pending_clarifications = list(snapshot.get("pending_clarifications") or [])
         session.clarifications = list(snapshot.get("clarifications") or [])

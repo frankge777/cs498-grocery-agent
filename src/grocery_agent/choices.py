@@ -2,7 +2,8 @@
 
 The UI (or a benchmark simulator) receives one JSON-serializable request and
 returns option IDs. Product names and prices come from catalog records, never
-from model-generated option text. This module makes no model calls.
+from model-generated option text. Interactive discovery injects a separate
+model policy; reference-cart validation can use deterministic discovery.
 """
 
 from __future__ import annotations
@@ -75,6 +76,10 @@ class RequirementChoice:
     status: str = "unresolved"
     force_user_choice: bool = False
     quantity_product_id: Optional[str] = None
+    search_attempts: List[dict] = field(default_factory=list)
+    semantic_reviews: List[dict] = field(default_factory=list)
+    uncertain_candidates: List[dict] = field(default_factory=list)
+    discovery_reason: Optional[str] = None
 
 
 def coordinator_from_intent(intent: Mapping) -> "ChoiceCoordinator":
@@ -144,41 +149,68 @@ class ChoiceCoordinator:
         if requirement.status != "added":
             requirement.status = "unresolved"
 
-    def search_unresolved(self, env, budget_cents: Optional[int] = None) -> dict:
+    def filter_products(self, env, requirement, products, budget_cents=None, legacy_names=False):
+        """Only observed product facts may satisfy hard constraints."""
+        matched = []
+        for summary in products:
+            product_id = str(summary["id"])
+            if product_id in requirement.excluded_product_ids:
+                continue
+            if legacy_names and (not _name_mentions_single_item(requirement.search_query, summary)
+                                 or _obvious_mixture(requirement.search_query, summary)):
+                continue
+            if requirement.required_product_ids and product_id not in requirement.required_product_ids:
+                continue
+            if not choice_brand_matches(requirement.required_brand, requirement.question, summary):
+                continue
+            details = summary
+            if (requirement.required_tags or requirement.measure.startswith("portions:")) and "dietary_tags" not in details:
+                detail = env.get_product(product_id)
+                if not detail.ok:
+                    continue
+                details = detail.data
+            if not set(requirement.required_tags).issubset(details.get("dietary_tags", [])):
+                continue
+            quantity = packages_for(requirement, details)
+            if quantity is None and requirement.target_min is not None:
+                continue
+            if budget_cents is not None and details["price_cents"] * (quantity or 1) > budget_cents:
+                continue
+            if details.get("in_stock") is not True or details.get("price_cents", 0) <= 0:
+                continue
+            matched.append({**details, "quantity": quantity})
+        return matched
+
+    def search_unresolved(self, env, budget_cents: Optional[int] = None, discovery=None, intent=None) -> dict:
         """Search only unresolved needs using the public environment tools."""
         counts = {}
         for requirement in self.requirements.values():
             if requirement.status != "unresolved":
                 continue
+            if discovery is not None:
+                specification = next(item for item in intent["requirements"]
+                                     if item["id"] == requirement.requirement_id)
+                result = discovery.discover(env, {**specification,
+                    "required_tags": requirement.required_tags})
+                requirement.search_attempts.extend(result["attempts"])
+                requirement.semantic_reviews.extend(result["reviews"])
+                requirement.discovery_reason = result["reason"]
+                verdicts = {row["product_id"]: row["verdict"] for row in result["reviews"]}
+                approved = [p for p in result["products"] if verdicts[p["id"]] == "related"]
+                uncertain = [p for p in result["products"] if verdicts[p["id"]] == "uncertain"]
+                matched = self.filter_products(env, requirement, approved, budget_cents)
+                requirement.uncertain_candidates = self.filter_products(env, requirement, uncertain, budget_cents)
+                if not matched and result["reason"] == "reviewed":
+                    requirement.discovery_reason = ("semantic_uncertainty" if requirement.uncertain_candidates
+                        else "hard_constraints" if approved or uncertain else "semantic_mismatch")
+                self.set_candidates(requirement.requirement_id, matched)
+                counts[requirement.requirement_id] = len(requirement.candidates)
+                continue
             observation = env.search_products(requirement.search_query, max_results=20)
             if not observation.ok:
                 raise ValueError(observation.message)
-            matched = []
-            for summary in observation.data["products"]:
-                product_id = str(summary["id"])
-                if not _name_mentions_single_item(requirement.search_query, summary):
-                    continue
-                if _obvious_mixture(requirement.search_query, summary):
-                    continue
-                if requirement.required_product_ids and product_id not in requirement.required_product_ids:
-                    continue
-                if not choice_brand_matches(requirement.required_brand,
-                                            requirement.question, summary):
-                    continue
-                details = summary
-                if requirement.required_tags or requirement.measure.startswith("portions:"):
-                    detail = env.get_product(product_id)
-                    if not detail.ok:
-                        continue
-                    details = detail.data
-                if not set(requirement.required_tags).issubset(details.get("dietary_tags", [])):
-                    continue
-                quantity = packages_for(requirement, details)
-                if quantity is None and requirement.target_min is not None:
-                    continue
-                if budget_cents is not None and summary["price_cents"] * (quantity or 1) > budget_cents:
-                    continue
-                matched.append({**summary, "quantity": quantity})
+            matched = self.filter_products(env, requirement, observation.data["products"],
+                                           budget_cents, legacy_names=True)
             self.set_candidates(requirement.requirement_id, matched)
             counts[requirement.requirement_id] = len(self.requirements[requirement.requirement_id].candidates)
         return counts
@@ -324,7 +356,10 @@ class ChoiceCoordinator:
                  "candidates": item.candidates, "selected_product_id": item.selected_product_id,
                  "excluded_product_ids": sorted(item.excluded_product_ids), "status": item.status}
                  | {"force_user_choice": item.force_user_choice,
-                    "quantity_product_id": item.quantity_product_id}
+                    "quantity_product_id": item.quantity_product_id,
+                    "search_attempts": item.search_attempts, "semantic_reviews": item.semantic_reviews,
+                    "uncertain_candidates": item.uncertain_candidates,
+                    "discovery_reason": item.discovery_reason}
                 for item in self.requirements.values()
             ],
             "next_decision": self._next_decision,
@@ -347,6 +382,10 @@ class ChoiceCoordinator:
                 excluded_product_ids=set(item["excluded_product_ids"]), status=item["status"],
                 force_user_choice=item.get("force_user_choice", False),
                 quantity_product_id=item.get("quantity_product_id"),
+                search_attempts=list(item.get("search_attempts") or []),
+                semantic_reviews=list(item.get("semantic_reviews") or []),
+                uncertain_candidates=list(item.get("uncertain_candidates") or []),
+                discovery_reason=item.get("discovery_reason"),
             )
             for item in snapshot["requirements"]
         ])
