@@ -1,0 +1,66 @@
+{
+  "catalog_sha256": "2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce",
+  "scenarios_sha256": "590c01667f938ab7e3509da03539b94e548906fa1da99e128af37272cfa3442e",
+  "catalog_path": "benchmark/kroger_snapshots/02100946-20261116.json",
+  "scenarios_path": "benchmark/scenarios_kroger.json",
+  "tool_schema_version": "1.0.0",
+  "agent": {
+    "name": "interactive",
+    "split": "main",
+    "dataset": "kroger",
+    "catalog_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/kroger_snapshots/02100946-20261116.json",
+    "scenario_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/scenarios_kroger.json",
+    "llm": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "runs": 1,
+    "variants": [
+      "high",
+      "medium",
+      "low"
+    ],
+    "scenarios": [
+      "K01",
+      "K02",
+      "K03",
+      "K04",
+      "K05",
+      "K06",
+      "K07",
+      "K08",
+      "K09",
+      "K10",
+      "K11",
+      "K12",
+      "K13",
+      "K14",
+      "K15",
+      "K16",
+      "K17",
+      "K18",
+      "K19",
+      "K20"
+    ],
+    "started_utc": "2026-11-27T17:47:21.899205+00:00",
+    "workflow": "InteractiveShoppingSession with ModelDiscovery",
+    "shopper_policy": {
+      "selection": "cheapest offered line total (unit price if quantity unknown), then UPC",
+      "free_text": "environment ask_user only",
+      "unresolved_quantity_or_semantics": "stop; no hidden needs or reference carts accessed",
+      "comparison_note": "interactive workflow with simulated shopper, separate from legacy ours"
+    },
+    "code_sha256": {
+      "src/grocery_agent/interactive.py": "72b7e8db4a5c750e63a2d75e401dfa2973598611d4ae52b1c2866e0361b60fd0",
+      "src/grocery_agent/interactive_intent.py": "e7e63c67d9eee26e3f952249c280508ad6e548e07fad1d5601f6c4f7668441dc",
+      "src/grocery_agent/choices.py": "dbf6328c96ebe171c9306ebc18b8f9cfa7be07568c4c587bd099f78ce5ce5b31",
+      "src/grocery_agent/discovery.py": "08c9f56d7995dcc3cdb5597e1882c7a76d2b68e9c94b2327a026bd0dc76d140b",
+      "src/grocery_agent/interactive_benchmark.py": "39c1246dc1905ebbf3edd945da027a5aedc3a1414df43c091639f6a1c074d5ee",
+      "src/grocery_agent/prompts.py": "9e0a4ab355984fe584ae5d9e3b9d6d5656b5b87f4bc441e2512b8b911ea602a3",
+      "src/grocery_agent/llm.py": "90117b93220a9d97d5de6af39a319e56f1da60af4315adbdcc070aae13cc3dce"
+    }
+  }
+}

@@ -12,6 +12,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -23,6 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from grocery_agent.llm import DEFAULT_MODEL, DeepSeekClient, estimate_cost_usd  # noqa: E402
 from grocery_agent.llm_agents import DirectFunctionCallingAgent, IntentGroundedLLMAgent, ReActAgent  # noqa: E402
+from grocery_agent.interactive_benchmark import InteractiveBenchmarkAgent  # noqa: E402
 from grocery_bench import load_catalog, load_scenarios, run_trials, write_outputs  # noqa: E402
 from grocery_bench.data import (  # noqa: E402
     BENCHMARK_DIR,
@@ -35,6 +37,7 @@ from grocery_bench.data import (  # noqa: E402
 
 def factories(llm):
     return {
+        "interactive": lambda: InteractiveBenchmarkAgent(llm),
         "ours": lambda: IntentGroundedLLMAgent(llm),
         "ours_noverify": lambda: IntentGroundedLLMAgent(llm, use_verifier=False),
         "ours_noclarify": lambda: IntentGroundedLLMAgent(llm, use_clarify=False),
@@ -104,6 +107,18 @@ def main() -> None:
                 "catalog_path": str(catalog_path), "scenario_path": str(scenario_path),
                 "llm": llm.describe(), "runs": args.runs, "variants": args.variants,
                 "scenarios": [s.id for s in scenarios], "started_utc": datetime.now(timezone.utc).isoformat()}
+        if name == "interactive":
+            meta["workflow"] = "InteractiveShoppingSession with ModelDiscovery"
+            meta["shopper_policy"] = {
+                "selection": "cheapest offered line total (unit price if quantity unknown), then UPC",
+                "free_text": "environment ask_user only",
+                "unresolved_quantity_or_semantics": "stop; no hidden needs or reference carts accessed",
+                "comparison_note": "interactive workflow with simulated shopper, separate from legacy ours",
+            }
+            meta["code_sha256"] = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in [ROOT / "src/grocery_agent" / filename for filename in (
+                    "interactive.py", "interactive_intent.py", "choices.py", "discovery.py",
+                    "interactive_benchmark.py", "prompts.py", "llm.py")]}
         summary = write_outputs(trials, out, agent_meta=meta, catalog_path=catalog_path, scenarios_path=scenario_path)
         cost = sum(estimate_cost_usd(args.model, t["input_tokens"], t["cached_input_tokens"], t["output_tokens"])
                    for t in trials)
