@@ -151,21 +151,31 @@ Start a session with `POST /api/agent/interactive/start`:
 {"instruction":"Buy one bag of carrots and one yogurt under $5. Let me choose.","source":"snapshot"}
 ```
 
-If a required quantity is missing, the first response has
-`status: "needs_clarification"` and quantity questions. For example, `"Buy
-yogurt"` pauses with `q_r1_quantity`; submit the answer to the resume endpoint:
+If only the quantity is missing, the first response offers product/package
+choices with `status: "waiting_for_user"`. For `"Buy yogurt"`, choose a UPC
+using the product-answer format below. Its option has `quantity: null` and
+`line_total_cents: null`; `price_cents` is the price of one package, not a
+confirmed basket total. Once a package is selected, the response has
+`status: "needs_clarification"` with `q_r1_quantity`. This quantity question
+includes `product_id`, `product_name`, `package_size`, and `price_cents` so the
+shopper knows exactly which package they are counting. Submit the answer:
 
 ```json
 {"session_token":"<token from start>","clarification_answers":{"answers":[{"question_id":"q_r1_quantity","amount":2,"measure":"units"}]}}
 ```
 
-`measure` may be `units` (packages), `count` (contents), `volume_ml`, or
-`weight_g`. Mandatory free-text questions use the same endpoint with
+The post-selection quantity answer uses `measure: "units"`: how many packages
+of this specific UPC to buy. The original request can still specify `count`
+(contents), `volume_ml`, or `weight_g`. Preserve those targets and calculate
+the package count automatically: twelve eggs can mean two cartons of six or
+one carton of twelve; no extra quantity question is asked. Mandatory free-text
+questions that block discovery (such as an unspecified restriction) are asked
+before search, using the same endpoint with
 `{"question_id":"q_open_1","text":"..."}`; the model extracts intent again
 from the answer. The frontend should show all clarification questions together
 and use the latest returned token on every resume call.
 
-After clarification, the response has `status: "waiting_for_user"`, a
+Product selection responses have `status: "waiting_for_user"`, a
 `questions` array (one entry per product), and a signed `session_token`. Each
 question has a `decision_id`, `requirement_id`, and `options` with `option_id`,
 UPC, name, size, price, required package quantity, and line total. For example,
@@ -185,6 +195,14 @@ deterministic `verification` report. For `budget_conflict`,
 call resume with `{"session_token":"<token>",
 "reconsider_requirement_ids":["r1"]}` to reopen one or more item choices.
 The frontend should keep the latest token and show the latest questions.
+`requirement_states` exposes each need's status, selected UPC, package quantity,
+and target measure/range. A need moves through `unresolved` (not selected),
+`needs_user` (product choice), `needs_quantity` (package selected but count
+unknown), `selected` (product and quantity ready), and `added`.
+Quantity answers preserve the chosen UPC and selection history. A package
+count confirmed after selection is bound to that UPC; replacement or
+reconsideration clears it and asks for a count for the new package. Targets
+stated in the original request survive replacement and are recalculated.
 Tokens expire after 30 minutes; the signed state contains the instruction and
 selection history, so treat it as private user data. No database is needed for
 this demo. Both snapshot and live modes only simulate the cart locally.

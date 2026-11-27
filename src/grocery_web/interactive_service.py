@@ -55,6 +55,12 @@ def _response(env, session, result, metadata, secret):
     output = {**result, "data_source": metadata["source"],
               "location": env.observation().get("location"),
               "cart_mode": "local simulation only", "cart": service.cart_payload(env)}
+    output["requirement_states"] = [
+        {"requirement_id": item.requirement_id, "status": item.status,
+         "selected_product_id": item.selected_product_id, "quantity": item.quantity,
+         "measure": item.measure, "target_min": item.target_min, "target_max": item.target_max}
+        for item in session.choices.requirements.values()
+    ] if session.choices else []
     if result["status"] != "complete":
         output["session_token"] = _encode({**metadata, "session": session.checkpoint(),
                                            "issued_at": time.time()}, secret)

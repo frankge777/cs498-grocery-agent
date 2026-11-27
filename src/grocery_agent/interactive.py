@@ -63,13 +63,18 @@ class InteractiveShoppingSession:
                 raise ValueError("Unknown clarification question")
             question = pending.pop(answer["question_id"])
             if question["kind"] == "quantity":
+                requirement = self.choices.requirements[question["requirement_id"]]
+                if (requirement.status != "needs_quantity"
+                        or requirement.selected_product_id != question["product_id"]):
+                    raise ValueError("The selected package changed; refresh the quantity question")
                 amount = answer.get("amount")
                 measure = answer.get("measure") or question["suggested_measure"]
                 if isinstance(amount, bool) or not isinstance(amount, int) or amount <= 0:
                     raise ValueError("Quantity must be a positive integer")
                 if measure not in question["allowed_measures"]:
                     raise ValueError("Unsupported quantity measure")
-                validated.append((question, {"amount": amount, "measure": measure}))
+                validated.append((question, {"amount": amount, "measure": measure,
+                                              "product_id": question["product_id"]}))
             else:
                 value = answer.get("text")
                 if not isinstance(value, str) or not value.strip() or len(value) > 1000:
@@ -84,6 +89,15 @@ class InteractiveShoppingSession:
         for question, value in validated:
             if question["kind"] == "quantity":
                 self.quantity_overrides[question["requirement_id"]] = value
+                requirement = self.choices.requirements[question["requirement_id"]]
+                requirement.measure = "units"
+                requirement.target_min = requirement.target_max = value["amount"]
+                requirement.quantity = value["amount"]
+                requirement.quantity_product_id = value["product_id"]
+                requirement.status = "selected"
+                for candidate in requirement.candidates:
+                    if candidate["id"] == requirement.selected_product_id:
+                        candidate["quantity"] = value["amount"]
             else:
                 self.clarifications.append({"question": question["question"], "answer": value})
         if free_text:
@@ -96,9 +110,47 @@ class InteractiveShoppingSession:
                 item.update({"measure": override["measure"], "min": override["amount"],
                              "max": override["amount"]})
         self.pending_clarifications = []
-        self.clarification_rounds += 1
-        if not clarification_questions(self.intent):
+        if free_text:
+            self.clarification_rounds += 1
+        if free_text and not clarification_questions(self.intent):
             self.choices = coordinator_from_intent(self.intent)
+
+    def _quantity_questions(self) -> list:
+        """Bind missing-quantity questions to the package the shopper chose."""
+        questions = []
+        for requirement in self.choices.requirements.values():
+            if requirement.status != "needs_quantity":
+                continue
+            product = next(item for item in requirement.candidates
+                           if item["id"] == requirement.selected_product_id)
+            questions.append({
+                "question_id": f"q_{requirement.requirement_id}_quantity",
+                "kind": "quantity", "requirement_id": requirement.requirement_id,
+                "product_id": product["id"], "product_name": product["name"],
+                "package_size": product.get("raw_size") or f"{product.get('size', '')} {product.get('unit', '')}".strip(),
+                "price_cents": product["price_cents"],
+                "question": f"How many packages of {product['name']} would you like?",
+                "suggested_measure": "units", "allowed_measures": ["units"],
+            })
+        return questions
+
+    def _forget_package_quantity(self, requirement) -> None:
+        """A count confirmed for one UPC must not silently transfer to another."""
+        if requirement.quantity_product_id is None:
+            return
+        requirement.quantity_product_id = None
+        requirement.quantity = None
+        requirement.target_min = requirement.target_max = None
+        for candidate in requirement.candidates:
+            candidate["quantity"] = None
+        self.quantity_overrides.pop(requirement.requirement_id, None)
+        for item in self.intent["requirements"]:
+            if item["id"] == requirement.requirement_id:
+                item["min"] = item["max"] = None
+
+    def _mark_unavailable(self, requirement, product_id) -> None:
+        self._forget_package_quantity(requirement)
+        self.choices.mark_unavailable(requirement.requirement_id, product_id)
 
     def _remove_added(self, requirement) -> None:
         product_id = requirement.selected_product_id
@@ -132,7 +184,7 @@ class InteractiveShoppingSession:
             if quantity is None or (requirement.status == "added" and quantity != requirement.quantity):
                 if requirement.status == "added":
                     self._remove_added(requirement)
-                self.choices.mark_unavailable(requirement.requirement_id, product_id)
+                self._mark_unavailable(requirement, product_id)
                 invalidated = True
                 continue
             requirement.quantity = quantity
@@ -224,6 +276,11 @@ class InteractiveShoppingSession:
             if decision["questions"]:
                 return {"status": "waiting_for_user", "questions": decision["questions"]}
 
+            quantities = self._quantity_questions()
+            if quantities:
+                self.pending_clarifications = quantities
+                return {"status": "needs_clarification", "questions": quantities}
+
             if self._refresh_selected():
                 continue
 
@@ -241,14 +298,14 @@ class InteractiveShoppingSession:
                 if product_id not in self.env.catalog:
                     details = self.env.get_product(product_id)
                     if not details.ok:
-                        self.choices.mark_unavailable(requirement.requirement_id, product_id)
+                        self._mark_unavailable(requirement, product_id)
                         retry = True
                         continue
                 result = self.env.add_to_cart(product_id, requirement.quantity)
                 if result.ok:
                     self.choices.mark_added(requirement.requirement_id)
                 else:
-                    self.choices.mark_unavailable(requirement.requirement_id, product_id)
+                    self._mark_unavailable(requirement, product_id)
                     retry = True
             if retry:
                 continue
@@ -268,12 +325,13 @@ class InteractiveShoppingSession:
 
     def reconsider(self, requirement_ids: Sequence[str]) -> dict:
         """Reopen selected choices after a budget conflict or changed preference."""
-        if self.choices._pending:
+        if self.pending_clarifications or self.choices is None or self.choices._pending:
             raise ValueError("Answer the current choice request first")
         for requirement_id in requirement_ids:
             requirement = self.choices.requirements[requirement_id]
             if requirement.status == "added":
                 self._remove_added(requirement)
+            self._forget_package_quantity(requirement)
             requirement.selected_product_id = None
             requirement.status = "unresolved"
             requirement.force_user_choice = True
@@ -313,5 +371,5 @@ class InteractiveShoppingSession:
                 if not affected:
                     raise ValueError(f"Could not restore cart item {product_id}: {result.message}")
                 for requirement in affected:
-                    session.choices.mark_unavailable(requirement.requirement_id, product_id)
+                    session._mark_unavailable(requirement, product_id)
         return session

@@ -37,7 +37,7 @@ class InteractiveServiceTests(unittest.TestCase):
         with self.assertRaises(service.ServiceError):
             interactive_service.resume("tampered.token", signing_secret=self.SECRET)
 
-    def test_missing_quantities_are_batched_then_resume_without_guessing_one(self):
+    def test_choose_both_packages_before_batched_quantity_questions(self):
         intent = {"requirements": [
             {"id": "r1", "description": "carrots", "search_query": "carrots",
              "quantity_explicit": False, "min": None, "max": None},
@@ -47,24 +47,51 @@ class InteractiveServiceTests(unittest.TestCase):
         llm = ScriptedLLM(lambda messages, tools, json_mode: {"content": json.dumps(intent)})
         started = interactive_service.start("Buy carrots and yogurt", source="snapshot",
                                             llm=llm, signing_secret=self.SECRET)
-        self.assertEqual(started["status"], "needs_clarification")
+        self.assertEqual(started["status"], "waiting_for_user")
         self.assertEqual([q["requirement_id"] for q in started["questions"]], ["r1", "r2"])
         self.assertEqual(started["cart"]["items"], [])
-        resumed = interactive_service.resume(started["session_token"], clarification_answers={"answers": [
+        answer = {"answers": []}
+        chosen_products = []
+        for question in started["questions"]:
+            chosen = min(question["options"], key=lambda item: item["price_cents"])
+            self.assertIsNone(chosen["quantity"])
+            self.assertIsNone(chosen["line_total_cents"])
+            chosen_products.append(chosen["product_id"])
+            answer["answers"].append({"decision_id": question["decision_id"],
+                                      "selected_option_id": chosen["option_id"]})
+        resumed = interactive_service.resume(started["session_token"], answers=answer,
+                                             signing_secret=self.SECRET)
+        self.assertEqual(resumed["status"], "needs_clarification")
+        self.assertEqual([r["status"] for r in resumed["requirement_states"]],
+                         ["needs_quantity", "needs_quantity"])
+        self.assertEqual([q["product_id"] for q in resumed["questions"]], chosen_products)
+        self.assertTrue(all(q["package_size"] for q in resumed["questions"]))
+        self.assertEqual(resumed["cart"]["items"], [])
+        complete = interactive_service.resume(resumed["session_token"], clarification_answers={"answers": [
             {"question_id": "q_r1_quantity", "amount": 1, "measure": "units"},
             {"question_id": "q_r2_quantity", "amount": 2, "measure": "units"},
         ]}, signing_secret=self.SECRET)
-        self.assertEqual(resumed["status"], "waiting_for_user")
-        self.assertEqual(len(resumed["questions"]), 2)
-        answer = {"answers": []}
-        for question in resumed["questions"]:
-            chosen = min(question["options"], key=lambda item: item["price_cents"])
-            answer["answers"].append({"decision_id": question["decision_id"],
-                                      "selected_option_id": chosen["option_id"]})
-        complete = interactive_service.resume(resumed["session_token"], answers=answer,
-                                              signing_secret=self.SECRET)
         self.assertEqual(complete["status"], "complete")
         self.assertEqual(sorted(item["quantity"] for item in complete["cart"]["items"]), [1, 2])
+
+    def test_known_content_count_selects_pack_without_quantity_question(self):
+        # These are actual pack sizes in the frozen Kroger snapshot.
+        for product_id, packages in (("0001111060906", 2), ("0001111060903", 1)):
+            with self.subTest(product_id=product_id):
+                intent = {"requirements": [{"id": "r1", "description": "12 eggs",
+                           "search_query": "eggs", "measure": "count", "min": 12, "max": 12}]}
+                llm = ScriptedLLM(lambda messages, tools, json_mode: {"content": json.dumps(intent)})
+                started = interactive_service.start("Buy exactly 12 eggs", source="snapshot",
+                                                    llm=llm, signing_secret=self.SECRET)
+                question = started["questions"][0]
+                option = next(p for p in question["options"] if p["product_id"] == product_id)
+                self.assertEqual(option["quantity"], packages)
+                completed = interactive_service.resume(started["session_token"], answers={"answers": [
+                    {"decision_id": question["decision_id"], "selected_option_id": option["option_id"]},
+                ]}, signing_secret=self.SECRET)
+                self.assertEqual(completed["status"], "complete")
+                self.assertEqual(completed["cart"]["items"][0]["quantity"], packages)
+                self.assertTrue(completed["verification"]["ok"])
 
     def test_invalid_clarification_does_not_advance(self):
         intent = {"requirements": [{"id": "r1", "description": "yogurt",
@@ -72,6 +99,11 @@ class InteractiveServiceTests(unittest.TestCase):
         llm = ScriptedLLM(lambda messages, tools, json_mode: {"content": json.dumps(intent)})
         started = interactive_service.start("Buy yogurt", source="snapshot",
                                             llm=llm, signing_secret=self.SECRET)
+        question = started["questions"][0]
+        started = interactive_service.resume(started["session_token"], answers={"answers": [
+            {"decision_id": question["decision_id"],
+             "selected_option_id": question["options"][0]["option_id"]},
+        ]}, signing_secret=self.SECRET)
         with self.assertRaises(service.ServiceError):
             interactive_service.resume(started["session_token"], clarification_answers={"answers": [
                 {"question_id": "q_r1_quantity", "amount": 0, "measure": "units"},
@@ -113,6 +145,31 @@ class InteractiveServiceTests(unittest.TestCase):
             {"question_id": "q_product", "text": "One yogurt"},
         ]}, llm=llm, signing_secret=self.SECRET)
         self.assertEqual(resumed["status"], "waiting_for_user")
+
+    def test_mandatory_restriction_is_asked_before_selecting_unknown_quantity(self):
+        def response(messages, tools, json_mode):
+            answered = "Answers from the shopper" in messages[-1]["content"]
+            return {"content": json.dumps({"requirements": [
+                {"id": "r1", "description": "yogurt", "quantity_explicit": False,
+                 "required_tags": ["nut_free"] if answered else []}],
+                "open_questions": [] if answered else [
+                    {"question": "What restriction must the yogurt satisfy?"}],
+            })}
+        llm = ScriptedLLM(response)
+        started = interactive_service.start("Buy yogurt for my dietary restriction", source="snapshot",
+                                            llm=llm, signing_secret=self.SECRET)
+        self.assertEqual(started["status"], "needs_clarification")
+        self.assertEqual([q["kind"] for q in started["questions"]], ["free_text"])
+        state = interactive_service._decode(started["session_token"], self.SECRET.encode())["session"]
+        self.assertIsNone(state["choices"])
+        resumed = interactive_service.resume(started["session_token"], clarification_answers={"answers": [
+            {"question_id": "q_open_1", "text": "Must be nut-free"},
+        ]}, llm=llm, signing_secret=self.SECRET)
+        # If Kroger supplies no adequate tag evidence, it must not offer unsafe choices.
+        self.assertIn(resumed["status"], {"no_candidates", "waiting_for_user", "needs_clarification"})
+        if resumed["status"] == "needs_clarification":
+            self.assertTrue(all(q["kind"] == "quantity" and q.get("product_id")
+                                for q in resumed["questions"]))
 
 
 if __name__ == "__main__":

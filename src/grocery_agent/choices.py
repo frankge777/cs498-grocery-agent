@@ -62,9 +62,9 @@ class RequirementChoice:
     requirement_id: str
     question: str
     search_query: str = ""
-    quantity: int = 1
+    quantity: Optional[int] = 1
     measure: str = "units"
-    target_min: int = 1
+    target_min: Optional[int] = 1
     target_max: Optional[int] = 1
     required_tags: List[str] = field(default_factory=list)
     required_brand: Optional[str] = None
@@ -74,19 +74,21 @@ class RequirementChoice:
     excluded_product_ids: set = field(default_factory=set)
     status: str = "unresolved"
     force_user_choice: bool = False
+    quantity_product_id: Optional[str] = None
 
 
 def coordinator_from_intent(intent: Mapping) -> "ChoiceCoordinator":
-    """Create one independently tracked choice per fully specified need."""
+    """Track each product need, preserving an unknown target quantity."""
     requirements = []
     for item in intent["requirements"]:
         minimum = item.get("min", 1)
         maximum = item.get("max", minimum)
-        if not isinstance(minimum, int) or minimum < 1 or (maximum is not None and maximum < minimum):
+        if minimum is not None and (not isinstance(minimum, int) or minimum < 1
+                                    or (maximum is not None and maximum < minimum)):
             raise ValueError("Interactive product choice requires a positive quantity range")
         requirements.append(RequirementChoice(
             requirement_id=item["id"], question=f"Which product for {item['description']}?",
-            search_query=item["search_query"], quantity=minimum if item.get("measure", "units") == "units" else 0,
+            search_query=item["search_query"], quantity=minimum if item.get("measure", "units") == "units" else None,
             measure=item.get("measure", "units"), target_min=minimum, target_max=maximum,
             required_tags=sorted(set(item.get("required_tags") or []) |
                                  set(intent.get("all_items_required_tags") or [])),
@@ -97,6 +99,8 @@ def coordinator_from_intent(intent: Mapping) -> "ChoiceCoordinator":
 
 
 def packages_for(requirement: RequirementChoice, details: Mapping) -> Optional[int]:
+    if requirement.target_min is None:
+        return None
     amount = amount_per_package(details, requirement.measure)
     if amount <= 0:
         return None
@@ -170,9 +174,9 @@ class ChoiceCoordinator:
                 if not set(requirement.required_tags).issubset(details.get("dietary_tags", [])):
                     continue
                 quantity = packages_for(requirement, details)
-                if quantity is None:
+                if quantity is None and requirement.target_min is not None:
                     continue
-                if budget_cents is not None and summary["price_cents"] * quantity > budget_cents:
+                if budget_cents is not None and summary["price_cents"] * (quantity or 1) > budget_cents:
                     continue
                 matched.append({**summary, "quantity": quantity})
             self.set_candidates(requirement.requirement_id, matched)
@@ -200,7 +204,7 @@ class ChoiceCoordinator:
                              key=lambda product: (product["price_cents"], product["id"]))
                 requirement.selected_product_id = chosen["id"]
                 requirement.quantity = chosen["quantity"]
-                requirement.status = "selected"
+                requirement.status = "needs_quantity" if chosen["quantity"] is None else "selected"
                 auto_selected[requirement.requirement_id] = chosen["id"]
         request = self.prepare_batch()
         return {"auto_selected": auto_selected, **request}
@@ -213,7 +217,7 @@ class ChoiceCoordinator:
         decisions = []
         for requirement_id in ids:
             requirement = self.requirements[requirement_id]
-            if requirement.status in {"selected", "added"} or not requirement.candidates:
+            if requirement.status != "unresolved" or not requirement.candidates:
                 continue
             decision_id = f"d{self._next_decision}"
             self._next_decision += 1
@@ -227,7 +231,8 @@ class ChoiceCoordinator:
                     "size": product.get("raw_size") or f"{product.get('size', '')} {product.get('unit', '')}".strip(),
                     "price_cents": product["price_cents"],
                     "quantity": product["quantity"],
-                    "line_total_cents": product["price_cents"] * product["quantity"],
+                    "line_total_cents": (product["price_cents"] * product["quantity"]
+                                         if product["quantity"] is not None else None),
                 })
             decision = {"decision_id": decision_id, "requirement_id": requirement_id,
                         "question": requirement.question, "options": options}
@@ -262,7 +267,7 @@ class ChoiceCoordinator:
             requirement = self.requirements[decision["requirement_id"]]
             requirement.selected_product_id = option["product_id"]
             requirement.quantity = option["quantity"]
-            requirement.status = "selected"
+            requirement.status = "needs_quantity" if option["quantity"] is None else "selected"
             requirement.force_user_choice = False
             self.history.append({"decision_id": decision["decision_id"],
                                  "requirement_id": requirement.requirement_id,
@@ -318,7 +323,8 @@ class ChoiceCoordinator:
                  "required_product_ids": item.required_product_ids,
                  "candidates": item.candidates, "selected_product_id": item.selected_product_id,
                  "excluded_product_ids": sorted(item.excluded_product_ids), "status": item.status}
-                 | {"force_user_choice": item.force_user_choice}
+                 | {"force_user_choice": item.force_user_choice,
+                    "quantity_product_id": item.quantity_product_id}
                 for item in self.requirements.values()
             ],
             "next_decision": self._next_decision,
@@ -340,6 +346,7 @@ class ChoiceCoordinator:
                 candidates=list(item["candidates"]), selected_product_id=item["selected_product_id"],
                 excluded_product_ids=set(item["excluded_product_ids"]), status=item["status"],
                 force_user_choice=item.get("force_user_choice", False),
+                quantity_product_id=item.get("quantity_product_id"),
             )
             for item in snapshot["requirements"]
         ])

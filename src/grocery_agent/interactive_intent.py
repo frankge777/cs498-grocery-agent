@@ -15,7 +15,10 @@ buy, set quantity_explicit=false, min=null, max=null. For example, "buy yogurt"
 means yogurt with unknown quantity; it does NOT mean one package. "Buy one
 yogurt" means units min=max=1. If the shopper specified 12 eggs, use count
 min=max=12; if 1 L of milk, use volume_ml min=max=1000. Do not put missing
-quantities in open_questions: the program asks for them. Use open_questions
+quantities in open_questions: after the shopper chooses a specific product and
+package, the program asks how many packages to buy. Preserve stated totals
+such as 12 cans or 1 L; never replace them with a guessed package count.
+Use open_questions
 only for other mandatory missing facts, such as an unspecified allergy. Do not
 put a question about which brand or flavor to choose in open_questions.
 """
@@ -78,20 +81,11 @@ def normalize_interactive_intent(raw: Mapping) -> dict:
 
 
 def clarification_questions(intent: Mapping) -> list:
+    """Questions that must be answered before product discovery can proceed."""
     questions = []
     if not intent["requirements"] and not intent["open_questions"]:
         questions.append({"question_id": "q_product", "kind": "free_text",
                           "question": "What products would you like to buy?"})
-    for item in intent["requirements"]:
-        if item["min"] is None:
-            questions.append({
-                "question_id": f"q_{item['id']}_quantity",
-                "kind": "quantity",
-                "requirement_id": item["id"],
-                "question": f"How much {item['description']} should I buy?",
-                "suggested_measure": item["measure"],
-                "allowed_measures": ["units", "count", "volume_ml", "weight_g"],
-            })
     for index, item in enumerate(intent["open_questions"], 1):
         question = item.get("question") if isinstance(item, dict) else str(item)
         questions.append({"question_id": f"q_open_{index}", "kind": "free_text",
