@@ -1,0 +1,14 @@
+{
+  "checked_utc": "2026-11-28T02:39:14.797662+00:00",
+  "authorization": {
+    "authorized": true,
+    "access_token_unexpired": true,
+    "can_refresh": true,
+    "scope": "cart.basic:write",
+    "real_cart_read_supported": false,
+    "checkout_supported": false
+  },
+  "browser_result": "Connected page observed at local /connected callback",
+  "cart_write_test_performed": false,
+  "note": "OAuth code exchange completed. Scope and local expiry verified; live cart mutation awaits explicit item confirmation."
+}

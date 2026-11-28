@@ -34,15 +34,22 @@ UPC `0001111060903`，1 个 12 ct 包装，PICKUP，当前小计 149 美分。
 `cart.basic:write` 及 Authorization Code grant。
 授权服务短暂仍返回旧的 redirect mismatch；随后新请求已成功进入 Kroger 消费者登录页。
 
+## 真实账户 OAuth 已完成
+
+用户完成了 Kroger 消费者登录与授权，浏览器已显示 `/connected` 的 Connected 页面。
+项目本地 `status` 实测为 authorized=true、access_token_unexpired=true、can_refresh=true，
+scope 为 cart.basic:write。授权码已成功交换为用户 token 并保存在私有账户库中。
+[非敏感授权核验记录](kroger_account_authorization_20261127.json) 不包含 token 或账户标识。
+can_refresh 表示已保存 refresh token，未在有效期内强制触发真实刷新实验。
+
+已基于原有 live 方案重新生成真实加购预览：UPC 0001111060903、12 ct、1 盒、
+PICKUP、查询小计 $1.49；这一步只读取商品和保存待确认计划，不写真实购物车。
+
 ## 当前尚未完成的验证
 
-目前项目 `status` 仍为 authorized=false，尚未收到购物账户的成功 OAuth 回调。
-用户需在已准备好的 Kroger 消费者登录页输入自己的购物账号，并同意 a grocery agent 的
-购物车授权。聊天中的完成按钮不能代替网页实际操作。
-
-因此目前**不能声称真实购物账户已连接，或真实加购已验证通过**。
-本轮未向真实账户添加任何商品，也未下单。账户连接成功后，还应先展示具体商品、
-数量与实时报价，取得该次加购确认，再进行真实接口测试并人工查看 Kroger 购物车。
+真实购物账户已连接；真实加车接口仍待用户确认具体商品后实测。
+目前没有向真实账户添加测试商品，也没有下单。用户确认该次加购后，才可提交，
+并应在 Kroger 网页/APP 人工检查实际购物车内容。
 
 ## 不能省略的接口边界
 
