@@ -18,6 +18,7 @@ paper/*.synctex.gz
 
 # secrets
 .env
+.kroger-account/
 
 # web
 web/node_modules/

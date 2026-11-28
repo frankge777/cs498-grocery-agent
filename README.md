@@ -9,8 +9,10 @@
 
 Data source is `live` (Kroger Public API; needs `KROGER_CLIENT_ID`/`KROGER_CLIENT_SECRET`)
 or `snapshot` (frozen Mt Zion snapshot; works without Kroger keys). `auto` picks
-live when the keys exist. The cart is a local simulation; pushing it to a real
-Kroger cart (OAuth authorization code, `cart.basic:write`) is not implemented yet.
+live when the keys exist. Agent tools use a local simulation. A separate local
+[real Kroger account bridge](docs/real-kroger-cart.md) now provides user OAuth,
+fresh previews and explicitly confirmed additions to the real cart. It is not
+automatically enabled in benchmark tools or the public web endpoints.
 
 Local dev (two terminals):
 
@@ -380,7 +382,8 @@ passed; the DeepSeek follow-up dialogue/live-model checks were blocked by
 insufficient balance after the main run. The separate GPT follow-up is linked above.
 The [previous version report](outputs/recommended_workflow_20261127.md) preserves
 the historical 53/60 result. These are single-run development results, not a
-held-out architecture comparison; actual-account Kroger cart writes are not implemented.
+held-out architecture comparison. The separate account-backed addition bridge
+is documented above; these experiment results concern the local-cart workflow.
 
 This calls the real model for intent extraction, fallback queries, and semantic
 review, while using the frozen Kroger snapshot for reproducibility. It retains

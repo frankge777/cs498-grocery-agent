@@ -1,0 +1,24 @@
+{
+  "checked_utc": "2026-11-28T02:20:51.857624+00:00",
+  "test_scope": "read-only live repricing/constraints check; no user authorization or cart submission verified",
+  "cart_write_performed": false,
+  "quote": {
+    "items": [
+      {
+        "product_id": "0001111060903",
+        "upc": "0001111060903",
+        "name": "Kroger\u00ae Grade A Large White Eggs",
+        "package_size": "12 ct",
+        "quantity": 1,
+        "price_cents": 149,
+        "line_total_cents": 149
+      }
+    ],
+    "subtotal_cents": 149,
+    "location_id": "02100946",
+    "modality": "PICKUP",
+    "budget_cents": 500,
+    "facts_hash": "b973729656ecc5a3d7ab1029f4a25befa2c98f80a7c3e2242a5d44f91cfec6cc",
+    "remote_cart_total_known": false
+  }
+}

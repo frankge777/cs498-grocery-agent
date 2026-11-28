@@ -1,5 +1,6 @@
 .venv
 .env
+.kroger-account
 results
 outputs
 paper
