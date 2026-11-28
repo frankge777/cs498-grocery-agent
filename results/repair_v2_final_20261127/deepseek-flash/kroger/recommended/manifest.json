@@ -1,0 +1,79 @@
+{
+  "catalog_sha256": "2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce",
+  "scenarios_sha256": "590c01667f938ab7e3509da03539b94e548906fa1da99e128af37272cfa3442e",
+  "catalog_path": "benchmark/kroger_snapshots/02100946-20261116.json",
+  "scenarios_path": "benchmark/scenarios_kroger.json",
+  "tool_schema_version": "1.0.0",
+  "agent": {
+    "name": "recommended",
+    "split": "main",
+    "dataset": "kroger",
+    "catalog_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/kroger_snapshots/02100946-20261116.json",
+    "scenario_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/scenarios_kroger.json",
+    "llm": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "runs": 1,
+    "variants": [
+      "high",
+      "medium",
+      "low"
+    ],
+    "scenarios": [
+      "K01",
+      "K02",
+      "K03",
+      "K04",
+      "K05",
+      "K06",
+      "K07",
+      "K08",
+      "K09",
+      "K10",
+      "K11",
+      "K12",
+      "K13",
+      "K14",
+      "K15",
+      "K16",
+      "K17",
+      "K18",
+      "K19",
+      "K20"
+    ],
+    "started_utc": "2026-11-28T01:24:47.845122+00:00",
+    "workflow": "InteractiveShoppingSession with ModelDiscovery + ModelBasketRecommender + explicit draft acceptance + target cart diff + v2 active scopes + stock recovery + ModelQuantityInterpreter (v1 compatibility retained)",
+    "shopper_policy": {
+      "selection": "model recommends; simulator selects only deferred/replacement choices",
+      "free_text": "environment ask_user only",
+      "quantity": "scripted shopper profile after question",
+      "unresolved_semantics": "stop; no hidden needs or reference carts accessed",
+      "comparison_note": "interactive workflow with simulated shopper, separate from legacy ours",
+      "basket_review": "accept all drafts",
+      "substitution_permission": "explicit private profiles only; no default authorization",
+      "quantity_conflict": "confirm only target-mismatch proposals matching an independent same-dimension count/volume/weight profile; stop for form/semantic ambiguity"
+    },
+    "user_profiles_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/interactive_user_profiles_kroger.json",
+    "user_profiles_sha256": "f1dc17946967f8e46cadf2f14c6aa07d6efd1b54e7db81d17d97e97715372dc0",
+    "protocol_version": "recommended-v2-development",
+    "comparison_note": "Frozen goals unchanged. Accept-all is compatibility, not preference adaptation evidence.",
+    "initial_recommendation_metric": "Original frozen needs and hard constraints at first draft; execution interaction predicates excluded. Missing drafts reported separately.",
+    "code_sha256": {
+      "src/grocery_agent/interactive.py": "36afb1908f7e05713e8ec3fdd13b68a27878df10b196513ca1650e2c29ba8194",
+      "src/grocery_agent/interactive_intent.py": "e7e63c67d9eee26e3f952249c280508ad6e548e07fad1d5601f6c4f7668441dc",
+      "src/grocery_agent/choices.py": "56c01ea30fd7036881963d05c03b3b4ec47e26d7d7de1e8d1e178af6dc28b465",
+      "src/grocery_agent/discovery.py": "5975d460f411b0b202d4217fa08318d1c78ee9b3f6bf274444fafcb2f8123b58",
+      "src/grocery_agent/interactive_benchmark.py": "f0557eff21a48968676bcf3d4fbb4430deb36cd8e01a01e37c4d149171a48a20",
+      "src/grocery_agent/simulated_user.py": "fe0f54fdad40679dfad85d1d6824041079197a78670d1872cdd61f4214dcc50d",
+      "src/grocery_agent/recommendation.py": "7405b8d7eb3ffd8f6dda6b4e348e1d9a5437bbea226d2099ad61276194c7debc",
+      "src/grocery_agent/intent_schema.py": "2f1c4d9127843a2fc750bd359d53d9c42ed3dc013c162910ad6ca5ad18720518",
+      "src/grocery_agent/quantity_interpretation.py": "8a2a882aeda81c9332caaea377b7f8d408318814bac4be1f6b115d2e961ca3dc",
+      "src/grocery_agent/prompts.py": "9e0a4ab355984fe584ae5d9e3b9d6d5656b5b87f4bc441e2512b8b911ea602a3",
+      "src/grocery_agent/llm.py": "28b81da331eacfab3c07376020237b8e6fa47836d7a0d3ef13752e1f2f3ee367"
+    }
+  }
+}

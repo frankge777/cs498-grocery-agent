@@ -28,10 +28,26 @@ class ScriptedBasketUser:
 
     def __init__(self, profiles=None):
         self.profiles = profiles or {}
+        self.substitution_profiles = {}
 
     @classmethod
     def load(cls, path):
-        return cls(json.loads(path.read_text(encoding="utf-8"))["basket_profiles"])
+        data = json.loads(path.read_text(encoding="utf-8"))
+        user = cls(data.get("basket_profiles", {}))
+        user.substitution_profiles = data.get("substitution_profiles", {})
+        return user
+
+    def authorize(self, scenario_id, question):
+        """No default authorization; only a separately authored shopper rule."""
+        description = _words(question["primary"]["description"])
+        rows = [r for r in self.substitution_profiles.get(scenario_id, [])
+                if _words(" ".join(r["need_words"])).issubset(description)]
+        if len(rows) != 1:
+            raise BasketAnswerUnavailable("No unique shopper substitution authorization")
+        row = rows[0]
+        if row.get("decline") is True:
+            return {"question_id": question["question_id"], "action": "decline"}
+        return {"question_id": question["question_id"], "action": "allow_scope", "scope": row["scope"]}
 
     def review(self, scenario_id, draft):
         products = {p["product_id"]: p for p in draft["items"]}
@@ -102,3 +118,25 @@ class ScriptedQuantityUser:
                  "shopper_target": {"measure": measure, "min": minimum, "max": maximum},
                  "question": question, "answer": answer}
         return answer, audit
+
+    def answer_review(self, scenario_id, question, env):
+        """Confirm only an independent, same-dimension total, not a form change.
+
+        E.g. private intention=4 bars; actual 4-count product; model proposes
+        one package, while extracted intent incorrectly said four packages.
+        Package-only profiles cannot resolve bottles/cans or other ambiguity.
+        """
+        if question.get("reason_code") != "quantity_target_mismatch":
+            raise QuantityAnswerUnavailable("No automatic consent to semantic/package-form conflicts")
+        p = question["product"]
+        answer, audit = self.answer(scenario_id, {"question_id": question["question_id"],
+            "requirement_id": question["requirement_id"], "kind": "quantity", "product_id": p["id"],
+            "product_name": p["name"]}, env)
+        if audit["shopper_target"]["measure"] not in {"count", "volume_ml", "weight_g"}:
+            raise QuantityAnswerUnavailable("Package-count-only intention cannot authorize a changed interpretation")
+        if question["interpretation"].get("proposed_purchase_packages") != answer["amount"]:
+            raise QuantityAnswerUnavailable("Model suggestion disagrees with independent shopper total")
+        response = {"question_id": question["question_id"], "action": "confirm_selected_package_count",
+                    "amount": answer["amount"], "acknowledge_product_change": True}
+        audit.update(source="scripted_independent_total_confirmation", question=question, answer=response)
+        return response, audit

@@ -9,10 +9,13 @@ model policy; reference-cart validation can use deterministic discovery.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import copy
 import re
+import time
 from typing import Callable, Dict, List, Mapping, Optional, Sequence
 
 from .llm_agents import amount_per_package, brand_matches
+from .intent_schema import active_spec, fact_violations
 
 
 ChoiceProvider = Callable[[dict], dict]
@@ -81,6 +84,19 @@ class RequirementChoice:
     uncertain_candidates: List[dict] = field(default_factory=list)
     discovery_reason: Optional[str] = None
     discovery_errors: List[dict] = field(default_factory=list)
+    rules: dict = field(default_factory=dict)
+    phase: str = "primary"
+    availability_observations: dict = field(default_factory=dict)
+    candidate_history: List[dict] = field(default_factory=list)
+    filter_history: List[dict] = field(default_factory=list)
+    selection_revision: int = 0
+    quantity_interpretation: Optional[dict] = None
+
+    def active_requirement(self):
+        specification = active_spec(self.rules, self.phase)
+        specification.update(id=self.requirement_id, measure=self.measure,
+                             min=self.target_min, max=self.target_max)
+        return specification
 
 
 def coordinator_from_intent(intent: Mapping) -> "ChoiceCoordinator":
@@ -100,6 +116,7 @@ def coordinator_from_intent(intent: Mapping) -> "ChoiceCoordinator":
                                  set(intent.get("all_items_required_tags") or [])),
             required_brand=item.get("brand"),
             required_product_ids=list(item.get("product_ids") or []),
+            rules=copy.deepcopy(item) if intent.get("schema_version") == 2 else {},
         ))
     return ChoiceCoordinator(requirements)
 
@@ -150,36 +167,63 @@ class ChoiceCoordinator:
         if requirement.status != "added":
             requirement.status = "unresolved"
 
-    def filter_products(self, env, requirement, products, budget_cents=None, legacy_names=False):
+    def filter_products(self, env, requirement, products, budget_cents=None, legacy_names=False, detail_cache=None):
         """Only observed product facts may satisfy hard constraints."""
         matched = []
+        rejected = []
         for summary in products:
             product_id = str(summary["id"])
             if product_id in requirement.excluded_product_ids:
+                rejected.append({"product_id": product_id, "code": "explicitly_excluded"})
                 continue
             if legacy_names and (not _name_mentions_single_item(requirement.search_query, summary)
                                  or _obvious_mixture(requirement.search_query, summary)):
                 continue
             if requirement.required_product_ids and product_id not in requirement.required_product_ids:
+                rejected.append({"product_id": product_id, "code": "required_product"})
                 continue
             if not choice_brand_matches(requirement.required_brand, requirement.question, summary):
+                rejected.append({"product_id": product_id, "code": "required_brand"})
                 continue
             details = summary
-            if (requirement.required_tags or requirement.measure.startswith("portions:")) and "dietary_tags" not in details:
-                detail = env.get_product(product_id)
-                if not detail.ok:
-                    continue
-                details = detail.data
+            constraints = requirement.active_requirement().get("constraints", []) if requirement.rules else []
+            if (requirement.required_tags or constraints or requirement.measure.startswith("portions:")) and "dietary_tags" not in details:
+                cached = (detail_cache or {}).get(product_id)
+                if cached and all(cached.get(k) == value for k, value in details.items()):
+                    details = cached
+                else:
+                    detail = env.get_product(product_id)
+                    if not detail.ok:
+                        rejected.append({"product_id": product_id, "code": "detail_error", "message": detail.message})
+                        continue
+                    details = detail.data
+                    if detail_cache is not None:
+                        detail_cache[product_id] = details
+            if requirement.rules:
+                requirement.availability_observations[product_id] = {
+                    "in_stock": details.get("in_stock"), "observed_at": time.time(), "source": "product_tool"}
             if not set(requirement.required_tags).issubset(details.get("dietary_tags", [])):
+                rejected.append({"product_id": product_id, "code": "missing_tags",
+                                 "missing": sorted(set(requirement.required_tags) - set(details.get("dietary_tags", [])))})
+                continue
+            violations = fact_violations(details, constraints)
+            if violations:
+                rejected.extend({"product_id": product_id, **v} for v in violations)
                 continue
             quantity = packages_for(requirement, details)
             if quantity is None and requirement.target_min is not None:
+                rejected.append({"product_id": product_id, "code": "quantity_incompatible"})
                 continue
             if budget_cents is not None and details["price_cents"] * (quantity or 1) > budget_cents:
+                rejected.append({"product_id": product_id, "code": "line_over_budget"})
                 continue
             if details.get("in_stock") is not True or details.get("price_cents", 0) <= 0:
+                rejected.append({"product_id": product_id, "code": "out_of_stock_or_invalid_price"})
                 continue
             matched.append({**details, "quantity": quantity})
+        if requirement.rules:
+            requirement.filter_history.append({"phase": requirement.phase, "observed_at": time.time(),
+                                               "rejected": rejected, "accepted": [p["id"] for p in matched]})
         return matched
 
     def search_unresolved(self, env, budget_cents: Optional[int] = None, discovery=None, intent=None) -> dict:
@@ -189,23 +233,65 @@ class ChoiceCoordinator:
             if requirement.status != "unresolved":
                 continue
             if discovery is not None:
-                specification = next(item for item in intent["requirements"]
-                                     if item["id"] == requirement.requirement_id)
-                result = discovery.discover(env, {**specification,
-                    "required_tags": requirement.required_tags})
-                requirement.search_attempts.extend(result["attempts"])
+                specification = (requirement.active_requirement() if requirement.rules else
+                                 next(item for item in intent["requirements"] if item["id"] == requirement.requirement_id))
+                # Reuse facts only inside this discovery pass. Final user
+                # confirmation/quantity checks still perform fresh tool reads.
+                detail_cache = {} if requirement.rules else None
+                def eligible(products, reviews):
+                    verdicts = {r["product_id"]: r for r in reviews}
+                    possible = [p for p in products if verdicts[p["id"]]["verdict"] in {"related", "uncertain"}
+                                and not verdicts[p["id"]].get("withheld")]
+                    count = len(self.filter_products(env, requirement, possible, budget_cents, detail_cache=detail_cache))
+                    # A definite, user-bound primary can already be unavailable
+                    # on the first search. Fresh detail must confirm this;
+                    # empty search, uncertain semantics and tool errors cannot.
+                    if not count and requirement.rules and requirement.phase == "primary" and requirement.rules["primary"]["binding"] == "user":
+                        for p in products:
+                            pid = p["id"]
+                            if verdicts[pid]["verdict"] != "related" or verdicts[pid].get("withheld"):
+                                continue
+                            if requirement.required_product_ids and pid not in requirement.required_product_ids:
+                                continue
+                            if not choice_brand_matches(requirement.required_brand, requirement.question, p):
+                                continue
+                            if p.get("in_stock") is False or (detail_cache.get(pid) or {}).get("in_stock") is False:
+                                detail = env.get_product(pid)
+                                if detail.ok and detail.data.get("in_stock") is False:
+                                    detail_cache[pid] = detail.data
+                                    return {"eligible_count": count, "primary_unavailable_id": pid}
+                    return count
+                if requirement.rules:
+                    specification["previous_queries"] = [r["query"] for r in requirement.search_attempts
+                                                          if r.get("phase") == requirement.phase]
+                    result = discovery.discover(env, specification, accept_products=eligible)
+                    requirement.candidate_history.append({"phase": requirement.phase, "observed_at": time.time(),
+                        "products": copy.deepcopy(result["products"]), "reviews": copy.deepcopy(result["reviews"])})
+                else:
+                    result = discovery.discover(env, {**specification, "required_tags": requirement.required_tags})
+                requirement.search_attempts.extend([{**r, "phase": requirement.phase} for r in result["attempts"]]
+                                                   if requirement.rules else result["attempts"])
                 requirement.semantic_reviews.extend(result["reviews"])
                 requirement.discovery_reason = result["reason"]
                 requirement.discovery_errors.extend(result.get("errors", []))
+                unavailable = next((a["primary_unavailable_id"] for a in result["attempts"]
+                                    if a.get("primary_unavailable_id")), None)
+                if unavailable:
+                    self.mark_unavailable(requirement.requirement_id, unavailable)
+                    counts[requirement.requirement_id] = 0
+                    continue
                 verdicts = {row["product_id"]: row["verdict"] for row in result["reviews"]}
                 approved = [p for p in result["products"] if verdicts[p["id"]] == "related"]
-                uncertain = [p for p in result["products"] if verdicts[p["id"]] == "uncertain"]
-                matched = self.filter_products(env, requirement, approved, budget_cents)
-                requirement.uncertain_candidates = self.filter_products(env, requirement, uncertain, budget_cents)
+                withheld = {r["product_id"] for r in result["reviews"] if r.get("withheld")}
+                uncertain = [p for p in result["products"] if verdicts[p["id"]] == "uncertain" and p["id"] not in withheld]
+                matched = self.filter_products(env, requirement, approved, budget_cents, detail_cache=detail_cache)
+                requirement.uncertain_candidates = self.filter_products(env, requirement, uncertain, budget_cents, detail_cache=detail_cache)
                 if not matched and result["reason"] == "reviewed":
                     requirement.discovery_reason = ("semantic_uncertainty" if requirement.uncertain_candidates
                         else "hard_constraints" if approved or uncertain else "semantic_mismatch")
                 self.set_candidates(requirement.requirement_id, matched)
+                if requirement.rules:
+                    requirement.candidate_history[-1]["offered_product_ids"] = [p["id"] for p in requirement.candidates]
                 counts[requirement.requirement_id] = len(requirement.candidates)
                 continue
             observation = env.search_products(requirement.search_query, max_results=20)
@@ -299,6 +385,9 @@ class ChoiceCoordinator:
             selections.append((decision, option))
         for decision, option in selections:
             requirement = self.requirements[decision["requirement_id"]]
+            if requirement.rules:
+                requirement.selection_revision += 1
+                requirement.quantity_interpretation = None
             requirement.selected_product_id = option["product_id"]
             requirement.quantity = option["quantity"]
             requirement.status = "needs_quantity" if option["quantity"] is None else "selected"
@@ -323,8 +412,30 @@ class ChoiceCoordinator:
 
     def mark_unavailable(self, requirement_id: str, product_id: str) -> None:
         requirement = self.requirements[requirement_id]
-        if requirement.selected_product_id != product_id:
+        if requirement.selected_product_id != product_id and not (requirement.rules and requirement.selected_product_id is None):
             raise ValueError("Only the selected product can be marked unavailable")
+        if requirement.rules:
+            requirement.availability_observations[product_id] = {
+                "in_stock": False, "observed_at": time.time(), "source": "confirmed_out_of_stock"}
+            requirement.selected_product_id = None
+            requirement.quantity_interpretation = None
+            requirement.selection_revision += 1
+            requirement.candidates = []
+            requirement.uncertain_candidates = []
+            requirement.force_user_choice = False
+            if requirement.phase == "primary" and requirement.rules.get("fallback"):
+                requirement.phase = "fallback"
+            elif requirement.phase == "primary" and requirement.rules["primary"]["binding"] == "user":
+                requirement.status = "needs_substitution_permission"
+                return
+            active = requirement.active_requirement()
+            requirement.search_query = active["search_query"]
+            requirement.question = f"Which product for {active['description']}?"
+            requirement.required_brand = active.get("brand")
+            requirement.required_tags = active["required_tags"]
+            requirement.required_product_ids = active["product_ids"]
+            requirement.status = "unresolved"
+            return
         requirement.excluded_product_ids.add(product_id)
         requirement.selected_product_id = None
         requirement.candidates = [p for p in requirement.candidates if p["id"] != product_id]
@@ -361,7 +472,11 @@ class ChoiceCoordinator:
                     "quantity_product_id": item.quantity_product_id,
                     "search_attempts": item.search_attempts, "semantic_reviews": item.semantic_reviews,
                     "uncertain_candidates": item.uncertain_candidates,
-                    "discovery_reason": item.discovery_reason, "discovery_errors": item.discovery_errors}
+                    "discovery_reason": item.discovery_reason, "discovery_errors": item.discovery_errors,
+                    "rules": item.rules, "phase": item.phase,
+                    "availability_observations": item.availability_observations,
+                    "candidate_history": item.candidate_history, "filter_history": item.filter_history,
+                    "selection_revision": item.selection_revision, "quantity_interpretation": item.quantity_interpretation}
                 for item in self.requirements.values()
             ],
             "next_decision": self._next_decision,
@@ -389,6 +504,12 @@ class ChoiceCoordinator:
                 uncertain_candidates=list(item.get("uncertain_candidates") or []),
                 discovery_reason=item.get("discovery_reason"),
                 discovery_errors=list(item.get("discovery_errors") or []),
+                rules=copy.deepcopy(item.get("rules") or {}), phase=item.get("phase", "primary"),
+                availability_observations=dict(item.get("availability_observations") or {}),
+                candidate_history=list(item.get("candidate_history") or []),
+                filter_history=list(item.get("filter_history") or []),
+                selection_revision=item.get("selection_revision", 0),
+                quantity_interpretation=item.get("quantity_interpretation"),
             )
             for item in snapshot["requirements"]
         ])

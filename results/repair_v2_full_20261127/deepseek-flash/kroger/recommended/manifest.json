@@ -1,0 +1,79 @@
+{
+  "catalog_sha256": "2fb65e82715d6b27c079984404052c5a1e4540ac843c6c0c7c49a1d8c89bcbce",
+  "scenarios_sha256": "590c01667f938ab7e3509da03539b94e548906fa1da99e128af37272cfa3442e",
+  "catalog_path": "benchmark/kroger_snapshots/02100946-20261116.json",
+  "scenarios_path": "benchmark/scenarios_kroger.json",
+  "tool_schema_version": "1.0.0",
+  "agent": {
+    "name": "recommended",
+    "split": "main",
+    "dataset": "kroger",
+    "catalog_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/kroger_snapshots/02100946-20261116.json",
+    "scenario_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/scenarios_kroger.json",
+    "llm": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "thinking": false,
+      "temperature": 0.0,
+      "max_tokens": 4096
+    },
+    "runs": 1,
+    "variants": [
+      "high",
+      "medium",
+      "low"
+    ],
+    "scenarios": [
+      "K01",
+      "K02",
+      "K03",
+      "K04",
+      "K05",
+      "K06",
+      "K07",
+      "K08",
+      "K09",
+      "K10",
+      "K11",
+      "K12",
+      "K13",
+      "K14",
+      "K15",
+      "K16",
+      "K17",
+      "K18",
+      "K19",
+      "K20"
+    ],
+    "started_utc": "2026-11-28T01:11:05.432531+00:00",
+    "workflow": "InteractiveShoppingSession with ModelDiscovery + ModelBasketRecommender + explicit draft acceptance + target cart diff + v2 active scopes + stock recovery + ModelQuantityInterpreter (v1 compatibility retained)",
+    "shopper_policy": {
+      "selection": "model recommends; simulator selects only deferred/replacement choices",
+      "free_text": "environment ask_user only",
+      "quantity": "scripted shopper profile after question",
+      "unresolved_semantics": "stop; no hidden needs or reference carts accessed",
+      "comparison_note": "interactive workflow with simulated shopper, separate from legacy ours",
+      "basket_review": "accept all drafts",
+      "substitution_permission": "explicit private profiles only; no default authorization",
+      "quantity_conflict": "stop; do not accept changed package semantics on behalf of shopper"
+    },
+    "user_profiles_path": "/Users/gyc/Documents/Codex/2026-11-12/https-chatgpt-com-share-6af5f390-eac8/benchmark/interactive_user_profiles_kroger.json",
+    "user_profiles_sha256": "f1dc17946967f8e46cadf2f14c6aa07d6efd1b54e7db81d17d97e97715372dc0",
+    "protocol_version": "recommended-v2-development",
+    "comparison_note": "Frozen goals unchanged. Accept-all is compatibility, not preference adaptation evidence.",
+    "initial_recommendation_metric": "Original frozen needs and hard constraints at first draft; execution interaction predicates excluded. Missing drafts reported separately.",
+    "code_sha256": {
+      "src/grocery_agent/interactive.py": "e92af8955f9a05e5b837ce00185bbcdb434c6b336dab535c2a8cae7d037aa818",
+      "src/grocery_agent/interactive_intent.py": "e7e63c67d9eee26e3f952249c280508ad6e548e07fad1d5601f6c4f7668441dc",
+      "src/grocery_agent/choices.py": "af9dd65124117d97e1ca658bc2daa7b873ebca1cacb97bfcac8d67382754ed22",
+      "src/grocery_agent/discovery.py": "4db9142f4067fbe7f178aa09609ca495d6c918256ee962ec0681601f6aea2ef2",
+      "src/grocery_agent/interactive_benchmark.py": "53fafa495d5a45d95ea24b6f3be832b5499928087fe4ccd27ce2686fac57a2ed",
+      "src/grocery_agent/simulated_user.py": "672a1c7db7f1fb6e2cbe99a9de7c9bdfd4145fd73e6459519cf1db5f69947b8a",
+      "src/grocery_agent/recommendation.py": "7405b8d7eb3ffd8f6dda6b4e348e1d9a5437bbea226d2099ad61276194c7debc",
+      "src/grocery_agent/intent_schema.py": "5b95ab5fc971644f21fcc9b215739f3a4d45579db1adb3c03863627f5e209b97",
+      "src/grocery_agent/quantity_interpretation.py": "9c6e8315250bc5906168a7bbce2985e8203f03e3d8a831da51a26cc8e1e2f04f",
+      "src/grocery_agent/prompts.py": "9e0a4ab355984fe584ae5d9e3b9d6d5656b5b87f4bc441e2512b8b911ea602a3",
+      "src/grocery_agent/llm.py": "28b81da331eacfab3c07376020237b8e6fa47836d7a0d3ef13752e1f2f3ee367"
+    }
+  }
+}

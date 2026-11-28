@@ -1,0 +1,63 @@
+{
+  "agent": "recommended",
+  "n_trials": 1,
+  "n_scored": 1,
+  "n_infra_failures": 0,
+  "macro_success": 1,
+  "macro_success_ci95": [
+    1,
+    1
+  ],
+  "success_by_variant": {
+    "medium": 1
+  },
+  "success_by_category": {
+    "recovery": 1
+  },
+  "success_by_difficulty": {
+    "H": 1
+  },
+  "success_by_scenario": {
+    "K20": 1
+  },
+  "secondary": {
+    "coverage": 1.0,
+    "hard_violation_rate": 0.0,
+    "budget_compliance": {
+      "rate": 1.0,
+      "n": 1
+    },
+    "preference_score": {
+      "mean": null,
+      "n": 0
+    },
+    "missed_required_clarification": {
+      "rate": null,
+      "n": 0
+    },
+    "unnecessary_clarification_rate": 0.0
+  },
+  "efficiency_all": {
+    "tool_calls": 71,
+    "model_calls": 19,
+    "input_tokens": 58106,
+    "cached_input_tokens": 12416,
+    "output_tokens": 11848,
+    "runtime_seconds": 66.227,
+    "cart_modifications": 3,
+    "n": 1
+  },
+  "efficiency_successful": {
+    "tool_calls": 71,
+    "model_calls": 19,
+    "input_tokens": 58106,
+    "cached_input_tokens": 12416,
+    "output_tokens": 11848,
+    "runtime_seconds": 66.227,
+    "cart_modifications": 3,
+    "n": 1
+  },
+  "termination_reasons": {
+    "finished": 1
+  }
+}

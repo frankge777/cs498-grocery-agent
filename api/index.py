@@ -48,6 +48,8 @@ class InteractiveResumeRequest(BaseModel):
     candidate_review_answers: Optional[Dict[str, Any]] = None
     reconsider_requirement_ids: Optional[list[str]] = None
     recommendation_answer: Optional[Dict[str, Any]] = None
+    substitution_answers: Optional[Dict[str, Any]] = None
+    quantity_review_answers: Optional[Dict[str, Any]] = None
 
 
 def _call(fn, *args, **kwargs):
@@ -108,4 +110,6 @@ def interactive_resume(request: InteractiveResumeRequest) -> dict:
                  answers=request.answers, clarification_answers=request.clarification_answers,
                  candidate_review_answers=request.candidate_review_answers,
                  reconsider_requirement_ids=request.reconsider_requirement_ids,
-                 recommendation_answer=request.recommendation_answer)
+                 recommendation_answer=request.recommendation_answer,
+                 substitution_answers=request.substitution_answers,
+                 quantity_review_answers=request.quantity_review_answers)

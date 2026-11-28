@@ -136,9 +136,12 @@ def main() -> None:
                 meta["user_profiles_sha256"] = hashlib.sha256(profiles_path.read_bytes()).hexdigest()
             if name == "recommended":
                 meta["workflow"] += " + ModelBasketRecommender + explicit draft acceptance + target cart diff"
+                meta["workflow"] += " + v2 active scopes + stock recovery + ModelQuantityInterpreter (v1 compatibility retained)"
                 meta["shopper_policy"]["selection"] = "model recommends; simulator selects only deferred/replacement choices"
                 meta["shopper_policy"]["basket_review"] = "private scripted preferences" if args.basket_profiles else "accept all drafts"
-                meta["protocol_version"] = "recommended-v1-development"
+                meta["shopper_policy"]["substitution_permission"] = "explicit private profiles only; no default authorization"
+                meta["shopper_policy"]["quantity_conflict"] = "confirm only target-mismatch proposals matching an independent same-dimension count/volume/weight profile; stop for form/semantic ambiguity"
+                meta["protocol_version"] = "recommended-v2-development"
                 meta["comparison_note"] = "Frozen goals unchanged. Accept-all is compatibility, not preference adaptation evidence."
                 if args.basket_profiles:
                     meta["basket_profiles_path"] = str(args.basket_profiles)
@@ -154,7 +157,8 @@ def main() -> None:
             meta["code_sha256"] = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                 for path in [ROOT / "src/grocery_agent" / filename for filename in (
                     "interactive.py", "interactive_intent.py", "choices.py", "discovery.py",
-                    "interactive_benchmark.py", "simulated_user.py", "recommendation.py", "prompts.py", "llm.py")]}
+                    "interactive_benchmark.py", "simulated_user.py", "recommendation.py", "intent_schema.py",
+                    "quantity_interpretation.py", "prompts.py", "llm.py")]}
         summary = write_outputs(trials, out, agent_meta=meta, catalog_path=catalog_path, scenarios_path=scenario_path)
         cost = sum(estimate_cost_usd(args.model, t["input_tokens"], t["cached_input_tokens"], t["output_tokens"])
                    for t in trials)

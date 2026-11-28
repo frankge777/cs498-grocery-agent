@@ -359,11 +359,18 @@ goals. The second runs four development cases with a private Greek-yogurt
 preference in RD03 and explicit quantity answers. Neither is a held-out
 personalization benchmark. Initial draft goal checks exclude execution
 interaction predicates; final success retains the complete original evaluator.
-See [implementation and measured results](outputs/recommended_workflow_20261127.md)
-for version-specific results: 136 offline tests pass; the final frozen Kroger
-compatibility run passes 53/60 (88.3%), the four dialogue development cases pass
-4/4, and a live Kroger egg task completes in the local simulated cart.
-These are single-run development results, not a held-out architecture comparison.
+The default recommended workflow now requests a v2 intent with source evidence,
+per-item primary/fallback phases, and a dedicated model quantity interpretation
+after product recommendation. Missing substitution permission and quantity/form
+conflicts pause through resumable API responses. See [runtime and API](docs/shopping-v2-runtime.md)
+and [v2 repair measurements](outputs/shopping_repair_v2_20261127.md).
+The latest v2 check passed 180 offline tests and 60/60 frozen Kroger episodes
+(one run, with simulated shopper answers). The live Kroger backend read check
+passed; four dialogue cases and the full live-model check remain unverified
+because DeepSeek returned insufficient balance after the main run.
+The [previous version report](outputs/recommended_workflow_20261127.md) preserves
+the historical 53/60 result. These are single-run development results, not a
+held-out architecture comparison; actual-account Kroger cart writes are not implemented.
 
 This calls the real model for intent extraction, fallback queries, and semantic
 review, while using the frozen Kroger snapshot for reproducibility. It retains

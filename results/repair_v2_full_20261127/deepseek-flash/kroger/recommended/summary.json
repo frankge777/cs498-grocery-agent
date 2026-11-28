@@ -1,0 +1,90 @@
+{
+  "agent": "recommended",
+  "n_trials": 60,
+  "n_scored": 60,
+  "n_infra_failures": 0,
+  "macro_success": 0.9,
+  "macro_success_ci95": [
+    0.8167,
+    0.9667
+  ],
+  "success_by_variant": {
+    "high": 0.8,
+    "low": 0.95,
+    "medium": 0.95
+  },
+  "success_by_category": {
+    "constrained": 1,
+    "explicit": 0.8,
+    "goal": 0.8667,
+    "recovery": 0.9333
+  },
+  "success_by_difficulty": {
+    "E": 0.9167,
+    "H": 0.9167,
+    "M": 0.875
+  },
+  "success_by_scenario": {
+    "K01": 1,
+    "K02": 1,
+    "K03": 1,
+    "K04": 0.6667,
+    "K05": 0.3333,
+    "K06": 1,
+    "K07": 1,
+    "K08": 1,
+    "K09": 1,
+    "K10": 1,
+    "K11": 1,
+    "K12": 0.6667,
+    "K13": 0.6667,
+    "K14": 1,
+    "K15": 1,
+    "K16": 0.6667,
+    "K17": 1,
+    "K18": 1,
+    "K19": 1,
+    "K20": 1
+  },
+  "secondary": {
+    "coverage": 0.9333,
+    "hard_violation_rate": 0.0333,
+    "budget_compliance": {
+      "rate": 1.0,
+      "n": 39
+    },
+    "preference_score": {
+      "mean": 1.0,
+      "n": 3
+    },
+    "missed_required_clarification": {
+      "rate": 0.0,
+      "n": 3
+    },
+    "unnecessary_clarification_rate": 0.0
+  },
+  "efficiency_all": {
+    "tool_calls": 31.8667,
+    "model_calls": 9.2833,
+    "input_tokens": 25306.85,
+    "cached_input_tokens": 4074.6667,
+    "output_tokens": 5604.6167,
+    "runtime_seconds": 23.6442,
+    "cart_modifications": 2.6667,
+    "n": 60
+  },
+  "efficiency_successful": {
+    "tool_calls": 33.3889,
+    "model_calls": 9.3333,
+    "input_tokens": 25337.1852,
+    "cached_input_tokens": 3792.5926,
+    "output_tokens": 5555.9444,
+    "runtime_seconds": 23.5183,
+    "cart_modifications": 2.8519,
+    "n": 54
+  },
+  "termination_reasons": {
+    "agent_returned": 4,
+    "finished": 56
+  }
+}

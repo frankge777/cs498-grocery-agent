@@ -1,5 +1,9 @@
 # 自动推荐购物篮：第一阶段实现
 
+后续 v2 的实际实现与新增接口见 [Shopping v2 运行说明](shopping-v2-runtime.md)。
+本文保留第一阶段说明；涉及后续能力时，以运行说明和对应实验版本区分，
+不能将旧 53/60 成绩当作 v2 新成绩。
+
 这份说明对应 `selection_mode="recommend"`。HTTP 交互入口现在默认使用该模式；
 旧的 `user_choice` 模式和 benchmark 的 `ours` / `interactive` 名称保留。
 前端仍调用旧的 `/api/agent/run`，尚未切换到新交互接口。
@@ -186,7 +190,12 @@ HTTP token 仍是 30 分钟有效的签名状态，尚无数据库中的会话�
 
 1. 从任意自然语言反馈提取局部修订（当前用结构化 requirement_ids/option_id）。
 2. 完整的“原话 × 包装形式 × 数量”语义解释、证据和确认流程。
+   待实现顺序为“模型推荐 → 专门模型数量解释 → 用户确认整份方案”；
+   用户先选候选不是默认必经步骤。详见 [数量设计修正](product-and-quantity-interpretation-design.md)，
+   当前推荐模式已有整篮确认，但尚无该专门模型数量解释步骤。
 3. 通用 preferred→substitute 阶段，以及库存变化后历史候选回选；原有缺货排除仍较简单。
+   整合后的实现依据见 [条件替代、候选审查与整篮推荐设计](conditional-substitution-review-recommendation-design.md)，
+   K16 细节见 [缺货替代设计](k16-stock-fallback-design.md)；均已记录，尚未据此实现或验收。
 4. 无候选时进一步诊断/澄清/重搜的恢复入口；当前仍会明确暂停。
 5. 整篮超预算后的自动重规划；当前返回冲突并允许局部重选。
 6. 候选审查已具备基础诊断与一次格式修复；语义误判的质量评估与改进仍需继续。

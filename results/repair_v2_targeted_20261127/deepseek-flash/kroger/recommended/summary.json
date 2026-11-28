@@ -1,0 +1,72 @@
+{
+  "agent": "recommended",
+  "n_trials": 15,
+  "n_scored": 15,
+  "n_infra_failures": 0,
+  "macro_success": 0.6,
+  "macro_success_ci95": [
+    0.2,
+    1
+  ],
+  "success_by_variant": {
+    "high": 0.6,
+    "low": 0.6,
+    "medium": 0.6
+  },
+  "success_by_category": {
+    "constrained": 1,
+    "recovery": 0.5
+  },
+  "success_by_difficulty": {
+    "H": 0.3333,
+    "M": 1
+  },
+  "success_by_scenario": {
+    "K06": 1,
+    "K16": 1,
+    "K17": 0,
+    "K19": 1,
+    "K20": 0
+  },
+  "secondary": {
+    "coverage": 0.78,
+    "hard_violation_rate": 0.0,
+    "budget_compliance": {
+      "rate": 1.0,
+      "n": 12
+    },
+    "preference_score": {
+      "mean": null,
+      "n": 0
+    },
+    "missed_required_clarification": {
+      "rate": null,
+      "n": 0
+    },
+    "unnecessary_clarification_rate": 0.0
+  },
+  "efficiency_all": {
+    "tool_calls": 26.9333,
+    "model_calls": 7.4667,
+    "input_tokens": 19551.7333,
+    "cached_input_tokens": 2568.5333,
+    "output_tokens": 4747.1333,
+    "runtime_seconds": 17.2375,
+    "cart_modifications": 1.6,
+    "n": 15
+  },
+  "efficiency_successful": {
+    "tool_calls": 34.8889,
+    "model_calls": 9,
+    "input_tokens": 23192.4444,
+    "cached_input_tokens": 2332.4444,
+    "output_tokens": 5281.8889,
+    "runtime_seconds": 19.7599,
+    "cart_modifications": 2.3333,
+    "n": 9
+  },
+  "termination_reasons": {
+    "agent_returned": 6,
+    "finished": 9
+  }
+}

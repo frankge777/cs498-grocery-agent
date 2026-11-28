@@ -29,9 +29,12 @@ class InteractiveBenchmarkAgent:
             # not an infrastructure outage excluded from the denominator.
             self.notes["stop_reason"] = "invalid_agent_output"
             self.notes["error"] = f"{type(error).__name__}: {error}"
+            if getattr(error, "diagnostics", None):
+                self.notes["intent_errors"] = error.diagnostics
 
     def _run(self, env):
         session = InteractiveShoppingSession.from_model(env, self.llm, selection_mode=self.selection_mode)
+        self.notes["intent_schema_version"] = session.intent.get("schema_version", 1)
         result = session.advance()
         self.continue_session(env, session, result)
 
@@ -93,6 +96,31 @@ class InteractiveBenchmarkAgent:
                 self.notes.setdefault("basket_dialogue", []).append({"question": draft, "answer": answer})
                 session.answer_recommendation(answer)
                 result = session.advance()
+            elif result["status"] == "needs_substitution_permission" and self.basket_user:
+                try:
+                    answers = [self.basket_user.authorize(env.observation()["scenario_id"], q)
+                               for q in result["questions"]]
+                except BasketAnswerUnavailable as error:
+                    self.notes["stop_reason"] = "substitution_permission_unavailable"
+                    self.notes["substitution_error"] = str(error)
+                    break
+                self.notes.setdefault("substitution_dialogue", []).append({"questions": result["questions"], "answers": answers})
+                session.answer_substitutions({"answers": answers})
+                result = session.advance()
+            elif result["status"] == "needs_quantity_review" and self.quantity_user:
+                answers, dialogue = [], []
+                try:
+                    for question in result["questions"]:
+                        answer, audit = self.quantity_user.answer_review(env.observation()["scenario_id"], question, env)
+                        answers.append(answer)
+                        dialogue.append(audit)
+                except QuantityAnswerUnavailable as error:
+                    self.notes["stop_reason"] = "quantity_review_unavailable"
+                    self.notes["quantity_error"] = str(error)
+                    break
+                self.notes["quantity_dialogue"].extend(dialogue)
+                session.answer_quantity_reviews({"answers": answers})
+                result = session.advance()
             else:
                 self.notes["stop_reason"] = result["status"]
                 break
@@ -100,7 +128,8 @@ class InteractiveBenchmarkAgent:
             self.notes["stop_reason"] = "interaction_limit"
         events = self.notes["interaction_events"]
         self.notes["dialogue_metrics"] = {
-            "prompt_batches": sum(e["status"] in {"waiting_for_user", "needs_clarification", "awaiting_basket_confirmation"}
+            "prompt_batches": sum(e["status"] in {"waiting_for_user", "needs_clarification", "awaiting_basket_confirmation",
+                                                   "needs_substitution_permission", "needs_quantity_review", "needs_candidate_review"}
                                   for e in events),
             "questions": sum(len(e["questions"]) + (e["status"] == "awaiting_basket_confirmation") for e in events),
             "replacement_requests": sum(d["answer"]["action"] == "replace" for d in self.notes.get("basket_dialogue", [])),

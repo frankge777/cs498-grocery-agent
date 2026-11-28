@@ -1,0 +1,143 @@
+{
+  "checked_utc": "2026-11-28T01:38:50.217269+00:00",
+  "source": "Kroger Public API (live)",
+  "model_used": false,
+  "test_scope": "deterministic backend integration, not a live model workflow",
+  "cart_mode": "local simulation only",
+  "location": {
+    "location_id": "02100946",
+    "name": "Kroger - Mt Zion",
+    "chain": "KROGER",
+    "address": {
+      "addressLine1": "1818 Airport Plz",
+      "city": "Decatur",
+      "state": "IL",
+      "zipCode": "62521",
+      "county": "MACON COUNTY"
+    }
+  },
+  "search": {
+    "ok": true,
+    "query": "large eggs",
+    "count": 10
+  },
+  "product": {
+    "id": "0001111060903",
+    "name": "Kroger\u00ae Grade A Large White Eggs",
+    "brand": "Kroger",
+    "category": "dairy",
+    "size": 12,
+    "unit": "ct",
+    "price_cents": 149,
+    "in_stock": true,
+    "upc": "0001111060903",
+    "raw_size": "12 ct",
+    "source": "kroger_live",
+    "stock_level": "HIGH",
+    "availability": {
+      "curbside": true,
+      "delivery": true,
+      "inStore": true,
+      "shipToHome": false
+    },
+    "dietary_tags": [
+      "dairy_free",
+      "fish_free",
+      "nut_free",
+      "peanut_free",
+      "shellfish_free",
+      "soy_free",
+      "tree_nut_free"
+    ],
+    "portions": {},
+    "protein_g": 6,
+    "protein_basis": "per labeled serving",
+    "allergens": {
+      "contains": [
+        "eggs_and_their_derivates"
+      ],
+      "may_contain": [],
+      "free_from": [
+        "crustaceans_and_their_derivates",
+        "fish_and_their_derivates",
+        "milk_and_its_derivates",
+        "molluscs_and_their_derivates",
+        "peanuts_and_their_derivates",
+        "shellfish_and_its_derivatives",
+        "soybean_and_its_derivatives",
+        "tree_nuts_and_their_derivatives",
+        "wheat_and_their_derivatives"
+      ]
+    },
+    "manufacturer_declarations": [
+      "Dairy Free",
+      "Fish Free",
+      "Free from Peanuts",
+      "Live Naturally",
+      "Shellfish Free",
+      "Soy Free",
+      "Tree Nuts Free"
+    ],
+    "ingredient_statement": null,
+    "nutrition_per_serving": {
+      "iron": {
+        "quantity": 0.9,
+        "unit": "mg"
+      },
+      "cholesterol": {
+        "quantity": 185,
+        "unit": "mg"
+      },
+      "vitamin_d": {
+        "quantity": 1,
+        "unit": "mcg"
+      },
+      "sodium": {
+        "quantity": 70,
+        "unit": "mg"
+      },
+      "calcium": {
+        "quantity": 30,
+        "unit": "mg"
+      },
+      "potassium": {
+        "quantity": 70,
+        "unit": "mg"
+      },
+      "total_fat": {
+        "quantity": 5,
+        "unit": "g"
+      },
+      "protein": {
+        "quantity": 6,
+        "unit": "g"
+      },
+      "saturated_fat": {
+        "quantity": 1.5,
+        "unit": "g"
+      },
+      "calories": {
+        "quantity": 70,
+        "unit": "kilocalorie (international table)"
+      }
+    },
+    "serving_size": {
+      "quantity": 50,
+      "unit": "g"
+    },
+    "servings_per_package": 12.0,
+    "organic": false,
+    "sold_by": "UNIT"
+  },
+  "local_cart": {
+    "0001111060903": 1
+  },
+  "local_total_cents": 149,
+  "assertions_passed": [
+    "real search succeeds",
+    "fresh product details succeed",
+    "12 ct positive price in stock",
+    "one local package supplies 12 eggs within $5",
+    "no real account cart endpoint called"
+  ]
+}
