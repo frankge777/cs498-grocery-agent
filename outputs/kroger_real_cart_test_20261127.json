@@ -1,0 +1,55 @@
+{
+  "checked_utc": "2026-11-28T02:43:06.408900+00:00",
+  "user_authorization": "Test the previously offered single 12-count egg carton, $1.49 lookup price, PICKUP; no checkout",
+  "checkout_performed": false,
+  "preview": {
+    "status": "awaiting_real_cart_confirmation",
+    "plan_id": "-ntNdLvltMh0ghnbFtTVRswZzxm4gU1q",
+    "items": [
+      {
+        "product_id": "0001111060903",
+        "upc": "0001111060903",
+        "name": "Kroger® Grade A Large White Eggs",
+        "package_size": "12 ct",
+        "quantity": 1,
+        "price_cents": 149,
+        "line_total_cents": 149
+      }
+    ],
+    "subtotal_cents": 149,
+    "location_id": "02100946",
+    "modality": "PICKUP",
+    "budget_cents": 500,
+    "facts_hash": "b973729656ecc5a3d7ab1029f4a25befa2c98f80a7c3e2242a5d44f91cfec6cc",
+    "remote_cart_total_known": false,
+    "expires_at": 1795834087.3059871,
+    "effect": "ADD these quantities to existing Kroger cart; existing contents cannot be read or replaced",
+    "cart_verification": "User must inspect Kroger cart after submission; this is not checkout"
+  },
+  "receipt": {
+    "status": "submitted",
+    "plan_id": "-ntNdLvltMh0ghnbFtTVRswZzxm4gU1q",
+    "api_request_accepted": true,
+    "verified_remote_cart": false,
+    "requires_user_cart_check": true,
+    "items": [
+      {
+        "product_id": "0001111060903",
+        "upc": "0001111060903",
+        "name": "Kroger® Grade A Large White Eggs",
+        "package_size": "12 ct",
+        "quantity": 1,
+        "price_cents": 149,
+        "line_total_cents": 149
+      }
+    ],
+    "addition_subtotal_cents": 149,
+    "checkout_performed": false
+  },
+  "remote_cart_ui_verification": {
+    "verified": false,
+    "page": "https://www.kroger.com/account/account-completion",
+    "blocker": "Kroger requires account completion, step 4 of 6; ZIP code required before opening /cart",
+    "profile_data_changed_by_agent": false
+  }
+}

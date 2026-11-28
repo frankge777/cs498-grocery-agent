@@ -1,14 +1,18 @@
 """OAuth and real-cart side effect boundaries; no real account writes in tests."""
 
 import copy
+import io
 import json
 import os
 import tempfile
 import unittest
 import urllib.parse
+import sys
+from contextlib import redirect_stdout
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from grocery_bench.kroger import normalize_kroger_product
 from grocery_agent.quantity_interpretation import quantity_fingerprint
@@ -284,6 +288,18 @@ class RealCartTests(AccountFixture, unittest.TestCase):
         target = completed_addition(json.loads(p.read_text()))
         self.assertEqual(target["quantities"], {"0001111060903": 1})
         self.assertEqual(target["budget_cents"], 500)
+
+    def test_generated_plan_id_works_with_cli_when_random_suffix_starts_with_dash(self):
+        from scripts import kroger_account as cli
+        with patch("grocery_web.real_cart.secrets.token_urlsafe", return_value="-random-suffix"):
+            plan = self.prepare()
+        pid = plan["plan_id"]
+        output = io.StringIO()
+        with patch.object(cli, "KrogerAccount", return_value=self.account), patch.object(
+                sys, "argv", ["kroger_account.py", "commit", "--plan-id", pid, "--confirm", pid]), redirect_stdout(output):
+            cli.main()
+        self.assertEqual(json.loads(output.getvalue())["status"], "submitted")
+        self.assertEqual(len(self.puts()), 1)
 
 
 if __name__ == "__main__":

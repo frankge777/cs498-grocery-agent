@@ -78,7 +78,7 @@ UPC、标签、品牌/指定商品、数量解释版本和预算；规格改变�
 
 ```bash
 .venv/bin/python scripts/kroger_account.py commit \
-  --plan-id '<预览返回的 ID>' --confirm '<同一个 ID>'
+  --plan-id='<预览返回的 ID>' --confirm='<同一个 ID>'
 ```
 
 提交前再次刷新商品。价格等事实变化则返回 needs_reconfirmation 和新 ID，

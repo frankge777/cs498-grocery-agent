@@ -147,7 +147,7 @@ class RealCartBridge:
                 previous = json.loads(old["data"])
                 if previous["target"] != target or previous["modality"] != modality:
                     raise AccountError("purchase_id is bound to a different intended addition")
-            plan_id = secrets.token_urlsafe(24)
+            plan_id = "cart_" + secrets.token_urlsafe(24)
             db.execute("INSERT OR REPLACE INTO submissions VALUES (?, ?, ?, 'prepared', ?)",
                        (operation, plan_id, value["grant_id"], json.dumps(data)))
         return self._preview(plan_id, data)
@@ -182,7 +182,7 @@ class RealCartBridge:
                 if not fresh or fresh[0] != "prepared":
                     raise AccountError("Plan changed while refreshing")
                 data.update(quote=quote, expires_at=self.account.clock() + 300)
-                new_id = secrets.token_urlsafe(24)
+                new_id = "cart_" + secrets.token_urlsafe(24)
                 db.execute("UPDATE submissions SET plan_id=?, data=? WHERE plan_id=?", (new_id, json.dumps(data), plan_id))
             return {**self._preview(new_id, data), "status": "needs_reconfirmation"}
         # Persist before the network call. A crash/timeout leaves a durable
