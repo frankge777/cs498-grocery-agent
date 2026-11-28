@@ -4,15 +4,19 @@
 
 | Part | Path | What it does |
 |---|---|---|
-| Backend | `api/index.py` (FastAPI) → `src/grocery_web/service.py` / `interactive_service.py` | `GET /api/health`, `GET /api/locations?zip_code=`, `GET /api/products?q=`, `POST /api/agent/run`, `POST /api/agent/interactive/start`, `POST /api/agent/interactive/resume` |
-| Frontend | `web/` (Vite + React) | request form → cart table, parsed intent, tool trajectory |
+| Backend | `api/index.py` (FastAPI) → `src/grocery_web/` | `GET /api/health`, `GET /api/locations?zip_code=`, `GET /api/products?q=`, `GET /api/products/{upc}` (details + Kroger image URLs), `POST /api/agent/run`, `POST /api/agent/interactive/start` / `resume`, the same two under `/api/agent/interactive/stream/…` (NDJSON: each tool/model call as it happens, then the result), and local-only `GET /api/kroger/account`, `POST /api/kroger/cart/prepare` / `commit` |
+| Frontend | `web/` (Vite + React), **ShopSpec** | 1 store (Locations API) → 2 request → 3 live shopping feed with the agent's questions → 4 editable receipt (quantities, swap, budget; sent back as `recommendation_answer`) → 5 checkout to the real Kroger cart |
 
 Data source is `live` (Kroger Public API; needs `KROGER_CLIENT_ID`/`KROGER_CLIENT_SECRET`)
 or `snapshot` (frozen Mt Zion snapshot; works without Kroger keys). `auto` picks
 live when the keys exist. Agent tools use a local simulation. A separate local
 [real Kroger account bridge](docs/real-kroger-cart.md) now provides user OAuth,
-fresh previews and explicitly confirmed additions to the real cart. It is not
-automatically enabled in benchmark tools or the public web endpoints.
+fresh previews and explicitly confirmed additions to the real cart. The web
+checkout calls it only when the server runs locally (it holds one shopper's
+tokens in `.kroger-account/`); on Vercel (`VERCEL=1`) or with
+`GROCERY_REAL_CART=0` those endpoints answer 501 and the page links each item
+on kroger.com instead. Connect the account with
+`.venv/bin/python scripts/kroger_account.py connect`; it needs a live-data run.
 
 Local dev (two terminals):
 

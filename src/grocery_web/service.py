@@ -238,3 +238,67 @@ def run_agent(instruction: str, source: Optional[str] = None, zip_code: Optional
         },
         "error": error,
     }
+
+
+# ------------------------------------------------------- product details (UI)
+# Kroger's product API returns images[].sizes[].url on this CDN pattern; the
+# frozen snapshot did not keep the image list, so it falls back to the pattern.
+KROGER_IMAGE_URL = "https://www.kroger.com/product/images/{size}/{perspective}/{upc}"
+IMAGE_PERSPECTIVES = ("front", "back", "left", "right", "top", "bottom")
+
+
+def image_urls(raw_images: Optional[List[Mapping[str, Any]]], upc: str) -> List[dict]:
+    """[{perspective, url, default}] preferring the API's own image list."""
+    images = []
+    for image in raw_images or []:
+        sizes = {s.get("size"): s.get("url") for s in image.get("sizes") or [] if s.get("url")}
+        url = next((sizes[s] for s in ("large", "xlarge", "medium", "small", "thumbnail") if sizes.get(s)), None)
+        if url:
+            images.append({"perspective": image.get("perspective") or "front", "url": url,
+                           "default": bool(image.get("featured") or image.get("default"))})
+    if images:
+        return images
+    return [{"perspective": p, "url": KROGER_IMAGE_URL.format(size="large", perspective=p, upc=upc),
+             "default": p == "front"} for p in IMAGE_PERSPECTIVES[:3]]
+
+
+def product_summaries(env: GroceryEnv, product_ids) -> Dict[str, dict]:
+    """Name/brand/size/price for products the UI shows (only ids the env has seen)."""
+    rows = {}
+    for pid in dict.fromkeys(str(p) for p in product_ids if p):
+        product = env.catalog.get(pid)
+        if product is not None:
+            rows[pid] = product.public_summary(env.stock.get(pid, 0) > 0)
+    return rows
+
+
+def product_detail(product_id: str, source: Optional[str] = None, zip_code: Optional[str] = None,
+                   location_id: Optional[str] = None) -> dict:
+    if not product_id.isdigit() or len(product_id) > 20:
+        raise ServiceError("product_id must be a numeric UPC")
+    source = resolve_source(source)
+    extra: Dict[str, Any] = {}
+    if source == "snapshot":
+        product = snapshot_catalog().get(product_id)
+        if product is None:
+            raise ServiceError("Product is not in the snapshot", status=404)
+        location = location_summary(snapshot_location())
+        raw_images = None
+    else:
+        from grocery_bench.kroger import normalize_kroger_product
+
+        env = build_env(source, "browse", {}, zip_code, location_id, lambda q: DEFAULT_CLARIFICATION_ANSWER)
+        raw = kroger_client().get_product(product_id, env.location_id)
+        product = normalize_kroger_product(raw)
+        location = env.observation()["location"]
+        raw_images = raw.get("images")
+        aisles = [a.get("description") for a in raw.get("aisleLocations") or [] if a.get("description")]
+        page = raw.get("productPageURI")
+        extra = {"aisles": aisles, "country_origin": raw.get("countryOrigin"),
+                 "temperature": (raw.get("temperature") or {}).get("indicator"),
+                 "product_page_url": f"https://www.kroger.com{page}" if page else None}
+    details = product.public_details(product.stock > 0)
+    upc = product.upc or product.id
+    return {"data_source": source, "location": location, **details, **extra,
+            "images": image_urls(raw_images, upc),
+            "search_url": f"https://www.kroger.com/search?query={upc}"}

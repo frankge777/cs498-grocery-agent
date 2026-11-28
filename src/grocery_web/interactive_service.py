@@ -29,6 +29,14 @@ def _secret(override: Optional[str]) -> bytes:
     return value.encode("utf-8")
 
 
+def session_configured() -> bool:
+    try:
+        _secret(None)
+        return True
+    except service.ServiceError:
+        return False
+
+
 def _encode(payload: dict, secret: bytes) -> str:
     data = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
     signature = hmac.new(secret, data, hashlib.sha256).digest()
@@ -74,6 +82,15 @@ def _response(env, session, result, metadata, secret):
          "availability_observations": item.availability_observations}
         for item in session.choices.requirements.values()
     ] if session.choices else []
+    # Display-only product facts (name, size, price) for every product the UI
+    # may show: reviewed candidates, options, the draft and the cart.
+    shown = [pid for row in output["discovery"] for pid in
+             [r.get("product_id") for r in row["reviews"] or []]]
+    shown += [i.get("product_id") for i in (result.get("recommendation") or {}).get("items", [])]
+    shown += [o.get("product_id") or o.get("id") for q in result.get("questions") or []
+              for o in q.get("options") or []]
+    shown += [s["selected_product_id"] for s in output["requirement_states"]] + list(env.cart)
+    output["products"] = service.product_summaries(env, shown)
     if result["status"] != "complete":
         output["session_token"] = _encode({**metadata, "session": session.checkpoint(),
                                            "issued_at": time.time()}, secret)
@@ -82,7 +99,8 @@ def _response(env, session, result, metadata, secret):
 
 def start(instruction: str, source: Optional[str] = None, zip_code: Optional[str] = None,
           location_id: Optional[str] = None, context: Optional[Mapping] = None,
-          llm=None, signing_secret: Optional[str] = None, selection_mode="recommend") -> dict:
+          llm=None, signing_secret: Optional[str] = None, selection_mode="recommend",
+          on_env=None) -> dict:
     """Start a recommended basket, or explicitly opt into legacy user choices."""
     secret = _secret(signing_secret)
     if not instruction.strip():
@@ -94,6 +112,8 @@ def start(instruction: str, source: Optional[str] = None, zip_code: Optional[str
         raise service.ServiceError("DEEPSEEK_API_KEY is not configured on the server", status=503)
     env = service.build_env(selected_source, instruction, dict(context or {}), zip_code,
                             location_id, lambda q: service.DEFAULT_CLARIFICATION_ANSWER)
+    if on_env is not None:  # lets the web layer stream tool calls while this runs
+        on_env(env)
     try:
         session = InteractiveShoppingSession.from_model(env, llm or DeepSeekClient(temperature=0),
                                                          selection_mode=selection_mode)
@@ -113,7 +133,7 @@ def resume(session_token: str, answers: Optional[Mapping] = None,
            signing_secret: Optional[str] = None, llm=None,
            recommendation_answer: Optional[Mapping] = None,
            substitution_answers: Optional[Mapping] = None,
-           quantity_review_answers: Optional[Mapping] = None) -> dict:
+           quantity_review_answers: Optional[Mapping] = None, on_env=None) -> dict:
     """Continue a saved session after choices, or reopen budget-conflicting needs."""
     secret = _secret(signing_secret)
     payload = _decode(session_token, secret)
@@ -124,6 +144,8 @@ def resume(session_token: str, answers: Optional[Mapping] = None,
     env = service.build_env(payload["source"], payload["instruction"], payload["context"],
                             payload.get("zip_code"), payload.get("location_id"),
                             lambda q: service.DEFAULT_CLARIFICATION_ANSWER)
+    if on_env is not None:
+        on_env(env)
     try:
         semantic = payload["session"].get("semantic_discovery", False)
         if (semantic or payload["session"].get("selection_mode") == "recommend") and llm is None:
