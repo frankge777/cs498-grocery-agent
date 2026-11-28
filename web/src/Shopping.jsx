@@ -26,7 +26,7 @@ const FILTER_TEXT = {
 const filterText = (r) => (FILTER_TEXT[r.code] ? FILTER_TEXT[r.code](r) : String(r.code || "rejected").replace(/_/g, " "));
 
 const REASON_TEXT = {
-  semantic_mismatch: "nothing the store search returned is this item",
+  semantic_mismatch: "no product found matches what you asked for (see each candidate's reason above)",
   hard_constraints: "matching products exist, but none meets every requirement (declared tags, stock, size or budget)",
   no_results: "the store search returned nothing",
   empty_search: "this store has nothing under that name",
