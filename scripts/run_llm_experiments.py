@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from grocery_agent.llm import DEFAULT_MODEL, DeepSeekClient, estimate_cost_usd  # noqa: E402
+from grocery_agent.llm import DEFAULT_MODEL, create_llm, estimate_cost_usd  # noqa: E402
 from grocery_agent.llm_agents import DirectFunctionCallingAgent, IntentGroundedLLMAgent, ReActAgent  # noqa: E402
 from grocery_agent.interactive_benchmark import InteractiveBenchmarkAgent, RecommendedBenchmarkAgent  # noqa: E402
 from grocery_agent.simulated_user import ScriptedQuantityUser, ScriptedBasketUser  # noqa: E402
@@ -56,7 +56,10 @@ def main() -> None:
     parser.add_argument("--agents", nargs="+", default=["ours", "react", "direct_fc"])
     parser.add_argument("--runs", type=int, default=3)
     parser.add_argument("--workers", type=int, default=16)
-    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--provider", choices=["deepseek", "codex"], default="deepseek")
+    parser.add_argument("--model", help="provider default: deepseek-flash or gpt-6-sol")
+    parser.add_argument("--reasoning-effort", choices=["low", "medium", "high", "xhigh"],
+                        help="defaults to low for Codex, high for DeepSeek thinking")
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--thinking", action="store_true", help="enable DeepSeek thinking mode")
     parser.add_argument("--scenarios", nargs="*", help="subset of scenario ids, e.g. 01 15")
@@ -84,8 +87,12 @@ def main() -> None:
     if args.split == "stress":
         scenario_path = BENCHMARK_DIR / "scenarios_stress.json"
 
-    llm = DeepSeekClient(model=args.model, temperature=args.temperature, thinking=args.thinking)
-    tag = args.model + ("-thinking" if args.thinking else "")
+    if args.provider == "codex" and (args.thinking or set(args.agents) - {"interactive", "recommended"}):
+        parser.error("Codex supports --agents recommended/interactive JSON workflows; use --reasoning-effort instead of --thinking")
+    args.model = args.model or ("gpt-6-sol" if args.provider == "codex" else DEFAULT_MODEL)
+    llm = create_llm(args.provider, model=args.model, temperature=args.temperature, thinking=args.thinking,
+                     reasoning_effort=args.reasoning_effort)
+    tag = ("codex-" if args.provider == "codex" else "") + args.model + ("-thinking" if args.thinking else "")
     catalog = load_catalog(catalog_path)
     scenarios = load_scenarios(scenario_path)
     if args.smoke:
@@ -158,15 +165,18 @@ def main() -> None:
                 for path in [ROOT / "src/grocery_agent" / filename for filename in (
                     "interactive.py", "interactive_intent.py", "choices.py", "discovery.py",
                     "interactive_benchmark.py", "simulated_user.py", "recommendation.py", "intent_schema.py",
-                    "quantity_interpretation.py", "prompts.py", "llm.py")]}
+                    "quantity_interpretation.py", "prompts.py", "llm.py", "codex_llm.py")]}
+            if args.provider == "codex":
+                meta["comparison_note"] += " Codex wraps prompts in a fresh CLI conversation, with additional system context and CLI limits; not an API-controlled model comparison."
         summary = write_outputs(trials, out, agent_meta=meta, catalog_path=catalog_path, scenarios_path=scenario_path)
-        cost = sum(estimate_cost_usd(args.model, t["input_tokens"], t["cached_input_tokens"], t["output_tokens"])
-                   for t in trials)
+        cost = (sum(estimate_cost_usd(args.model, t["input_tokens"], t["cached_input_tokens"], t["output_tokens"])
+                   for t in trials) if args.provider == "deepseek" else None)
         print(json.dumps({
             "agent": name, "out": str(out), "macro_success": summary["macro_success"],
             "ci95": summary["macro_success_ci95"], "by_variant": summary["success_by_variant"],
             "infra_failures": summary["n_infra_failures"], "terminations": summary["termination_reasons"],
-            "est_cost_usd_peak": round(cost, 3), "minutes": round((time.time() - started) / 60, 1),
+            "est_cost_usd_peak": round(cost, 3) if cost is not None else None,
+            "minutes": round((time.time() - started) / 60, 1),
         }, indent=1), flush=True)
         for t in trials:
             if t["infra_failure"]:

@@ -45,7 +45,25 @@ def estimate_cost_usd(model: str, input_tokens: int, cached_input_tokens: int, o
 
 def is_provider_error(error: Exception) -> bool:
     """Keep SDK transport/auth/quota failures out of agent reasoning failures."""
-    return type(error).__module__.split(".", 1)[0] == "openai"
+    return isinstance(error, LLMProviderError) or type(error).__module__.split(".", 1)[0] == "openai"
+
+
+class LLMProviderError(RuntimeError):
+    """Transport, authentication or execution isolation failure, not reasoning."""
+
+
+def create_llm(provider="deepseek", model=None, temperature=0.7, thinking=False,
+               reasoning_effort=None, timeout=180.0):
+    """Keep provider selection explicit; never silently change a failed model."""
+    if provider == "deepseek":
+        return DeepSeekClient(model=model or DEFAULT_MODEL, temperature=temperature,
+                              thinking=thinking, reasoning_effort=reasoning_effort or "high", timeout=timeout)
+    if provider == "codex":
+        from .codex_llm import CodexCLIClient
+        if thinking:
+            raise ValueError("For Codex use reasoning_effort, not DeepSeek's thinking option")
+        return CodexCLIClient(model=model or "gpt-6-sol", reasoning_effort=reasoning_effort or "low", timeout=timeout)
+    raise ValueError(f"Unsupported provider: {provider}")
 
 
 @dataclass

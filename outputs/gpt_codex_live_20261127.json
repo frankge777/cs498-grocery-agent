@@ -1,0 +1,1297 @@
+{
+  "instruction": "Buy exactly 12 large chicken eggs in total under $5, nothing else.",
+  "source": "live",
+  "llm": {
+    "provider": "codex-cli",
+    "model": "gpt-6-sol",
+    "reasoning_effort": "low",
+    "temperature": null,
+    "max_tokens": null,
+    "transport": "codex exec JSONL",
+    "protocol": "codex-json-inference-v1",
+    "fresh_session_per_call": true,
+    "native_tool_calls": false,
+    "api_cost_usd": null,
+    "limits_note": "CLI does not enforce the DeepSeek sampling/output-token settings"
+  },
+  "cart_mode": "local simulation only",
+  "auto_accept_local_draft": true,
+  "steps": [
+    {
+      "status": "awaiting_basket_confirmation",
+      "recommendation": {
+        "recommendation_id": "basket_1",
+        "fingerprint": "b1e28fa0e9dae545e2ca30207abf1074db8aac495ec2c61b4e5f3a73f08397ac",
+        "items": [
+          {
+            "product_id": "0001111060903",
+            "name": "Kroger\u00ae Grade A Large White Eggs",
+            "package_size": "12 ct",
+            "quantity": 1,
+            "price_cents": 149,
+            "line_total_cents": 149
+          }
+        ],
+        "total_cents": 149,
+        "budget_cents": 500,
+        "operations": [
+          {
+            "product_id": "0001111060903",
+            "from_quantity": 0,
+            "to_quantity": 1,
+            "action": "add"
+          }
+        ],
+        "assignments": [
+          {
+            "requirement_id": "r1",
+            "product_id": "0001111060903",
+            "quantity": 1,
+            "phase": "primary",
+            "quantity_interpretation": {
+              "status": "proposal",
+              "purchase_packages": 1,
+              "explanation": "One 12-count package of Kroger Grade A Large White Eggs contains exactly 12 eggs and costs $1.49, under the $5 limit.",
+              "question": null,
+              "evidence": [
+                {
+                  "field": "raw_size",
+                  "quote": "12 ct"
+                }
+              ],
+              "reason_code": null,
+              "proposed_purchase_packages": null,
+              "normalized_contents": {
+                "amount": 12,
+                "unit": "ct"
+              },
+              "product_id": "0001111060903",
+              "selection_revision": 1,
+              "facts_fingerprint": "b22aaef3f746381e67f992aa0daec96285c7e1c44a5a5a13c93e41319512e2ad"
+            },
+            "reason": "One 12-count carton of large eggs costs $1.49, meeting the exact quantity and $5 budget."
+          }
+        ]
+      },
+      "data_source": "live",
+      "selection_mode": "recommend",
+      "schema_version": 2,
+      "location": {
+        "location_id": "02100946",
+        "name": "Kroger - Mt Zion",
+        "chain": "KROGER",
+        "address": {
+          "addressLine1": "1818 Airport Plz",
+          "city": "Decatur",
+          "state": "IL",
+          "zipCode": "62521",
+          "county": "MACON COUNTY"
+        }
+      },
+      "cart_mode": "local simulation only",
+      "cart": {
+        "items": [],
+        "total_cents": 0
+      },
+      "requirement_states": [
+        {
+          "requirement_id": "r1",
+          "status": "selected",
+          "selected_product_id": "0001111060903",
+          "quantity": 1,
+          "measure": "count",
+          "target_min": 12,
+          "target_max": 12,
+          "phase": "primary",
+          "active_requirement": {
+            "id": "r1",
+            "description": "large chicken eggs",
+            "search_query": "large chicken eggs",
+            "measure": "count",
+            "min": 12,
+            "max": 12,
+            "required_tags": [],
+            "product_ids": [],
+            "brand": null,
+            "primary": {
+              "description": "large chicken eggs",
+              "search_query": "large chicken eggs",
+              "brand": null,
+              "product_ids": [],
+              "evidence": [
+                {
+                  "source": "instruction",
+                  "quote": "large chicken eggs"
+                }
+              ],
+              "binding": "open"
+            },
+            "fallback": null,
+            "constraints": [],
+            "quantity_request": {
+              "kind": "contents",
+              "min": 12,
+              "max": 12,
+              "unit": "eggs",
+              "expression": "exactly 12 large chicken eggs in total",
+              "evidence": [
+                {
+                  "source": "instruction",
+                  "quote": "exactly 12 large chicken eggs in total"
+                }
+              ]
+            },
+            "phase": "primary",
+            "historical_primary": {
+              "description": "large chicken eggs",
+              "search_query": "large chicken eggs",
+              "brand": null,
+              "product_ids": [],
+              "evidence": [
+                {
+                  "source": "instruction",
+                  "quote": "large chicken eggs"
+                }
+              ],
+              "binding": "open"
+            },
+            "matching_instruction": "Match CURRENT active description; historical primary is not a fallback name restriction."
+          },
+          "selection_revision": 1,
+          "quantity_interpretation": {
+            "status": "proposal",
+            "purchase_packages": 1,
+            "explanation": "One 12-count package of Kroger Grade A Large White Eggs contains exactly 12 eggs and costs $1.49, under the $5 limit.",
+            "question": null,
+            "evidence": [
+              {
+                "field": "raw_size",
+                "quote": "12 ct"
+              }
+            ],
+            "reason_code": null,
+            "proposed_purchase_packages": null,
+            "normalized_contents": {
+              "amount": 12,
+              "unit": "ct"
+            },
+            "product_id": "0001111060903",
+            "selection_revision": 1,
+            "facts_fingerprint": "b22aaef3f746381e67f992aa0daec96285c7e1c44a5a5a13c93e41319512e2ad"
+          }
+        }
+      ],
+      "discovery": [
+        {
+          "requirement_id": "r1",
+          "reason": "reviewed",
+          "search_attempts": [
+            {
+              "query": "large chicken eggs",
+              "retry": 0,
+              "ok": true,
+              "count": 0,
+              "message": "0 live Kroger results",
+              "phase": "primary"
+            },
+            {
+              "query": "large eggs",
+              "retry": 0,
+              "ok": true,
+              "count": 20,
+              "message": "20 live Kroger results",
+              "eligible_count": 4,
+              "phase": "primary"
+            }
+          ],
+          "reviews": [
+            {
+              "product_id": "0001111060903",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060933",
+              "verdict": "related",
+              "reason": "Large eggs match; package count and stock are checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514150349",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514111357",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060904",
+              "verdict": "unrelated",
+              "reason": "Extra large eggs differ from the requested large size.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Extra Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060914",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111060906",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111079772",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111079770",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514172928",
+              "verdict": "unrelated",
+              "reason": "Extra large eggs differ from the requested large size.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Extra Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0081565200214",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0085138700741",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514151464",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0086174500001",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0086231500024",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Eggs Large"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111089310",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111016520",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0071514111657",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0088742200008",
+              "verdict": "related",
+              "reason": "Large eggs match the requested product.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ]
+            },
+            {
+              "product_id": "0001111015097",
+              "verdict": "related",
+              "reason": "Large eggs match; package count is checked separately.",
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ]
+            }
+          ],
+          "errors": [],
+          "filters": [
+            {
+              "phase": "primary",
+              "observed_at": 1795830589.4063969,
+              "rejected": [
+                {
+                  "product_id": "0001111060933",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0071514150349",
+                  "code": "out_of_stock_or_invalid_price"
+                },
+                {
+                  "product_id": "0071514111357",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111060914",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111079772",
+                  "code": "out_of_stock_or_invalid_price"
+                },
+                {
+                  "product_id": "0081565200214",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0085138700741",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0086174500001",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0086231500024",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111089310",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111016520",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0071514111657",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0088742200008",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0001111015097",
+                  "code": "quantity_incompatible"
+                }
+              ],
+              "accepted": [
+                "0001111060903",
+                "0001111060906",
+                "0001111079770",
+                "0071514151464"
+              ]
+            },
+            {
+              "phase": "primary",
+              "observed_at": 1795830589.407757,
+              "rejected": [
+                {
+                  "product_id": "0001111060933",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0071514150349",
+                  "code": "out_of_stock_or_invalid_price"
+                },
+                {
+                  "product_id": "0071514111357",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111060914",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111079772",
+                  "code": "out_of_stock_or_invalid_price"
+                },
+                {
+                  "product_id": "0081565200214",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0085138700741",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0086174500001",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0086231500024",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111089310",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0001111016520",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0071514111657",
+                  "code": "quantity_incompatible"
+                },
+                {
+                  "product_id": "0088742200008",
+                  "code": "line_over_budget"
+                },
+                {
+                  "product_id": "0001111015097",
+                  "code": "quantity_incompatible"
+                }
+              ],
+              "accepted": [
+                "0001111060903",
+                "0001111060906",
+                "0001111079770",
+                "0071514151464"
+              ]
+            },
+            {
+              "phase": "primary",
+              "observed_at": 1795830589.407758,
+              "rejected": [],
+              "accepted": []
+            }
+          ],
+          "availability_observations": {
+            "0001111060903": {
+              "in_stock": true,
+              "observed_at": 1795830589.4071062,
+              "source": "product_tool"
+            },
+            "0001111060933": {
+              "in_stock": false,
+              "observed_at": 1795830589.407146,
+              "source": "product_tool"
+            },
+            "0071514150349": {
+              "in_stock": false,
+              "observed_at": 1795830589.4071832,
+              "source": "product_tool"
+            },
+            "0071514111357": {
+              "in_stock": false,
+              "observed_at": 1795830589.40722,
+              "source": "product_tool"
+            },
+            "0001111060914": {
+              "in_stock": false,
+              "observed_at": 1795830589.407257,
+              "source": "product_tool"
+            },
+            "0001111060906": {
+              "in_stock": true,
+              "observed_at": 1795830589.407295,
+              "source": "product_tool"
+            },
+            "0001111079772": {
+              "in_stock": false,
+              "observed_at": 1795830589.4073322,
+              "source": "product_tool"
+            },
+            "0001111079770": {
+              "in_stock": true,
+              "observed_at": 1795830589.40737,
+              "source": "product_tool"
+            },
+            "0081565200214": {
+              "in_stock": true,
+              "observed_at": 1795830589.4074152,
+              "source": "product_tool"
+            },
+            "0085138700741": {
+              "in_stock": true,
+              "observed_at": 1795830589.4074528,
+              "source": "product_tool"
+            },
+            "0071514151464": {
+              "in_stock": true,
+              "observed_at": 1795830589.40749,
+              "source": "product_tool"
+            },
+            "0086174500001": {
+              "in_stock": true,
+              "observed_at": 1795830589.4075341,
+              "source": "product_tool"
+            },
+            "0086231500024": {
+              "in_stock": false,
+              "observed_at": 1795830589.4075708,
+              "source": "product_tool"
+            },
+            "0001111089310": {
+              "in_stock": false,
+              "observed_at": 1795830589.407608,
+              "source": "product_tool"
+            },
+            "0001111016520": {
+              "in_stock": true,
+              "observed_at": 1795830589.4076438,
+              "source": "product_tool"
+            },
+            "0071514111657": {
+              "in_stock": false,
+              "observed_at": 1795830589.407681,
+              "source": "product_tool"
+            },
+            "0088742200008": {
+              "in_stock": true,
+              "observed_at": 1795830589.407718,
+              "source": "product_tool"
+            },
+            "0001111015097": {
+              "in_stock": true,
+              "observed_at": 1795830589.407755,
+              "source": "product_tool"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "status": "complete",
+      "cart": {
+        "items": [
+          {
+            "id": "0001111060903",
+            "name": "Kroger\u00ae Grade A Large White Eggs",
+            "brand": "Kroger",
+            "category": "dairy",
+            "size": 12,
+            "unit": "ct",
+            "price_cents": 149,
+            "in_stock": true,
+            "upc": "0001111060903",
+            "raw_size": "12 ct",
+            "source": "kroger_live",
+            "stock_level": "HIGH",
+            "availability": {
+              "curbside": true,
+              "delivery": true,
+              "inStore": true,
+              "shipToHome": false
+            },
+            "quantity": 1,
+            "line_total_cents": 149
+          }
+        ],
+        "total_cents": 149
+      },
+      "total_cents": 149,
+      "verification": {
+        "ok": true,
+        "violations": [],
+        "total_cents": 149,
+        "expected_cart": {
+          "0001111060903": 1
+        }
+      },
+      "data_source": "live",
+      "selection_mode": "recommend",
+      "schema_version": 2,
+      "location": {
+        "location_id": "02100946",
+        "name": "Kroger - Mt Zion",
+        "chain": "KROGER",
+        "address": {
+          "addressLine1": "1818 Airport Plz",
+          "city": "Decatur",
+          "state": "IL",
+          "zipCode": "62521",
+          "county": "MACON COUNTY"
+        }
+      },
+      "cart_mode": "local simulation only",
+      "requirement_states": [
+        {
+          "requirement_id": "r1",
+          "status": "added",
+          "selected_product_id": "0001111060903",
+          "quantity": 1,
+          "measure": "count",
+          "target_min": 12,
+          "target_max": 12,
+          "phase": "primary",
+          "active_requirement": {
+            "brand": null,
+            "constraints": [],
+            "description": "large chicken eggs",
+            "fallback": null,
+            "id": "r1",
+            "max": 12,
+            "measure": "count",
+            "min": 12,
+            "primary": {
+              "binding": "open",
+              "brand": null,
+              "description": "large chicken eggs",
+              "evidence": [
+                {
+                  "quote": "large chicken eggs",
+                  "source": "instruction"
+                }
+              ],
+              "product_ids": [],
+              "search_query": "large chicken eggs"
+            },
+            "product_ids": [],
+            "quantity_request": {
+              "evidence": [
+                {
+                  "quote": "exactly 12 large chicken eggs in total",
+                  "source": "instruction"
+                }
+              ],
+              "expression": "exactly 12 large chicken eggs in total",
+              "kind": "contents",
+              "max": 12,
+              "min": 12,
+              "unit": "eggs"
+            },
+            "required_tags": [],
+            "search_query": "large chicken eggs",
+            "phase": "primary",
+            "historical_primary": {
+              "binding": "open",
+              "brand": null,
+              "description": "large chicken eggs",
+              "evidence": [
+                {
+                  "quote": "large chicken eggs",
+                  "source": "instruction"
+                }
+              ],
+              "product_ids": [],
+              "search_query": "large chicken eggs"
+            },
+            "matching_instruction": "Match CURRENT active description; historical primary is not a fallback name restriction."
+          },
+          "selection_revision": 1,
+          "quantity_interpretation": {
+            "evidence": [
+              {
+                "field": "raw_size",
+                "quote": "12 ct"
+              }
+            ],
+            "explanation": "One 12-count package of Kroger Grade A Large White Eggs contains exactly 12 eggs and costs $1.49, under the $5 limit.",
+            "facts_fingerprint": "b22aaef3f746381e67f992aa0daec96285c7e1c44a5a5a13c93e41319512e2ad",
+            "normalized_contents": {
+              "amount": 12,
+              "unit": "ct"
+            },
+            "product_id": "0001111060903",
+            "proposed_purchase_packages": null,
+            "purchase_packages": 1,
+            "question": null,
+            "reason_code": null,
+            "selection_revision": 1,
+            "status": "proposal"
+          }
+        }
+      ],
+      "discovery": [
+        {
+          "requirement_id": "r1",
+          "reason": "reviewed",
+          "search_attempts": [
+            {
+              "count": 0,
+              "message": "0 live Kroger results",
+              "ok": true,
+              "phase": "primary",
+              "query": "large chicken eggs",
+              "retry": 0
+            },
+            {
+              "count": 20,
+              "eligible_count": 4,
+              "message": "20 live Kroger results",
+              "ok": true,
+              "phase": "primary",
+              "query": "large eggs",
+              "retry": 0
+            }
+          ],
+          "reviews": [
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ],
+              "product_id": "0001111060903",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ],
+              "product_id": "0001111060933",
+              "reason": "Large eggs match; package count and stock are checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ],
+              "product_id": "0071514150349",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ],
+              "product_id": "0071514111357",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Extra Large White Eggs"
+                }
+              ],
+              "product_id": "0001111060904",
+              "reason": "Extra large eggs differ from the requested large size.",
+              "verdict": "unrelated"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ],
+              "product_id": "0001111060914",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ],
+              "product_id": "0001111060906",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Eggs"
+                }
+              ],
+              "product_id": "0001111079772",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ],
+              "product_id": "0001111079770",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Extra Large White Eggs"
+                }
+              ],
+              "product_id": "0071514172928",
+              "reason": "Extra large eggs differ from the requested large size.",
+              "verdict": "unrelated"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Eggs"
+                }
+              ],
+              "product_id": "0081565200214",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Eggs"
+                }
+              ],
+              "product_id": "0085138700741",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ],
+              "product_id": "0071514151464",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ],
+              "product_id": "0086174500001",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Eggs Large"
+                }
+              ],
+              "product_id": "0086231500024",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ],
+              "product_id": "0001111089310",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ],
+              "product_id": "0001111016520",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large White Eggs"
+                }
+              ],
+              "product_id": "0071514111657",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ],
+              "product_id": "0088742200008",
+              "reason": "Large eggs match the requested product.",
+              "verdict": "related"
+            },
+            {
+              "evidence": [
+                {
+                  "field": "name",
+                  "quote": "Large Brown Eggs"
+                }
+              ],
+              "product_id": "0001111015097",
+              "reason": "Large eggs match; package count is checked separately.",
+              "verdict": "related"
+            }
+          ],
+          "errors": [],
+          "filters": [
+            {
+              "accepted": [
+                "0001111060903",
+                "0001111060906",
+                "0001111079770",
+                "0071514151464"
+              ],
+              "observed_at": 1795830589.4063969,
+              "phase": "primary",
+              "rejected": [
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111060933"
+                },
+                {
+                  "code": "out_of_stock_or_invalid_price",
+                  "product_id": "0071514150349"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0071514111357"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111060914"
+                },
+                {
+                  "code": "out_of_stock_or_invalid_price",
+                  "product_id": "0001111079772"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0081565200214"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0085138700741"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0086174500001"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0086231500024"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111089310"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0001111016520"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0071514111657"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0088742200008"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111015097"
+                }
+              ]
+            },
+            {
+              "accepted": [
+                "0001111060903",
+                "0001111060906",
+                "0001111079770",
+                "0071514151464"
+              ],
+              "observed_at": 1795830589.407757,
+              "phase": "primary",
+              "rejected": [
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111060933"
+                },
+                {
+                  "code": "out_of_stock_or_invalid_price",
+                  "product_id": "0071514150349"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0071514111357"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111060914"
+                },
+                {
+                  "code": "out_of_stock_or_invalid_price",
+                  "product_id": "0001111079772"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0081565200214"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0085138700741"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0086174500001"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0086231500024"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111089310"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0001111016520"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0071514111657"
+                },
+                {
+                  "code": "line_over_budget",
+                  "product_id": "0088742200008"
+                },
+                {
+                  "code": "quantity_incompatible",
+                  "product_id": "0001111015097"
+                }
+              ]
+            },
+            {
+              "accepted": [],
+              "observed_at": 1795830589.407758,
+              "phase": "primary",
+              "rejected": []
+            }
+          ],
+          "availability_observations": {
+            "0001111015097": {
+              "in_stock": true,
+              "observed_at": 1795830589.407755,
+              "source": "product_tool"
+            },
+            "0001111016520": {
+              "in_stock": true,
+              "observed_at": 1795830589.4076438,
+              "source": "product_tool"
+            },
+            "0001111060903": {
+              "in_stock": true,
+              "observed_at": 1795830589.4071062,
+              "source": "product_tool"
+            },
+            "0001111060906": {
+              "in_stock": true,
+              "observed_at": 1795830589.407295,
+              "source": "product_tool"
+            },
+            "0001111060914": {
+              "in_stock": false,
+              "observed_at": 1795830589.407257,
+              "source": "product_tool"
+            },
+            "0001111060933": {
+              "in_stock": false,
+              "observed_at": 1795830589.407146,
+              "source": "product_tool"
+            },
+            "0001111079770": {
+              "in_stock": true,
+              "observed_at": 1795830589.40737,
+              "source": "product_tool"
+            },
+            "0001111079772": {
+              "in_stock": false,
+              "observed_at": 1795830589.4073322,
+              "source": "product_tool"
+            },
+            "0001111089310": {
+              "in_stock": false,
+              "observed_at": 1795830589.407608,
+              "source": "product_tool"
+            },
+            "0071514111357": {
+              "in_stock": false,
+              "observed_at": 1795830589.40722,
+              "source": "product_tool"
+            },
+            "0071514111657": {
+              "in_stock": false,
+              "observed_at": 1795830589.407681,
+              "source": "product_tool"
+            },
+            "0071514150349": {
+              "in_stock": false,
+              "observed_at": 1795830589.4071832,
+              "source": "product_tool"
+            },
+            "0071514151464": {
+              "in_stock": true,
+              "observed_at": 1795830589.40749,
+              "source": "product_tool"
+            },
+            "0081565200214": {
+              "in_stock": true,
+              "observed_at": 1795830589.4074152,
+              "source": "product_tool"
+            },
+            "0085138700741": {
+              "in_stock": true,
+              "observed_at": 1795830589.4074528,
+              "source": "product_tool"
+            },
+            "0086174500001": {
+              "in_stock": true,
+              "observed_at": 1795830589.4075341,
+              "source": "product_tool"
+            },
+            "0086231500024": {
+              "in_stock": false,
+              "observed_at": 1795830589.4075708,
+              "source": "product_tool"
+            },
+            "0088742200008": {
+              "in_stock": true,
+              "observed_at": 1795830589.407718,
+              "source": "product_tool"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

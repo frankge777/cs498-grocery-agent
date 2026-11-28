@@ -341,6 +341,16 @@ To evaluate the newer resumable workflow, use the separate `interactive` name:
 
 For the model-recommended basket workflow (separate result label):
 
+To use a GPT model through an already authenticated local Codex CLI, add
+`--provider codex --model gpt-6-sol`; no OpenAI API key is required for this
+local CLI path. See [GPT experiment commands and protocol limits](docs/gpt-experiments.md).
+This adapter supports the JSON-only recommended/interactive workflows;
+native function-calling baselines and the HTTP server default are unchanged.
+The [actual GPT follow-up run](outputs/gpt_codex_experiments_20261127.md) completed
+the live Kroger/local-cart demo; the four dialogue cases scored 1/4, with three
+paused for missing bag-packaging evidence. This is separate from the DeepSeek
+60/60 main run; the full main set has not been rerun with GPT.
+
 ```bash
 .venv/bin/python scripts/run_llm_experiments.py --dataset kroger \
   --agents recommended --runs 1 --workers 3 --temperature 0 \
@@ -366,8 +376,8 @@ conflicts pause through resumable API responses. See [runtime and API](docs/shop
 and [v2 repair measurements](outputs/shopping_repair_v2_20261127.md).
 The latest v2 check passed 180 offline tests and 60/60 frozen Kroger episodes
 (one run, with simulated shopper answers). The live Kroger backend read check
-passed; four dialogue cases and the full live-model check remain unverified
-because DeepSeek returned insufficient balance after the main run.
+passed; the DeepSeek follow-up dialogue/live-model checks were blocked by
+insufficient balance after the main run. The separate GPT follow-up is linked above.
 The [previous version report](outputs/recommended_workflow_20261127.md) preserves
 the historical 53/60 result. These are single-run development results, not a
 held-out architecture comparison; actual-account Kroger cart writes are not implemented.
