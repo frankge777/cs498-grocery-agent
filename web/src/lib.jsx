@@ -29,8 +29,9 @@ export async function api(path, body) {
 }
 
 /** POST to an NDJSON endpoint; calls onEvent for each progress line, resolves with the result. */
-export async function streamApi(path, body, onEvent) {
+export async function streamApi(path, body, onEvent, signal) {
   const res = await fetch(path, {
+    signal,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

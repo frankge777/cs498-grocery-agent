@@ -40,7 +40,7 @@ export default function App() {
   const [loc, setLoc] = useState(null);
   const [locBusy, setLocBusy] = useState(false);
   const [locError, setLocError] = useState("");
-  const [req, setReq] = useState({ text: EXAMPLES[0], people: 4, budget: "15", diets: [] });
+  const [req, setReq] = useState({ text: EXAMPLES[0], people: null, budget: "", diets: [] });
   const [rounds, setRounds] = useState([]);
   const [live, setLive] = useState([]);
   const [busy, setBusy] = useState(null);
@@ -49,6 +49,8 @@ export default function App() {
   const [pd, setPd] = useState(null);
   const [elapsed, setElapsed] = useState(0);
   const tokenRef = useRef(null);
+  const runRef = useRef({ id: 0, abort: null });
+  const stepRef = useRef(0);
   const elapsedBase = useRef(0);
 
   useEffect(() => {
@@ -56,12 +58,14 @@ export default function App() {
   }, []);
   useEffect(() => {
     if (!busy) return undefined;
+    if (busy.fresh) elapsedBase.current = 0; // runs after the cancelled run's cleanup
     const t0 = Date.now();
     const t = setInterval(() => setElapsed(elapsedBase.current + (Date.now() - t0) / 1000), 250);
     return () => { clearInterval(t); elapsedBase.current += (Date.now() - t0) / 1000; };
   }, [busy]);
 
   const go = useCallback((i) => {
+    stepRef.current = i;
     setStep(i);
     setMaxStep((m) => Math.max(m, i));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -69,8 +73,10 @@ export default function App() {
 
   const store = storeView(loc, locSource === "live");
 
+  useEffect(() => { findStores(); }, []); // show the default ZIP's store right away
+
   async function findStores(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setLocBusy(true); setLocError("");
     try {
       const r = await api(`/api/locations?zip_code=${encodeURIComponent(zip)}`);
@@ -81,31 +87,43 @@ export default function App() {
   }
 
   async function runStep(path, body, action, actionNote) {
-    setBusy({ action }); setLive([]); setRunError("");
+    // One run at a time: a newer start/resume cancels the older stream and its results are ignored.
+    if (runRef.current.abort) runRef.current.abort.abort();
+    const id = runRef.current.id + 1;
+    const abort = new AbortController();
+    runRef.current = { id, abort };
+    const stale = () => runRef.current.id !== id;
+    setBusy({ action, fresh: !action }); setLive([]); setRunError("");
     let collected = [];
+    // Only move the user along if they are still watching the run (not off editing step 1/2).
+    const follow = () => stepRef.current >= 2;
     try {
-      const resp = await streamApi(path, body, (ev) => { collected = foldLive(collected, ev); setLive(collected); });
+      const resp = await streamApi(path, body, (ev) => { if (stale()) return; collected = foldLive(collected, ev); setLive(collected); }, abort.signal);
+      if (stale()) return;
       tokenRef.current = resp.session_token || null;
       setProducts((p) => ({ ...p, ...(resp.products || {}) }));
       setRounds((rs) => [...rs, { resp, live: collected, action, actionNote }]);
-      if (resp.status === "complete") go(4);
-      else if (resp.status === "awaiting_basket_confirmation" && step === 3) go(3);
-      else if (resp.status !== "awaiting_basket_confirmation") go(2);
+      if (follow()) {
+        if (resp.status === "complete") go(4);
+        else if (resp.status !== "awaiting_basket_confirmation") go(2);
+        else if (stepRef.current !== 3) go(2);
+      }
     } catch (err) {
+      if (stale() || err.name === "AbortError") return;
       setRunError(err.message);
-      if (step !== 2) go(2);
+      if (follow()) go(2);
     } finally {
-      setBusy(null); setLive([]);
+      if (!stale()) { setBusy(null); setLive([]); runRef.current.abort = null; }
     }
   }
 
   function start() {
-    setRounds([]); setProducts({}); tokenRef.current = null; elapsedBase.current = 0; setElapsed(0);
+    setRounds([]); setProducts({}); tokenRef.current = null; setElapsed(0);
     go(2);
     runStep("/api/agent/interactive/stream/start", {
       instruction: composeInstruction(req), source: "auto",
       zip_code: zip, location_id: loc?.location_id || null,
-      context: { household_size: req.people, dietary_needs: req.diets },
+      context: { ...(req.people ? { household_size: req.people } : {}), ...(req.diets.length ? { dietary_needs: req.diets } : {}) },
     }, null);
   }
 
@@ -115,7 +133,9 @@ export default function App() {
   const draftResp = last?.status === "awaiting_basket_confirmation" ? last : null;
   const prevDraft = rounds.slice(0, -1).map((r) => r.resp).filter((r) => r.status === "awaiting_basket_confirmation").pop()?.recommendation;
   const complete = last?.status === "complete";
-  const can = (i) => !busy || i === step || (i === 2);
+  const stuck = last && last.requirement_ids && !["complete", "awaiting_basket_confirmation"].includes(last.status)
+    ? last.requirement_ids.map((rid) => (last.requirement_states || []).find((st) => st.requirement_id === rid)?.active_requirement?.description || rid)
+    : [];
   const reachable = [true, !!loc, rounds.length > 0 || !!busy, !!draftResp, complete];
 
   const ready = health && health.deepseek_configured && health.session_configured;
@@ -138,7 +158,7 @@ export default function App() {
             {STEPS.map((s, i) => {
               const done = i < step && reachable[i];
               return (
-                <button key={s} className={`step ${i === step ? "on" : done ? "done" : ""}`} disabled={!reachable[i] || !can(i)}
+                <button key={s} className={`step ${i === step ? "on" : done ? "done" : ""}`} disabled={!reachable[i]}
                   aria-current={i === step ? "step" : undefined} onClick={() => go(i)}>
                   <b>{done ? <span style={{ width: 12, height: 12, display: "grid" }}>{Icon.check}</span> : i + 1}</b><span>{s}</span>
                 </button>
@@ -163,8 +183,9 @@ export default function App() {
                       <button className="btn" disabled={locBusy}>{locBusy ? "Finding…" : "Find stores"}</button>
                     </div>
                   </label>
-                  <div className="source"><span className="dot" />Kroger Locations API · <code>GET /v1/locations?filter.zipCode.near={zip}</code></div>
-                  {health && !sourceLive && <div className="note">Snapshot mode: the store list is the one store captured in the snapshot.</div>}
+                  {sourceLive
+                    ? <div className="source"><span className="dot" />Kroger Locations API · <code>GET /v1/locations?filter.zipCode.near={zip}</code></div>
+                    : health && <div className="note">Snapshot mode: no Kroger API call is made and the ZIP code is ignored. The only store available is the one captured on Nov 16 (Kroger – Mt Zion, Decatur, IL). Add Kroger API keys on the server to search real stores near any ZIP.</div>}
                 </form>
                 <div className="stack">
                   {locError && <div className="err">{locError}</div>}
@@ -208,14 +229,14 @@ export default function App() {
                 </div>
                 <div className="card stack">
                   <div className="row2">
-                    <div className="field">People
+                    <div className="field">People (optional)
                       <div className="stepper">
-                        <button type="button" aria-label="Fewer people" onClick={() => setReq({ ...req, people: Math.max(1, req.people - 1) })}>−</button>
-                        <output className="num">{req.people}</output>
-                        <button type="button" aria-label="More people" onClick={() => setReq({ ...req, people: Math.min(20, req.people + 1) })}>+</button>
+                        <button type="button" aria-label="Fewer people" onClick={() => setReq({ ...req, people: req.people && req.people > 1 ? req.people - 1 : null })}>−</button>
+                        <output className="num">{req.people || "—"}</output>
+                        <button type="button" aria-label="More people" onClick={() => setReq({ ...req, people: Math.min(20, (req.people || 0) + 1) })}>+</button>
                       </div>
                     </div>
-                    <label className="field" htmlFor="budget">Budget ($)
+                    <label className="field" htmlFor="budget">Budget ($, optional)
                       <input className="input num" id="budget" type="number" min="1" step="1" placeholder="none" value={req.budget} onChange={(e) => setReq({ ...req, budget: e.target.value })} />
                     </label>
                   </div>
@@ -228,7 +249,11 @@ export default function App() {
                   </div>
                   <div className="note"><b>Sent to the agent:</b> {composeInstruction(req)}</div>
                   {health && !ready && <div className="err">{!health.deepseek_configured ? "DEEPSEEK_API_KEY is not set on the server." : "GROCERY_SESSION_SECRET is not set on the server."}</div>}
-                  <button className="btn" disabled={!req.text.trim() || !ready || !!busy} onClick={start}>Start shopping</button>
+                  {stuck.length > 0 && !busy && (
+                    <div className="note"><b>Last run got stuck on:</b> {stuck.join(", ")}. Change or remove {stuck.length === 1 ? "that item" : "those items"} (or a dietary tag) and shop again.</div>
+                  )}
+                  {(rounds.length > 0 || busy) && <div className="muted small">{busy ? "A run is in progress. Starting again cancels it." : "Starting again replaces your current basket."} You can also go back to it with the arrows below.</div>}
+                  <button className="btn" disabled={!req.text.trim() || !ready} onClick={start}>{rounds.length > 0 || busy ? "Shop again with this request" : "Start shopping"}</button>
                 </div>
               </div>
             </>
@@ -246,6 +271,14 @@ export default function App() {
           )}
           {step === 4 && complete && <Checkout rounds={rounds} store={store} onOpen={setPd} onRestart={() => go(1)} />}
         </section>
+        <nav className="pager" aria-label="Step navigation">
+          {step > 0 ? (
+            <button className="btn ghost" onClick={() => go(step - 1)}>← {STEPS[step - 1]}</button>
+          ) : <span />}
+          {step < STEPS.length - 1 && reachable[step + 1] ? (
+            <button className="btn ghost" onClick={() => go(step + 1)}>{STEPS[step + 1]} →</button>
+          ) : <span />}
+        </nav>
       </main>
 
       <footer>

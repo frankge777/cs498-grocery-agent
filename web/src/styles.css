@@ -320,3 +320,5 @@ button.thumb:hover { transform: scale(1.08); }
 code.cmd { display: block; font-family: var(--f-mono); font-size: 12px; background: var(--sunk); padding: 8px 10px; border-radius: 8px; overflow-x: auto; white-space: nowrap; }
 .banner { font-size: 12px; text-align: center; padding: 6px 16px; background: var(--citrus-soft); color: var(--ink); }
 .banner.live { background: var(--leaf-soft); }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--line); }

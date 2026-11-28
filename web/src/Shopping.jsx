@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Icon, Pill, Thumb, money, tagLabel } from "./lib.jsx";
 
 export const QUESTION_STATUSES = new Set([
@@ -21,8 +21,18 @@ const FILTER_TEXT = {
   over_budget: () => "over budget",
   brand_mismatch: () => "different brand",
   quantity_unmet: () => "package size cannot meet the quantity",
+  quantity_incompatible: () => "its package size can't add up to the amount you asked for",
 };
 const filterText = (r) => (FILTER_TEXT[r.code] ? FILTER_TEXT[r.code](r) : String(r.code || "rejected").replace(/_/g, " "));
+
+const REASON_TEXT = {
+  semantic_mismatch: "nothing the store search returned is this item",
+  hard_constraints: "matching products exist, but none meets every requirement (declared tags, stock, size or budget)",
+  no_results: "the store search returned nothing",
+  empty_search: "this store has nothing under that name",
+  review_error: "the AI's product review came back invalid twice, so the program refused to use it",
+  search_error: "the store search failed",
+};
 
 const STATUS_TEXT = {
   no_candidates: "No product passed every check",
@@ -42,6 +52,13 @@ const STATUS_TEXT = {
 };
 
 /* --------------------------------------------------------------- helpers */
+export function constraintText(c) {
+  if (c.kind === "tag") return `must be declared ${tagLabel(c.value)}`;
+  if (c.kind === "description") return `“${c.value}”`;
+  const v = typeof c.value === "object" ? JSON.stringify(c.value) : c.value;
+  return v == null ? String(c.kind).replace(/_/g, " ") : `${String(c.kind).replace(/_/g, " ")}: ${v}`;
+}
+
 export function reqLabel(resp, rid) {
   const st = (resp?.requirement_states || []).find((s) => s.requirement_id === rid);
   return st?.active_requirement?.description || rid;
@@ -119,13 +136,13 @@ function Reviews({ resp, prev, products, onOpen }) {
             const why = r.verdict !== "related" ? r.reason : rej && rej.code !== "accepted" ? filterText(rej) : r.reason;
             return (
               <div key={r.product_id} className={`cand ${pick ? "pick" : ""} ${r.verdict !== "related" || (rej && rej.code !== "accepted") ? "oos" : ""}`}
-                onClick={() => onOpen(r.product_id)} role="button" tabIndex={0}>
+                onClick={() => onOpen(r.product_id)} onKeyDown={(e) => e.key === "Enter" && onOpen(r.product_id)} role="button" tabIndex={0}>
                 <Thumb id={r.product_id} name={p.name} onOpen={onOpen} />
                 <div style={{ minWidth: 0 }}>
                   <div className="nm">{p.name || r.product_id}{p.raw_size ? ` · ${p.raw_size}` : ""}</div>
                   <div className="why">{pick ? "Chosen · " : ""}{why}</div>
                 </div>
-                <b className="num">{money(p.price_cents)}</b>
+                <b className="num">{p.price_cents ? money(p.price_cents) : <span className="muted small">no price</span>}</b>
               </div>
             );
           })}
@@ -162,12 +179,22 @@ function StatusEv({ resp, current, busy, onAnswer, onGo, onRestart, products, on
       </Ev>
     );
   }
-  const reasons = resp.reasons ? Object.entries(resp.reasons).map(([rid, why]) => `${reqLabel(resp, rid)}: ${String(why).replace(/_/g, " ")}`) : [];
+  const reasons = resp.reasons ? Object.entries(resp.reasons).map(([rid, why]) => `${reqLabel(resp, rid)}: ${REASON_TEXT[why] || String(why).replace(/_/g, " ")}`) : [];
   const ids = resp.requirement_ids || [];
   return (
     <Ev type="fix" title={STATUS_TEXT[s] || s.replace(/_/g, " ")} note={resp.error || resp.message}>
-      {reasons.length > 0 && <ul className="violations">{reasons.map((r) => <li key={r}><Pill kind="bad">stop</Pill><span>{r}</span></li>)}</ul>}
-      {resp.status === "no_candidates" && <FilterSummary resp={resp} />}
+      {reasons.length > 0 && <ul className="violations">{reasons.map((r) => <li key={r}><Pill kind="bad">stuck</Pill><span>{r}</span></li>)}</ul>}
+      {ids.length > 0 && (resp.requirement_states || []).some((st) => !ids.includes(st.requirement_id)) && (
+        <ul className="violations">{(resp.requirement_states || []).filter((st) => !ids.includes(st.requirement_id)).map((st) => (
+          <li key={st.requirement_id}><Pill kind="ok">found</Pill><span>{reqLabel(resp, st.requirement_id)}</span></li>))}</ul>
+      )}
+      {["no_candidates", "review_error", "search_error"].includes(resp.status) && <FilterSummary resp={resp} />}
+      {resp.status === "review_error" && current && (
+        <div className="note" style={{ marginTop: 8 }}>This is a model output failure, not missing products. Running the same request again usually gets past it.</div>
+      )}
+      {resp.status === "no_candidates" && (
+        <div className="note" style={{ marginTop: 8 }}>The agent stops rather than buy something that breaks your request. Loosen that item (for example drop a dietary tag for it, or name a different product) and shop again.</div>
+      )}
       {current && (
         <div className="row-actions" style={{ marginTop: 10 }}>
           {REOPENABLE.has(s) && ids.length > 0 && s !== "no_candidates" && (
@@ -189,6 +216,7 @@ function FilterSummary({ resp }) {
       counts[k] = (counts[k] || 0) + 1;
     }
     for (const [k, n] of Object.entries(counts)) lines.push(`${reqLabel(resp, d.requirement_id)}: ${n} × ${k}`);
+    for (const e of d.errors || []) lines.push(`${reqLabel(resp, d.requirement_id)} · ${String(e.stage || "error").replace(/_/g, " ")}: ${String(e.message || e.error || JSON.stringify(e)).slice(0, 220)}`);
   }
   if (!lines.length) return null;
   return <div className="note" style={{ marginTop: 8 }}>{lines.map((l) => <div key={l}>{l}</div>)}</div>;
@@ -198,14 +226,21 @@ function FilterSummary({ resp }) {
 function Question({ resp, busy, onAnswer, products, onOpen }) {
   const s = resp.status;
   const qs = resp.questions || [];
-  const [vals, setVals] = useState({});
-  useEffect(() => setVals({}), [resp]);
+  const defaults = () => Object.fromEntries(qs.filter((q) => q.kind === "quantity").map((q) => [q.question_id, "1"]));
+  const [vals, setVals] = useState(defaults);
+  const box = useRef(null);
+  useEffect(() => {
+    setVals(defaults());
+    // Bring the question into view: it is usually far below the feed.
+    const t = setTimeout(() => box.current && box.current.scrollIntoView({ behavior: "smooth", block: "center" }), 150);
+    return () => clearTimeout(t);
+  }, [resp]); // eslint-disable-line react-hooks/exhaustive-deps
   const set = (k, v) => setVals((o) => ({ ...o, [k]: v }));
 
   if (s === "needs_clarification") {
     const ready = qs.every((q) => (q.kind === "quantity" ? Number(vals[q.question_id]) >= 1 : (vals[q.question_id] || "").trim()));
     return (
-      <form className="qcard" onSubmit={(e) => {
+      <form ref={box} className="qcard" onSubmit={(e) => {
         e.preventDefault();
         onAnswer({ clarification_answers: { answers: qs.map((q) => q.kind === "quantity"
           ? { question_id: q.question_id, amount: parseInt(vals[q.question_id], 10) }
@@ -227,7 +262,7 @@ function Question({ resp, busy, onAnswer, products, onOpen }) {
   if (s === "waiting_for_user") {
     const ready = qs.every((q) => vals[q.decision_id]);
     return (
-      <div className="qcard">
+      <div ref={box} className="qcard">
         {qs.map((q) => (
           <div key={q.decision_id} className="stack" style={{ gap: 6 }}>
             <h4>{q.question || `Pick a product for “${reqLabel(resp, q.requirement_id)}”`}</h4>
@@ -248,7 +283,7 @@ function Question({ resp, busy, onAnswer, products, onOpen }) {
   if (s === "needs_candidate_review") {
     const ready = qs.every((q) => q.review_id in vals);
     return (
-      <div className="qcard">
+      <div ref={box} className="qcard">
         {qs.map((q) => (
           <div key={q.review_id} className="stack" style={{ gap: 6 }}>
             <h4>“{reqLabel(resp, q.requirement_id)}”: {q.question}</h4>
@@ -272,7 +307,7 @@ function Question({ resp, busy, onAnswer, products, onOpen }) {
   if (s === "needs_quantity_review") {
     const ready = qs.every((q) => vals[q.question_id] === "replace" || Number(vals[q.question_id]) >= 1);
     return (
-      <div className="qcard">
+      <div ref={box} className="qcard">
         {qs.map((q) => (
           <div key={q.question_id} className="stack" style={{ gap: 8 }}>
             <div className="opt" style={{ cursor: "default" }}>
@@ -298,7 +333,7 @@ function Question({ resp, busy, onAnswer, products, onOpen }) {
   if (s === "needs_substitution_permission") {
     const ready = qs.every((q) => vals[q.question_id] === "decline" || (vals[q.question_id] || "").trim());
     return (
-      <div className="qcard">
+      <div ref={box} className="qcard">
         {qs.map((q) => (
           <div key={q.question_id} className="stack" style={{ gap: 8 }}>
             <h4>“{q.primary?.description || reqLabel(resp, q.requirement_id)}” is out of stock. {q.question}</h4>
@@ -317,7 +352,7 @@ function Question({ resp, busy, onAnswer, products, onOpen }) {
     const states = (resp.requirement_states || []).filter((st) => st.selected_product_id);
     const picked = states.filter((st) => vals[st.requirement_id]).map((st) => st.requirement_id);
     return (
-      <div className="qcard bad">
+      <div ref={box} className="qcard bad">
         <h4>The cheapest valid basket is {money(resp.total_cents)}, over your {money(resp.budget_cents)} budget. Pick items to choose again:</h4>
         {states.map((st) => {
           const p = products[st.selected_product_id] || {};
@@ -410,7 +445,7 @@ export default function Shopping({ store, rounds, live, busy, error, products, o
                   <li key={s.requirement_id} className={`req ${met ? "met" : ""}`}>
                     <span className="box">{met ? Icon.check : ""}</span>
                     <span>{a.description || s.requirement_id}
-                      <small>{a.quantity_request?.expression || ""}{(a.constraints || []).filter((c) => c.kind === "tag").map((c) => ` · ${tagLabel(c.value)}`).join("")}</small>
+                      <small>{a.quantity_request?.expression || ""}{[...new Set((a.constraints || []).filter((c) => c.kind === "tag").map((c) => tagLabel(c.value)))].map((t) => ` · ${t}`).join("")}</small>
                     </span>
                   </li>
                 );
@@ -428,7 +463,7 @@ export default function Shopping({ store, rounds, live, busy, error, products, o
             <h3>{draft ? "Proposed basket" : "Cart"} <span className="muted small">{lines.length} items</span></h3>
             <div className="mini-cart">
               {lines.length ? lines.map((l) => (
-                <div key={l.id} className="mini new" onClick={() => onOpen(l.id)} role="button" tabIndex={0}>
+                <div key={l.id} className="mini new" onClick={() => onOpen(l.id)} onKeyDown={(e) => e.key === "Enter" && onOpen(l.id)} role="button" tabIndex={0}>
                   <Thumb id={l.id} name={l.name} onOpen={onOpen} />
                   <span className="nm">{l.name}<div className="muted small">{l.size} · ×{l.qty}</div></span>
                   <b className="num">{money(l.total)}</b>
@@ -459,7 +494,7 @@ function IntentEv({ resp }) {
             <li key={s.requirement_id}>
               <Pill kind="ok">{s.requirement_id}</Pill>
               <span><b>{a.description}</b>{a.quantity_request?.expression ? ` · ${a.quantity_request.expression}` : ""}
-                {(a.constraints || []).map((c, j) => <span key={j} className="muted"> · {c.kind === "tag" ? `must be declared ${tagLabel(c.value)}` : c.kind}</span>)}
+                {[...new Set((a.constraints || []).map(constraintText))].map((t) => <span key={t} className="muted"> · {t}</span>)}
               </span>
             </li>
           );
