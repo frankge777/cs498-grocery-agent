@@ -100,7 +100,7 @@ def _response(env, session, result, metadata, secret):
 def start(instruction: str, source: Optional[str] = None, zip_code: Optional[str] = None,
           location_id: Optional[str] = None, context: Optional[Mapping] = None,
           llm=None, signing_secret: Optional[str] = None, selection_mode="recommend",
-          on_env=None) -> dict:
+          on_env=None, fallback_when_primary_empty=False) -> dict:
     """Start a recommended basket, or explicitly opt into legacy user choices."""
     secret = _secret(signing_secret)
     if not instruction.strip():
@@ -117,6 +117,7 @@ def start(instruction: str, source: Optional[str] = None, zip_code: Optional[str
     try:
         session = InteractiveShoppingSession.from_model(env, llm or DeepSeekClient(temperature=0),
                                                          selection_mode=selection_mode)
+        session.fallback_when_primary_empty = bool(fallback_when_primary_empty)
         result = session.advance()
     except (ValueError, KeyError, TypeError) as error:
         raise service.ServiceError(str(error), status=422) from error

@@ -11,7 +11,9 @@ const EXAMPLES = [
   "A dozen large eggs and a gallon of whole milk",
   "Breakfast for one week: rolled oats, bananas and a carton of almond milk",
 ];
-const DIETS = ["Vegan", "Gluten-free", "Organic", "Dairy-free"];
+// Strict: every item must be declared so. Preferred: use it when the store has it, otherwise regular.
+const DIETS = ["Vegan", "Gluten-free", "Dairy-free"];
+const PREFERS = ["Organic"];
 
 function storeView(loc, live) {
   if (!loc) return null;
@@ -24,7 +26,10 @@ function composeInstruction({ text, people, budget, diets }) {
   if (first && !/[.!?]$/.test(first)) first += ".";
   const parts = [first];
   if (people) parts.push(`It is for ${people} ${people === 1 ? "person" : "people"}.`);
-  if (diets.length) parts.push(`Every item must be ${diets.join(" and ").toLowerCase()}.`);
+  const strict = diets.filter((d) => !PREFERS.includes(d));
+  const prefer = diets.filter((d) => PREFERS.includes(d));
+  if (strict.length) parts.push(`Every item must be ${strict.join(" and ").toLowerCase()}.`);
+  if (prefer.length) parts.push(`Buy the ${prefer.join(" and ").toLowerCase()} version of each item when available, otherwise the regular version.`);
   if (budget) parts.push(`Keep the total under $${budget}.`);
   return parts.join(" ");
 }
@@ -241,11 +246,11 @@ export default function App() {
                     </label>
                   </div>
                   <div className="field">Dietary needs
-                    <div className="chips">{DIETS.map((d) => (
+                    <div className="chips">{[...DIETS, ...PREFERS].map((d) => (
                       <button key={d} type="button" className="chip" aria-pressed={req.diets.includes(d)}
-                        onClick={() => setReq({ ...req, diets: req.diets.includes(d) ? req.diets.filter((x) => x !== d) : [...req.diets, d] })}>{d}</button>
+                        onClick={() => setReq({ ...req, diets: req.diets.includes(d) ? req.diets.filter((x) => x !== d) : [...req.diets, d] })}>{PREFERS.includes(d) ? `${d} if available` : d}</button>
                     ))}</div>
-                    <span className="muted small" style={{ fontWeight: 400 }}>Only products whose maker declares it count.</span>
+                    <span className="muted small" style={{ fontWeight: 400 }}>Dietary needs are strict: only products whose maker declares it count. “Organic if available” falls back to the regular product when the store has no organic one.</span>
                   </div>
                   <div className="note"><b>Sent to the agent:</b> {composeInstruction(req)}</div>
                   {health && !ready && <div className="err">{!health.deepseek_configured ? "DEEPSEEK_API_KEY is not set on the server." : "GROCERY_SESSION_SECRET is not set on the server."}</div>}

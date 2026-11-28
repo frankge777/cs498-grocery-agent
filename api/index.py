@@ -112,7 +112,7 @@ def agent_run(request: AgentRequest) -> dict:
 def interactive_start(request: InteractiveStartRequest) -> dict:
     return _call(interactive_service.start, request.instruction, source=request.source,
                  zip_code=request.zip_code, location_id=request.location_id, context=request.context,
-                 selection_mode=request.selection_mode)
+                 selection_mode=request.selection_mode, fallback_when_primary_empty=True)
 
 
 @app.post("/api/agent/interactive/resume")
@@ -136,7 +136,8 @@ def interactive_stream_start(request: InteractiveStartRequest) -> StreamingRespo
     """Same as /interactive/start, streamed as NDJSON progress lines (see grocery_web.streaming)."""
     return _ndjson(stream(interactive_service.start, request.instruction, source=request.source,
                           zip_code=request.zip_code, location_id=request.location_id,
-                          context=request.context, selection_mode=request.selection_mode))
+                          context=request.context, selection_mode=request.selection_mode,
+                          fallback_when_primary_empty=True))
 
 
 @app.post("/api/agent/interactive/stream/resume")

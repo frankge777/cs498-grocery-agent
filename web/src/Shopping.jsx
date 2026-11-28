@@ -59,6 +59,11 @@ export function constraintText(c) {
   return v == null ? String(c.kind).replace(/_/g, " ") : `${String(c.kind).replace(/_/g, " ")}: ${v}`;
 }
 
+export function primaryLabel(resp, rid) {
+  const st = (resp?.requirement_states || []).find((s) => s.requirement_id === rid);
+  return st?.active_requirement?.historical_primary?.description || st?.active_requirement?.description || rid;
+}
+
 export function reqLabel(resp, rid) {
   const st = (resp?.requirement_states || []).find((s) => s.requirement_id === rid);
   return st?.active_requirement?.description || rid;
@@ -410,6 +415,7 @@ export default function Shopping({ store, rounds, live, busy, error, products, o
                 {i === 0 && <IntentEv resp={r.resp} />}
                 <LiveEvents live={r.live} />
                 <Reviews resp={r.resp} prev={rounds[i - 1]?.resp} products={products} onOpen={onOpen} />
+                <FallbackEv resp={r.resp} prev={rounds[i - 1]?.resp} />
                 <StatusEv resp={r.resp} current={i === rounds.length - 1 && !busy} busy={busy} onAnswer={onAnswer} onGo={onGo} onRestart={onRestart} products={products} onOpen={onOpen} />
               </React.Fragment>
             ))}
@@ -444,7 +450,7 @@ export default function Shopping({ store, rounds, live, busy, error, products, o
                 return (
                   <li key={s.requirement_id} className={`req ${met ? "met" : ""}`}>
                     <span className="box">{met ? Icon.check : ""}</span>
-                    <span>{a.description || s.requirement_id}
+                    <span>{a.description || s.requirement_id}{s.phase === "fallback" && <> <Pill kind="warn">backup</Pill></>}
                       <small>{a.quantity_request?.expression || ""}{[...new Set((a.constraints || []).filter((c) => c.kind === "tag").map((c) => tagLabel(c.value)))].map((t) => ` · ${t}`).join("")}</small>
                     </span>
                   </li>
@@ -482,6 +488,21 @@ export default function Shopping({ store, rounds, live, busy, error, products, o
   );
 }
 
+function FallbackEv({ resp, prev }) {
+  const was = Object.fromEntries((prev?.requirement_states || []).map((s) => [s.requirement_id, s.phase]));
+  const switched = (resp.requirement_states || []).filter((s) => s.phase === "fallback" && was[s.requirement_id] !== "fallback");
+  if (!switched.length) return null;
+  return (
+    <Ev type="fix" title={`Used your backup for ${switched.length} item${switched.length === 1 ? "" : "s"}`}
+      note="Nothing matched your first choice, and your request allowed a backup">
+      <ul className="violations">{switched.map((s) => (
+        <li key={s.requirement_id}><Pill kind="warn">backup</Pill>
+          <span><span className="muted">{s.active_requirement?.historical_primary?.description || s.requirement_id} →</span> <b>{s.active_requirement?.description}</b></span></li>
+      ))}</ul>
+    </Ev>
+  );
+}
+
 function IntentEv({ resp }) {
   const states = resp.requirement_states || [];
   if (!states.length) return null;
@@ -493,7 +514,8 @@ function IntentEv({ resp }) {
           return (
             <li key={s.requirement_id}>
               <Pill kind="ok">{s.requirement_id}</Pill>
-              <span><b>{a.description}</b>{a.quantity_request?.expression ? ` · ${a.quantity_request.expression}` : ""}
+              <span><b>{s.phase === "fallback" && a.historical_primary ? a.historical_primary.description : a.description}</b>{a.quantity_request?.expression ? ` · ${a.quantity_request.expression}` : ""}
+                {a.fallback && <span className="muted"> · if not available: {a.fallback.description}</span>}
                 {[...new Set((a.constraints || []).map(constraintText))].map((t) => <span key={t} className="muted"> · {t}</span>)}
               </span>
             </li>

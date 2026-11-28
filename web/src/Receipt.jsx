@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Icon, Thumb, money, tagLabel } from "./lib.jsx";
-import { reqLabel } from "./Shopping.jsx";
+import { primaryLabel, reqLabel } from "./Shopping.jsx";
 
 /**
  * The agent's proposed basket as an editable receipt. Edits are sent back to
@@ -77,6 +77,7 @@ export default function Receipt({ resp, prevDraft, store, busy, products, onAnsw
                 </div>
               </div>
               <div className="amt num">{money(lt)}</div>
+              {assigns.map((a) => a.phase === "fallback" && <div key={`fb-${a.requirement_id}`} className="reason"><b>Backup choice:</b> this store has no product matching your first choice “{primaryLabel(resp, a.requirement_id)}”, so this uses the backup your request allowed: “{reqLabel(resp, a.requirement_id)}”.</div>)}
               {assigns.map((a) => a.reason && <div key={a.requirement_id} className="reason">Why: {a.reason}</div>)}
               <div className="ctrls">
                 {rid ? (

@@ -45,6 +45,10 @@ class InteractiveShoppingSession:
         self.semantic_discovery = discovery is not None
         self.pending_candidate_reviews = []
         self.selection_mode = selection_mode
+        # Opt-in (web app): when the shopper's own words authorize a fallback
+        # ("organic if available, otherwise regular") and no primary product
+        # passes the checks, use the fallback instead of stopping.
+        self.fallback_when_primary_empty = False
         self.recommender = recommender
         self.initial_cart = dict(env.cart)
         self.pending_recommendation = None
@@ -494,6 +498,64 @@ class InteractiveShoppingSession:
             if item["id"] == requirement.requirement_id:
                 item.update(measure="units", min=amount, max=amount)
 
+    def _fallback_for_empty_primary(self, requirement_ids) -> bool:
+        """Switch primary->fallback for needs whose primary found nothing eligible.
+
+        Only when opted in, only for a fallback the intent recorded from the
+        shopper's own words, and never after search/review infrastructure errors.
+        """
+        if not self.fallback_when_primary_empty:
+            return False
+        switched = False
+        for rid in requirement_ids:
+            r = self.choices.requirements[rid]
+            if (not r.rules or r.phase != "primary" or not r.rules.get("fallback")
+                    or r.uncertain_candidates or r.discovery_reason in {"search_error", "review_error"}):
+                continue
+            relaxed = self._conditional_preference_tags(r.rules)
+            if relaxed:
+                r.rules["constraints"] = [c for c in r.rules.get("constraints", []) if c not in relaxed]
+            r.candidate_history.append({"phase": "primary", "observed_at": time.time(),
+                                        "event": "fallback_no_eligible_primary", "reason": r.discovery_reason,
+                                        "relaxed_constraints": copy.deepcopy(relaxed)})
+            self.intent_revisions.append({"kind": "fallback_no_eligible_primary", "requirement_id": rid,
+                                          "relaxed_constraints": copy.deepcopy(relaxed), "created_at": time.time()})
+            r.phase = "fallback"
+            active = r.active_requirement()
+            r.search_query = active["search_query"]
+            r.question = f"Which product for {active['description']}?"
+            r.required_brand = active.get("brand")
+            r.required_tags = active["required_tags"]
+            r.required_product_ids = active["product_ids"]
+            r.selected_product_id = None
+            r.quantity_interpretation = None
+            r.selection_revision += 1
+            r.candidates = []
+            r.status = "unresolved"
+            switched = True
+        if switched:
+            self._invalidate_approval()
+        return switched
+
+    RELAXABLE_PREFERENCE_TAGS = frozenset({"organic", "non_gmo"})
+
+    @classmethod
+    def _conditional_preference_tags(cls, rules):
+        """Preference tags stated only inside the shopper's fallback rule.
+
+        "Organic when available, otherwise regular" yields an invariant
+        organic tag whose evidence sits inside the fallback's evidence; that
+        tag belongs to the primary only. Dietary/safety tags are never relaxed.
+        """
+        fallback_quotes = [e.get("quote", "") for e in (rules.get("fallback") or {}).get("evidence", [])]
+        relaxed = []
+        for c in rules.get("constraints", []):
+            quotes = [e.get("quote", "") for e in c.get("evidence", [])]
+            if (c.get("kind") == "tag" and c.get("value") in cls.RELAXABLE_PREFERENCE_TAGS and quotes
+                    and all(q and any(q in f for f in fallback_quotes) for q in quotes)):
+                relaxed.append(c)
+        return relaxed
+
     def _candidate_review_questions(self):
         questions = []
         for requirement in self.choices.requirements.values():
@@ -833,6 +895,8 @@ class InteractiveShoppingSession:
                               if reason in {"search_error", "review_error"}), None)
                 if error:
                     return {"status": error, "requirement_ids": empty, "reasons": issues}
+                if self._fallback_for_empty_primary(empty):
+                    continue
                 questions = self._candidate_review_questions()
                 if questions:
                     self.pending_candidate_reviews = questions
@@ -994,7 +1058,8 @@ class InteractiveShoppingSession:
                 "schema_version": self.intent.get("schema_version", 1),
                 "original_request": self.original_request, "intent_revisions": self.intent_revisions,
                 "pending_substitution_questions": self.pending_substitution_questions,
-                "pending_quantity_reviews": self.pending_quantity_reviews}
+                "pending_quantity_reviews": self.pending_quantity_reviews,
+                "fallback_when_primary_empty": self.fallback_when_primary_empty}
 
     @classmethod
     def from_checkpoint(cls, env, snapshot: Mapping, discovery=None, recommender=None) -> "InteractiveShoppingSession":
@@ -1011,6 +1076,7 @@ class InteractiveShoppingSession:
         session.intent_revisions = copy.deepcopy(snapshot.get("intent_revisions", []))
         session.pending_substitution_questions = copy.deepcopy(snapshot.get("pending_substitution_questions", []))
         session.pending_quantity_reviews = copy.deepcopy(snapshot.get("pending_quantity_reviews", []))
+        session.fallback_when_primary_empty = bool(snapshot.get("fallback_when_primary_empty", False))
         session.semantic_discovery = snapshot.get("semantic_discovery", False)
         session.pending_candidate_reviews = list(snapshot.get("pending_candidate_reviews") or [])
         session.rounds = snapshot["rounds"]
